@@ -1,80 +1,119 @@
-# One kernel. Three programs.
+<div align="center">
 
-![GPU](https://img.shields.io/badge/GPU-NVIDIA%20A100-76b900) ![kernel launches](https://img.shields.io/badge/kernel%20launches-1-blue) ![status](https://img.shields.io/badge/status-research%20demo-lightgrey)
+<img src="site/assets/hero.svg" alt="TRIAD: one kernel, three programs" width="100%">
 
-A reproduction of the idea behind the Flapping Airplanes "KVM DOOM" demo: **one persistent GPU kernel launch** on a single NVIDIA A100 that, at the same time,
+**🧠 trains &nbsp;·&nbsp; 💬 serves &nbsp;·&nbsp; 👹 plays Doom &nbsp;·&nbsp; all at once, in a single GPU kernel launch**
 
-1. **trains** a character-level language model,
-2. **generates text** from the live, still-training weights, and
-3. **runs real Doom** (the doomgeneric engine, shareware E1M1) with its own game loop inside the kernel.
+![GPU](https://img.shields.io/badge/GPU-NVIDIA%20A100-76b900?logo=nvidia&logoColor=white) ![launches](https://img.shields.io/badge/kernel%20launches-1-27c8e8) ![doom](https://img.shields.io/badge/Doom-35%20fps%20on%20the%20GPU-f2c14e) ![status](https://img.shields.io/badge/status-research%20demo-lightgrey)
 
-> **Not affiliated with Flapping Airplanes.** This is an independent reproduction of an idea from their public demo video. We have not seen their code.
+[**📊 Stats site**](site/) &nbsp;·&nbsp; [**🏗️ Architecture**](#️-architecture) &nbsp;·&nbsp; [**🚀 Quickstart**](#-quickstart) &nbsp;·&nbsp; [**📈 Results**](#-results) &nbsp;·&nbsp; [**⚠️ Caveats**](#️-honest-caveats)
 
-![Live dashboard: training loss, streaming text, Doom frames](site/assets/dashboard.png)
+</div>
 
-![A Doom frame rendered by the GPU kernel](site/assets/doom_gpu_frame.png)
+---
 
-## What runs in the kernel
+**Triad** puts three unrelated programs inside **one persistent GPU kernel** on a single NVIDIA A100 and runs them at the same time:
 
-| Program | What it does |
-|---|---|
-| **Training** | Character-level MLP LM (512 hidden units, 96-way softmax, 8-char context). Forward, backward and SGD all run as tasks inside the kernel. |
-| **Inference** | Streams generated text from the weights *as they train*, so the text visibly improves while the loss falls. |
-| **Doom** | The C engine, compiled for the GPU, ticks its own game loop in the kernel. Frames are copied to pinned host memory and shown in the browser. |
+| | Program | What happens |
+|---|---|---|
+| 🧠 | **Training** | A character-level language model learns online: forward, backward and SGD all run as tasks inside the kernel. |
+| 💬 | **Inference** | Text streams out of the *live, still-training* weights, so the output visibly improves while the loss falls. |
+| 👹 | **Doom** | The real engine (doomgeneric, shareware E1M1) runs its own game loop on the GPU, played by a scripted bot. |
 
-## Architecture
+> 🛰️ **Not affiliated with Flapping Airplanes.** Independent reproduction of an idea from their public demo video. We have not seen their code.
 
+<div align="center">
+
+![Live dashboard: training loss, streaming text, Doom](site/assets/dashboard.png)
+
+*The demo is just these three panels. The numbers live on the [stats site](site/).*
+
+</div>
+
+## 🏗️ Architecture
+
+<div align="center">
+
+![Animated architecture](site/assets/architecture.svg)
+
+</div>
+
+**How one kernel runs three programs.** Every block is a long-lived worker. Warp 0 of each block polls sharded ticket queues, claims the next *ready* task (priority Doom > inference > training), and the other warps run it. Tasks signal completion through dependency counters guarded by memory fences, so a forward pass releases its backward pass and a token releases the next token, with no kernel launch in between.
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant S as warp 0 (scheduler)
+    participant Q as ticket queues
+    participant C as dependency counters
+    participant W as compute warps
+    loop persistent loop, inside ONE launch
+        S->>Q: probe 32 shards (one memory round trip)
+        Q-->>S: head task of each job
+        S->>C: is its dependency met?
+        C-->>S: counter >= target
+        S->>Q: claim with CAS (Doom > infer > train)
+        S->>W: run the task (registers + L2)
+        W->>C: fence, then atomicAdd (signals dependents)
+    end
 ```
-                       ONE kernel launch (persistent blocks, 2 per SM)
-  +------------------------------------------------------------------------------+
-  |  warp 0 of each block: scheduler                                             |
-  |     pops tasks from sharded ticket queues  --->  hands them to worker warps  |
-  |                                                                              |
-  |   train queue ---+                                                           |
-  |   infer queue ---+--> dependency counters (+ memory fences) release the      |
-  |   (sharded)      |    next tasks: fwd -> bwd -> SGD; token t -> token t+1    |
-  |                                                                              |
-  |  Doom block:                                                                 |
-  |    thread 0       runs the Doom tick (game logic, BSP walk, no drawing)      |
-  |    threads 1..255 are workers: execute queued column / span draws            |
-  |                   behind ONE named barrier                                   |
-  +------------------------------------------------------------------------------+
-        |  host only: HTTP server + SSH tunnel -> browser dashboard (3 panels)
+
+### 👹 One Doom frame
+
+<div align="center">
+
+![Doom frame pipeline](site/assets/doom-pipeline.svg)
+
+</div>
+
+Thread 0 runs the game logic and *queues* column and span draws; at two flush points the other 255 threads of the block execute the queue behind a single named barrier. The picture is pixel-identical to serial drawing, but a frame drops from **24 ms to 6.7 ms**.
+
+```mermaid
+flowchart LR
+    A[doomgeneric C source] -->|clang -target nvptx64| B[LLVM bitcode]
+    T[tinylibc.c<br/>printf, string, WAD-in-memory] --> B
+    B -->|llvm-link| C[one module]
+    C -->|fix_varargs.py<br/>lowers va_start / va_arg| D[patched IR]
+    D -->|llc| E[PTX]
+    E -->|nvcc -dc, reg cap 112| F[device object]
+    G[demo.cu megakernel] -->|nvcc -rdc=true| H((triad demo binary))
+    F --> H
+    H -->|pinned memory + HTTP| I[browser: 3 panels]
 ```
 
-## Quickstart
+## 🚀 Quickstart
 
-You need an NVIDIA A100 box (sm_80) reachable over SSH. Run these from your Mac or Linux machine:
+You need an NVIDIA A100 box (sm_80) reachable over SSH. Run these on your Mac or Linux machine:
 
 ```bash
-./doom-gpu/setup_box.sh ubuntu@<ip>          # once: installs clang, fetches doomgeneric + shareware WAD (md5 checked)
-./live-demo/run_demo.sh ubuntu@<ip>          # builds, starts, tunnels and opens the dashboard on localhost:8080
-./benchmarks/run_benchmarks.sh ubuntu@<ip> 5 6   # 5 reps x 6 s per measurement, writes benchmarks/results/
-python3 -m http.server 8000 --directory site     # stats site at http://localhost:8000
+./doom-gpu/setup_box.sh ubuntu@<ip>          # once: clang, doomgeneric, shareware WAD (md5 checked)
+./live-demo/run_demo.sh ubuntu@<ip>          # build, run, tunnel, open http://localhost:8080
+./benchmarks/run_benchmarks.sh ubuntu@<ip> 5 6   # 5 reps x 6 s, writes benchmarks/results/
+python3 -m http.server 8000 --directory site     # the stats site, http://localhost:8000
 ```
 
-## Results
+## 📈 Results
 
-NVIDIA A100-SXM4-40GB (108 SMs), 5 repetitions x 6 s, 2026-11-01. Source: `benchmarks/results/latest.json`, `benchmarks/results/summary.md`.
+NVIDIA A100-SXM4-40GB (108 SMs), 5 repetitions x 6 s, 2026-11-01. Source: [`benchmarks/results/latest.json`](benchmarks/results/latest.json) and [`summary.md`](benchmarks/results/summary.md).
 
-**Megakernel, all three at once (mean, sd):** 13,507.6 steps/s (sd 214.1), 3,457,953 training tok/s, **53,211.6 inference tok/s (sd 751.2)**, **35.0 Doom fps (sd 0.0)**, 1 kernel launch.
+> 🎯 **Triad, all three at once (mean, sd):** **13,507.6** training steps/s (sd 214.1) · 3,457,953 training tok/s · **53,211.6** inference tok/s (sd 751.2) · **35.0** Doom fps (sd 0.0) · **1** kernel launch
 
-Baselines run the *same task code* as ordinary per-op kernels (4 launches per step, 3 per token), each job **alone** unless stated. Doom has no per-op baseline.
+The baselines run the *same task code* as ordinary per-op kernels (4 launches per step, 3 per token), each job **alone** unless stated. Doom has no per-op baseline.
 
-| Baseline | Train steps/s | Infer tok/s | Baseline slower than megakernel, train / infer | 4,000 steps take |
+| Baseline | Train steps/s | Infer tok/s | Baseline slower than Triad, train / infer | 4,000 steps take |
 |---|---|---|---|---|
 | Per-op kernels, eager launches | 15,282 | 52,070 | -13.1% / 2.1% | 0.262 s |
 | Per-op kernels, CUDA graphs | 16,296 | 60,343 | -20.6% / -13.4% | 0.245 s |
 | Both jobs, one process, two CUDA-graph streams | 14,960 | 53,377 | -10.8% / -0.3% | 0.267 s |
-| Two separate processes sharing the GPU | 7,465 | 27,278 | **44.7% / 48.7%** | 0.536 s |
+| 🥊 Two separate processes sharing the GPU | 7,465 | 27,278 | **44.7% / 48.7%** | 0.536 s |
 
-Negative means the baseline is faster. The megakernel takes 0.296 s for 4,000 steps.
+Negative means the baseline is faster. Triad takes 0.296 s for 4,000 steps.
 
-### Versus Flapping Airplanes' published numbers
+### 🆚 Versus Flapping Airplanes' published numbers
 
-Their column is **read frame by frame from their demo video** (`benchmarks/fa_published.json`); we did not measure it.
+Their column is **read frame by frame from their demo video** ([`benchmarks/fa_published.json`](benchmarks/fa_published.json)); we did not measure it.
 
-| | Flapping Airplanes (B200, from video) | This repo (A100, measured) |
+| | Flapping Airplanes (B200, from video) | Triad (A100, measured) |
 |---|---|---|
 | Kernel launches | 1 vs 514,562 | 1 vs 4 per step / 3 per token |
 | 4,000 training steps | 46.1 s vs 70.1 s (baseline **34% slower**) | 0.296 s vs 0.262 s eager (baseline **13.1% faster**) |
@@ -82,33 +121,34 @@ Their column is **read frame by frame from their demo video** (`benchmarks/fa_pu
 | SM split | 116 train / 24 infer / 8 Doom of 148 | dynamic, mean busy SMs 18.5 / 2.3 / 0.19 of 108 |
 | Model | LLM-scale (loss starts near 11.5) | tiny char-level MLP |
 
-## Honest caveats
+## ⚠️ Honest caveats
 
-- **A100, not B200.** Different chip, different scale.
-- **A tiny char-level model, not an LLM.** Absolute throughput numbers are not comparable with theirs.
-- **Our per-op baseline is tight.** It reuses the megakernel's own task code, so on this workload it is actually *faster per job* than the megakernel (13% to 21% on training). The megakernel's advantage here is running all three at once and beating two processes sharing a GPU by roughly 45-49%.
-- **We do not reproduce their 34%.** Their baseline is Megatron plus vLLM; ours is not.
-- **The GPU is mostly idle for our workload** (about 21 of 108 SMs busy on average), so this is a demonstration of the mechanism, not a saturation benchmark.
-- **Doom is played by a script**, and **sound is disabled**.
+- 🖥️ **A100, not B200.** Different chip, different scale.
+- 🔬 **A tiny char-level model, not an LLM.** Absolute throughput is not comparable with theirs.
+- 🎯 **Our per-op baseline is tight.** It reuses Triad's own task code, so on this workload it is actually *faster per job* (13% to 21% on training). Triad's advantage here is running all three at once and beating two processes that share a GPU by roughly 45-49%.
+- ❌ **We do not reproduce their 34%.** Their baseline is Megatron plus vLLM; ours is not.
+- 💤 **The GPU is mostly idle for our workload** (about 21 of 108 SMs busy on average): this demonstrates the mechanism, it is not a saturation benchmark.
+- 🤖 **Doom is played by a script**, and 🔇 **sound is disabled**.
 
-## Repo map
+## 🗺️ Repo map
 
 | Path | What |
 |---|---|
 | `live-demo/` | The demo: `demo.cu` megakernel with embedded HTTP server, `index.html` three-panel dashboard, `run_demo.sh` |
 | `doom-gpu/` | Compiling the C Doom engine for the GPU: tinylibc, `fix_varargs.py`, `gpu_par.c`, `build_doom.sh`, `setup_box.sh`, `doomtest.cu` |
 | `benchmarks/` | `run_benchmarks.sh`, `compare.py`, `fa_published.json`, `results/` |
-| `site/` | Static stats website (`index.html`, `data/`, `assets/`) |
-| `docs/RESEARCH.md` | The original long research log (feasibility analysis, build ladder, milestone notes) |
+| `site/` | Static stats website with animated diagrams (`index.html`, `data/`, `assets/`) |
+| `tools/` | `gen_svgs.py` regenerates the animated SVGs |
+| `docs/RESEARCH.md` | The original research log: feasibility analysis, build ladder, milestone notes |
 | `m0-a100/`, `m1-demo/` | Earlier persistent-kernel VM experiments on the A100 (history) |
 
-## How Doom runs on a GPU
+## 🔧 How Doom runs on a GPU
 
-doomgeneric is compiled with **clang's NVPTX backend** against a small hand-written **tinylibc** (the engine needs only a few libc calls). clang 14 cannot select `va_start` for NVPTX, so `fix_varargs.py` **lowers varargs at the LLVM IR level**. PTX cannot emit some static initialisers (self-referential tables, pointers to array elements), so `build_doom.sh` patches those to be set at startup, and sound is disabled for the same reason. The object is linked into the CUDA kernel with relocatable device code, with a **register cap of 112** and a **24 KB per-thread stack**. Rendering is parallel: thread 0 runs the tick and queues column/span draws, while 255 workers execute them. Warp-0 divergence otherwise hangs, so all participants meet at **one shared named-barrier instruction**.
+doomgeneric is compiled with **clang's NVPTX backend** against a small hand-written **tinylibc** (the engine needs only a few libc calls). clang 14 cannot select `va_start` for NVPTX, so `fix_varargs.py` **lowers varargs at the LLVM IR level**. PTX cannot emit some static initialisers (self-referential tables, pointers to array elements), so `build_doom.sh` patches those to be set at startup, and sound is disabled for the same reason. The object is linked into the CUDA kernel with relocatable device code, with a **register cap of 112** and a **24 KB per-thread stack**. Warp-0 divergence otherwise hangs a named barrier, so every participant meets at **one shared barrier instruction**.
 
-## Credits and licensing
+## 📜 Credits and licensing
 
 - **doomgeneric** by ozkl (GPL) is cloned by `setup_box.sh` and is not stored in this repo. **Doom** is by id Software.
-- The **shareware `doom1.wad` is not included**. `setup_box.sh` downloads it and keeps it only if its md5 matches.
+- The **shareware `doom1.wad` is not included**: `setup_box.sh` downloads it and keeps it only if its md5 matches.
 - Not affiliated with, endorsed by, or based on code from Flapping Airplanes.
 - More background: [`docs/RESEARCH.md`](docs/RESEARCH.md), [`benchmarks/README.md`](benchmarks/README.md), [`site/README.md`](site/README.md).
