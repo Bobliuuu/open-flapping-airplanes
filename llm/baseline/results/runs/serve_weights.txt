@@ -1,0 +1,1 @@
+serving weights: /home/ubuntu/data/hf_trained

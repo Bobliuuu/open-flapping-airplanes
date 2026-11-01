@@ -1,0 +1,1 @@
+SM check @16%: device_reported_sms=16 distinct_smids_used=16

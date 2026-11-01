@@ -1,0 +1,1 @@
+{"name":"pytorch_mps_r1","noisy_not_idle_before_start":0,"gpu_before":"0 %, 922 MiB","gpu_after":"0 %, 170 MiB","max_compute_procs_seen":3,"rc":0}

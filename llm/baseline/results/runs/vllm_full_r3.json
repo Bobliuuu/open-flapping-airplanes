@@ -1,0 +1,12 @@
+{
+ "mps_pct": null,
+ "enforce_eager": false,
+ "new_tokens": 256,
+ "prompt_tokens": 4,
+ "seconds": [
+  0.4849374294281006
+ ],
+ "tok_s": [
+  527.9031571184503
+ ]
+}
