@@ -1,0 +1,61 @@
+{
+ "sm_100a": {
+  "runs": true,
+  "out": "name=NVIDIA B300 SXM6 AC cc=10.3 SMs=148 smemPerBlockOptin=232448 smemPerSM=233472 regsPerSM=65536 L2=126 MB clk=2032 MHz memclk=3996 MHz bus=7680 mem=287.4 GB maxThrPerSM=2048\nsmid: distinct=148 max=147\ncopy_bw=6390 GB/s (read+write, 42.9 GB moved)\nlasterr=no error\n"
+ },
+ "sm_100f": {
+  "runs": true,
+  "out": "name=NVIDIA B300 SXM6 AC cc=10.3 SMs=148 smemPerBlockOptin=232448 smemPerSM=233472 regsPerSM=65536 L2=126 MB clk=2032 MHz memclk=3996 MHz bus=7680 mem=287.4 GB maxThrPerSM=2048\nsmid: distinct=148 max=147\ncopy_bw=6400 GB/s (read+write, 42.9 GB moved)\nlasterr=no error\n"
+ },
+ "sm_103a": {
+  "runs": true,
+  "out": "name=NVIDIA B300 SXM6 AC cc=10.3 SMs=148 smemPerBlockOptin=232448 smemPerSM=233472 regsPerSM=65536 L2=126 MB clk=2032 MHz memclk=3996 MHz bus=7680 mem=287.4 GB maxThrPerSM=2048\nsmid: distinct=148 max=147\ncopy_bw=6386 GB/s (read+write, 42.9 GB moved)\nlasterr=no error\n"
+ },
+ "sm_103f": {
+  "runs": true,
+  "out": "name=NVIDIA B300 SXM6 AC cc=10.3 SMs=148 smemPerBlockOptin=232448 smemPerSM=233472 regsPerSM=65536 L2=126 MB clk=2032 MHz memclk=3996 MHz bus=7680 mem=287.4 GB maxThrPerSM=2048\nsmid: distinct=148 max=147\ncopy_bw=6395 GB/s (read+write, 42.9 GB moved)\nlasterr=no error\n"
+ },
+ "ptx_compute_100": {
+  "runs": true,
+  "out": "name=NVIDIA B300 SXM6 AC cc=10.3 SMs=148 smemPerBlockOptin=232448 smemPerSM=233472 regsPerSM=65536 L2=126 MB clk=2032 MHz memclk=3996 MHz bus=7680 mem=287.4 GB maxThrPerSM=2048\nsmid: distinct=148 max=147\ncopy_bw=6396 GB/s (read+write, 42.9 GB moved)\nlasterr=no error\n"
+ },
+ "ptx_compute_100a": {
+  "runs": false,
+  "out": "name=NVIDIA B300 SXM6 AC cc=10.3 SMs=148 smemPerBlockOptin=232448 smemPerSM=233472 regsPerSM=65536 L2=126 MB clk=2032 MHz memclk=3996 MHz bus=7680 mem=287.4 GB maxThrPerSM=2048\nsmid: distinct=0 max=0\ncopy_bw=11278801 GB/s (read+write, 42.9 GB moved)\nlasterr=no kernel image is available for execution on the device\n"
+ },
+ "sm_80_cubin": {
+  "runs": true,
+  "out": "name=NVIDIA B300 SXM6 AC cc=10.3 SMs=148 smemPerBlockOptin=232448 smemPerSM=233472 regsPerSM=65536 L2=126 MB clk=2032 MHz memclk=3996 MHz bus=7680 mem=287.4 GB maxThrPerSM=2048\nsmid: distinct=148 max=147\ncopy_bw=6377 GB/s (read+write, 42.9 GB moved)\nlasterr=no error\n"
+ },
+ "ptx_compute_80": {
+  "runs": true,
+  "out": "name=NVIDIA B300 SXM6 AC cc=10.3 SMs=148 smemPerBlockOptin=232448 smemPerSM=233472 regsPerSM=65536 L2=126 MB clk=2032 MHz memclk=3996 MHz bus=7680 mem=287.4 GB maxThrPerSM=2048\nsmid: distinct=148 max=147\ncopy_bw=6386 GB/s (read+write, 42.9 GB moved)\nlasterr=no error\n"
+ },
+ "sm_90a": {
+  "runs": true,
+  "out": "name=NVIDIA B300 SXM6 AC cc=10.3 SMs=148 smemPerBlockOptin=232448 smemPerSM=233472 regsPerSM=65536 L2=126 MB clk=2032 MHz memclk=3996 MHz bus=7680 mem=287.4 GB maxThrPerSM=2048\nsmid: distinct=148 max=147\ncopy_bw=6396 GB/s (read+write, 42.9 GB moved)\nlasterr=no error\n"
+ },
+ "mps_scan": {
+  "8": "device_reported_sms=10 distinct_smids_used=10",
+  "10": "device_reported_sms=14 distinct_smids_used=14",
+  "12": "device_reported_sms=16 distinct_smids_used=16",
+  "14": "device_reported_sms=20 distinct_smids_used=20",
+  "16": "device_reported_sms=22 distinct_smids_used=22",
+  "18": "device_reported_sms=26 distinct_smids_used=26",
+  "20": "device_reported_sms=28 distinct_smids_used=28",
+  "25": "device_reported_sms=36 distinct_smids_used=36",
+  "50": "device_reported_sms=74 distinct_smids_used=74",
+  "70": "device_reported_sms=102 distinct_smids_used=102",
+  "74": "device_reported_sms=108 distinct_smids_used=108",
+  "76": "device_reported_sms=112 distinct_smids_used=112",
+  "78": "device_reported_sms=114 distinct_smids_used=114",
+  "79": "device_reported_sms=116 distinct_smids_used=116",
+  "80": "device_reported_sms=118 distinct_smids_used=118",
+  "82": "device_reported_sms=120 distinct_smids_used=120",
+  "85": "device_reported_sms=124 distinct_smids_used=124",
+  "90": "device_reported_sms=132 distinct_smids_used=132",
+  "100": "device_reported_sms=148 distinct_smids_used=148"
+ },
+ "wall_s": 39.51709246635437,
+ "cost_usd_est": 0.06860167252159119
+}
