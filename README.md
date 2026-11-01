@@ -130,6 +130,10 @@ Their column is **read frame by frame from their demo video** ([`benchmarks/fa_p
 - 💤 **The GPU is mostly idle for our workload** (about 21 of 108 SMs busy on average): this demonstrates the mechanism, it is not a saturation benchmark.
 - 🤖 **Doom is played by a script**, and 🔇 **sound is disabled**.
 
+## Demo video
+
+[Watch the explainer (86 s, `video/release/triad_explainer_preview.mp4`)](video/release/triad_explainer_preview.mp4). It plays when opened from the repo on GitHub. The B300 numbers in it are interim.
+
 ## 🗺️ Repo map
 
 | Path | What |

@@ -26,6 +26,8 @@ Edit `data.json` (a number is `{value, unit, status, source}`; set `status` to `
 Pending now: `b300.launches_base`, `b300.train_s_base`, `b300.train_toks_base`, `b300.loss_end_base`, `b300.doom_fps`.
 Scene lengths and burned-in captions are in `data.json` under `scenes` (`[start_s, end_s, text]` relative to the scene).
 `tools/make_data.py` bootstraps data.json from the repo results (refuses to overwrite without --force, and does not carry the `scenes` block).
+`python3 tools/refresh_numbers.py [--dry]` re-reads the repo result files (llm/triad/README.md, llm/b200/results/mk_split_100a.txt + bl_gpu1.log, llm/baseline/results, benchmarks/fa_published.json) and updates only value/status in data.json (scenes, captions, sources untouched), printing a diff and the still-pending list. B300 numbers carry status `interim` until the baselines are complete.
+`compose.sh` accepts any input resolution/fps/pixel format (audio is dropped; tested 1282x721@25, 2560x1440@60, 1280x720 yuv444 with audio, MAXS=45 with a 40 s clip).
 Percentages use FA's convention, 1 - faster/slower (70.1 s vs 46.1 s = 34%).
 
 Large outputs (`out/`, `*.mp4`, `node_modules/`) are ignored by `video/.gitignore`. Not affiliated with Flapping Airplanes.
