@@ -72,7 +72,7 @@ tr{transition:background .2s}tbody tr:hover,table tr:hover td{background:#101826
 <section id="how" class="reveal"><h2>🚀 Reproduce</h2>
 <pre>git clone https://github.com/Bobliuuu/flapping-airplanes &amp;&amp; cd flapping-airplanes
 ./doom-gpu/setup_box.sh ubuntu@&lt;ip&gt;        # once: clang, engine source, shareware WAD (md5 checked)
-./live-demo/run_demo.sh ubuntu@&lt;ip&gt;        # the three-program demo, tunnelled to your browser
+./a100-demo/run_demo.sh ubuntu@&lt;ip&gt;        # the three-program demo, tunnelled to your browser
 ./benchmarks/run_benchmarks.sh ubuntu@&lt;ip&gt; 5 6   # this page's numbers; then open site/index.html</pre>
 <ul><li><b>Method.</b> Each number is the mean of <span id="reps"></span> repetitions of a few seconds each, with the standard deviation shown. Doom measurements run in their own process because the engine cannot be re-created in one.</li>
 <li><b>Baselines.</b> The "individually timed" rows run one program alone on the GPU, like the video. The "streams" and "processes" rows run both at once.</li>

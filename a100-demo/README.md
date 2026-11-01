@@ -1,4 +1,4 @@
-# live-demo
+# a100-demo
 
 `demo.cu` is one persistent CUDA kernel that trains a char-level LM, streams text from the live weights, and runs real Doom, while an embedded HTTP server feeds `index.html` (three panels: training, text, Doom).
 
