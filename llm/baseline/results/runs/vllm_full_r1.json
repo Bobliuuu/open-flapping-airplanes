@@ -1,0 +1,19 @@
+{
+ "mps_pct": null,
+ "enforce_eager": false,
+ "new_tokens": 256,
+ "prompt_tokens": 4,
+ "seconds": [
+  0.47040557861328125
+ ],
+ "tok_s": [
+  544.2112331122175
+ ],
+ "launches": {
+  "method": "torch.profiler(CUPTI) over one 64-new-token generate (incl. prefill+sampling kernels), divided by 64",
+  "kernel_records_per_token": 129.328125,
+  "memops_per_token": 5.125,
+  "host_cudaLaunchKernel_calls_per_token": 21.046875,
+  "host_cudaGraphLaunch_calls_per_token": 0.984375
+ }
+}
