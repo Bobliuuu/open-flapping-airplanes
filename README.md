@@ -87,7 +87,7 @@ You need an NVIDIA A100 box (sm_80) reachable over SSH. Run these on your Mac or
 
 ```bash
 ./doom-gpu/setup_box.sh ubuntu@<ip>          # once: clang, doomgeneric, shareware WAD (md5 checked)
-./live-demo/run_demo.sh ubuntu@<ip>          # build, run, tunnel, open http://localhost:8080
+./a100-demo/run_demo.sh ubuntu@<ip>          # build, run, tunnel, open http://localhost:8080
 ./benchmarks/run_benchmarks.sh ubuntu@<ip> 5 6   # 5 reps x 6 s, writes benchmarks/results/
 python3 -m http.server 8000 --directory site     # the stats site, http://localhost:8000
 ```
@@ -134,13 +134,14 @@ Their column is **read frame by frame from their demo video** ([`benchmarks/fa_p
 
 | Path | What |
 |---|---|
-| `live-demo/` | The demo: `demo.cu` megakernel with embedded HTTP server, `index.html` three-panel dashboard, `run_demo.sh` |
+| `a100-demo/` | A100 small-model Doom demo: `demo.cu` megakernel with embedded HTTP server, `index.html` three-panel dashboard, `run_demo.sh` |
 | `doom-gpu/` | Compiling the C Doom engine for the GPU: tinylibc, `fix_varargs.py`, `gpu_par.c`, `build_doom.sh`, `setup_box.sh`, `doomtest.cu` |
 | `benchmarks/` | `run_benchmarks.sh`, `compare.py`, `fa_published.json`, `results/` |
 | `site/` | Static stats website with animated diagrams (`index.html`, `data/`, `assets/`) |
+| `llm/` | LLM + Doom open-flapping-airplanes build, baselines and the B200/B300 kit (to be regrouped into `a100-llm/` and `b300-run/`, see `docs/REORG_PLAN.md`) |
+| `video/` | Sources of the explainer video |
 | `tools/` | `gen_svgs.py` regenerates the animated SVGs |
 | `docs/RESEARCH.md` | The original research log: feasibility analysis, build ladder, milestone notes |
-| `m0-a100/`, `m1-demo/` | Earlier persistent-kernel VM experiments on the A100 (history) |
 
 ## 🔧 How Doom runs on a GPU
 

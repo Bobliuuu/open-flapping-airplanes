@@ -203,102 +203,7 @@ Hazy Research: *No Bubbles*, *We Bought the Whole GPU* · Cursor: *Mixture of Ki
 
 ---
 
-## 10. M0 results: sm_80 (A100-SXM4-40GB, Lambda)
-
-Code: [`m0-a100/mk.cu`](m0-a100/mk.cu) (v2, split-K chunked deps), [`m0-a100/mk_v1.cu`](m0-a100/mk_v1.cu) (v1, layer-wide barriers). Run: `./m0-a100/run_lambda.sh ubuntu@<ip>`.
-Workload: 16 layers of a Llama-1B-shaped MLP decode at batch 1 (1.61 GB of bf16 weights per forward). Peak HBM about 1555 GB/s.
-
-**Proven on Ampere (no TMA, no setmaxnreg, no hardware CLC):**
-- Persistent kernel with per-task dependency counters, fence-before-signal, and a dynamic claim queue is **correct**: bitwise identical to the per-op baseline and a CUDA graph, in static and dynamic modes, and CPU-reference PASS.
-- Fences and counters cost essentially nothing (removing the fence changed timing by noise).
-- With dependency waits skipped (timing probe only, wrong results) the same kernel reaches **1195 us = 87% of peak HBM**, faster than the CUDA graph (1400 us, 74%). So the task loop and loads are sound.
-
-**Not yet a speedup:**
-
-| variant | base+graph | mega-static | mega-dynamic |
-|---|---|---|---|
-| v1 (2 barriers/layer), 2 blocks/SM | 1401 us | 1574 us (0.89x) | 1541 us (0.91x) |
-
-v2 makes the per-op baseline slower too (tiny tasks), so its ratio improves more than its absolute time; v1 remains the best absolute megakernel so far. v2 absolute times were not captured in the run output.
-| v2 (split-K, chunked deps), 2 blocks/SM | 1651 us | 0.88x | 0.95x |
-
-**Diagnosis.** The whole gap is the dependency barriers (~11 us each, about one task duration, a tail effect), not launch cost or fences. At batch 1 this MLP chain has inherent all-to-all barriers (rmsnorm needs all of x; down needs all of act), and a graph pays the same ones. Next levers, in order:
-1. Interleave two independent streams (drafter+verifier, or two requests) so one fills the other's tail. This is the "share the GPU" idea and the strongest test of the megakernel thesis; compare against a 2-stream graph.
-2. Cut per-task serial overhead in v2 (101 regs caps it at 2 blocks/SM).
-3. Port the same VM to sm_90/sm_100 (TMA, `setmaxnreg`, CLC), where Hazy measured the gain.
-
-Honest read: on A100 at batch 1 the megakernel is within about 5 to 10% of a CUDA graph and correct; it does not win yet. The 87% probe shows the headroom is real but sits in the barrier structure.
-
----
-
-## 11. M1 demo: training + inference + a game in ONE kernel (A100)
-
-Code: [`m1-demo/vm.cu`](m1-demo/vm.cu). Run: `./m1-demo/run_lambda.sh ubuntu@<ip>` (add `--live --all-only` over `ssh -t` to watch Pong in the terminal).
-
-One persistent kernel, 216 blocks (2 per SM), three job streams with different contracts:
-- **Game**: Pong physics plus a rasteriser, paced at 60 FPS (16.7 ms frame deadline), frames written straight into pinned host memory.
-- **Inference**: the 8-layer decode chain from M0, paced at a token rate.
-- **Training**: a 64x1024x1 tanh MLP trained with SGD (forward, backward, update all inside the kernel, fixed reduction orders), unpaced filler.
-
-Scheduler: priority game > inference > training. A block claims a job's head task only if its dependencies are already satisfied, by CAS on a 32-way sharded ticket, so a block never blocks mid-task and preemption happens at task boundaries. Dependencies are monotonic global counters with a fence before every signal.
-
-### Running the demo from your Mac
-
-The kernel needs an NVIDIA GPU (built for A100, `sm_80`), so it builds and runs on the Lambda box; your Mac only drives it over SSH. Prerequisites: `ssh ubuntu@<ip>` works without a prompt (key in `~/.ssh/config`) and the box has `nvcc` and `rsync`.
-
-```bash
-cd flapping-airplanes/m1-demo
-
-# full benchmark: solo vs concurrent, determinism checks, comparison against two CUDA-graph streams (about 1 minute)
-./run_lambda.sh ubuntu@<ip> --secs 4
-
-# watch it live: Pong in your terminal while inference and training run in the same kernel (needs a real terminal)
-./run_lambda.sh ubuntu@<ip> --secs 20 --live --all-only
-```
-
-`run_lambda.sh` rsyncs the folder to `~/flapping-m1` on the box, compiles `vm.cu` with `nvcc -arch=sm_80`, and runs it over `ssh -t`. Useful flags: `--secs N` (seconds per run), `--tok-us N` (token period in microseconds; 3000 = 333 tokens/s), `--live`, `--all-only` (skip the solo runs and comparison), `--det-steps N`. Debug env vars: `MK_TPROF=1` (per-task training timeline), `MK_TBENCH=1` (per-phase kernel times).
-
-Results on one A100-SXM4-40GB (4 s runs, current `vm.cu`):
-
-| check | result |
-|---|---|
-| game deadline misses (60 FPS, 16.7 ms) with inference + training running | **0**; frame latency p99 25 us |
-| tokens at 333/s with game + training running | token p99 0.93 ms (solo 1.03 ms); training keeps 78% of its solo throughput (15.1k of 19.4k steps/s) |
-| inference output, solo vs concurrent | **bitwise identical** |
-| training weights after exactly 400 steps: solo, concurrent, per-op CUDA graphs | **bitwise identical** (all three); also identical at every task size tried |
-| training | loss 0.107 to about 0.0001 in 4 s (overfits its 4096-sample set) |
-
-**Interleave gain, unpaced (1500 tokens + training, vs the same jobs as two CUDA-graph streams, inference on the high-priority stream):**
-
-| | tokens/s | train steps/s | fraction of solo capacity, summed |
-|---|---|---|---|
-| 2-stream graphs, both | 1201 | 6528 | 0.98 + 0.19 = **1.17** |
-| megakernel, both | 1120 | 9046 | 0.98 + 0.39 = **1.37** |
-| solo, graphs | 1226 | 34417 | |
-| solo, megakernel | 1165 | 23094 | |
-
-**Honest read.** One persistent kernel serving tokens, training and a game gives training 1.39x the baseline's throughput while inference keeps 0.93x of the baseline's tokens/s (run-to-run noise is about 5%). Alone, inference is within 5% of a CUDA graph (1165 vs 1226 tok/s) and training reaches 0.67x of its graph (23.1k vs 34.4k steps/s; the graph runs the same task code, so every task-level speedup helps both). Per-op graphs still win on pure single-job speed; the megakernel's edge is running everything at once on one GPU without starving the background job.
-
-**A100 optimisation log.** Each step was found by measuring, not guessing (device-side cycle counters, then per-task timestamps).
-1. *Single global ticket per job*: claims serialise at about 1 per us, so a 16,384-task token took 14 ms. Fix: 128 sharded tickets, one home shard per block. Inference 0.62x to 0.67x.
-2. *Scheduler probe cost*: a probe round took about 10k cycles (runtime integer divisions, 12 candidates per lane spilling to local memory). Fix: compile-time layer count, one candidate per lane (32-shard window around the home shard), global scan only when idle. 12k to 1.9k cycles; inference to 0.89x.
-3. *Smem reuse*: keep the normalised x / activation chunk in shared memory across consecutive tasks of the same token, layer and chunk. Removes per-task rmsnorm barriers; inference to 0.93x.
-4. *Training task code*: the kernel's own tasks were slow (P1 30 us, P3 28 us). Coalesced feature-major input loads, and a gradient loop that reuses each load across 4 units, with the exact summation order kept (hash unchanged). Training 7.9k to 11.4k steps/s.
-   Later rounds vectorised the shared-memory reads (float4, same summation order) and issued all independent loads before the first barrier: step 52 us to 43 us, training alone to 23.1k steps/s.
-5. *Fuse the output phase away*: P1 threads already hold the hidden activations, so they emit partial output sums and every P3 task recomputes the error from them. Step goes from 3 phases to 2 (new hash, still bitwise equal across all variants).
-6. *CAS pile-up*: per-task timestamps showed barrier gaps were only 1 us, but a phase's tasks started over 24 us because all 216 blocks picked the lowest ready shard and failed down the list one round trip at a time. Starting each block's search at a different lane: training alone 11.9k to 19.4k steps/s (step 87 us to 52 us), and training under load 4.1k to 8.4k.
-
-**Negative results worth keeping.**
-- *Loader-warp design* (`vm3_loader.cu`): 8 compute warps plus 1 loader warp that `cp.async`-streams weights into two 64 KB smem pages, with deadlock-safe claim-ahead across dependency barriers. Correct and bitwise identical but slower (about 550 tok/s). With 1 block per SM and 2 pages the compute warps idle 84%. This is the design that should pay off with TMA, mbarriers and `setmaxnreg` on Hopper, where a loader is nearly free; untested (no H100/H200 access).
-- *Smaller training tasks* (2 to 8 units per task) are slower, because every P3 task repeats the partial-sum prologue.
-
-Files: `m1-demo/vm.cu` (current best), `vm2.cu` (earlier sharded-ticket version), `vm_3phase.cu` (before the phase fusion), `vm3_loader.cu` and `vm3_loader_prof.cu` (loader-warp experiment, the latter with cycle counters). Set `MK_TPROF=1` for the per-task training timeline and `MK_TBENCH=1` for per-phase kernel times.
-
-The "game" is Pong with scripted paddles; training does not yet drive the game (no RL loop), and inference is a weight-streaming MLP chain, not a full transformer.
-
----
-
-## 12. Live demo: one kernel, three programs, in your browser (`live-demo/`)
+## 10. Live demo: one kernel, three programs, in your browser (`a100-demo/`)
 
 Modelled on the structure of the original Flapping Airplanes demo video (one dashboard with a training panel and its loss curve, an inference panel streaming text, a game panel, a real-time clock, then a comparison against separate kernels). Everything on screen is measured from the running kernel; nothing is scripted.
 
@@ -306,11 +211,11 @@ Modelled on the structure of the original Flapping Airplanes demo video (one das
 - **Training**: a character-level language model (8-character context, 512 tanh units, 96-way softmax), forward, backward and SGD inside the kernel. About 14k steps per second at batch 256.
 - **Inference**: text generated by the same live weights as they train, so you watch gibberish turn into sentences while the loss falls. Paced at 1000 tokens per second for readability.
 - **Game**: **real Doom** (the doomgeneric port, shareware `doom1.wad`, E1M1) running its own game loop and its own software renderer inside the kernel, one tic per frame, on a single GPU thread (about 24 ms per frame standalone, about 31 fps of game time when sharing the GPU with the other two jobs). A scripted bot plays: god mode and all weapons via the real cheat codes, then walks, turns, strafes, shoots and opens doors. Its clock is virtual (one tic per frame), so the game is deterministic. See `doom-gpu/` for how the C engine is compiled for the GPU.
-- **Scheduler**: the sharded-ticket claim queue from section 11, with deadlines and pacing per job.
+- **Scheduler**: the sharded-ticket claim queue (from the earlier prototypes, since removed), with deadlines and pacing per job.
 
 **Run it from your Mac** (SSH to the GPU box must work without a prompt):
 ```bash
-cd flapping-airplanes/live-demo
+cd flapping-airplanes/a100-demo
 ../doom-gpu/setup_box.sh ubuntu@<ip>   # ONCE: installs clang with sudo apt, clones doomgeneric, fetches the shareware WAD (md5-checked), builds the engine for the GPU
 ./run_demo.sh ubuntu@<ip>            # builds on the box, tunnels port 8080 to your Mac, opens http://localhost:8080
 ./run_demo.sh ubuntu@<ip> 8080 --secs 45 --cmp-secs 8     # longer live phase
