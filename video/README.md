@@ -1,0 +1,31 @@
+# video/: Triad explainer (data-driven, rendered with headless Chrome + ffmpeg)
+
+Scenes are one HTML/SVG/CSS page (`index.html`). `render.js` drives headless Chrome (puppeteer-core, system Google Chrome)
+frame by frame at 1920x1080, 30 fps, pipes JPEG frames into ffmpeg (libx264, crf 16), one MP4 segment per scene, then concatenates.
+Every number comes from `data.json`; `value: null` renders as "pending" (hatched bars).
+
+## Render
+```
+cd video && npm install            # once: puppeteer-core only (no browser download; uses /Applications/Google Chrome.app)
+node render.js                     # -> out/triad_explainer_preview.mp4 (86 s, ~2 min, 3 scenes in parallel; --conc N)
+node render.js --scene results     # re-render one scene segment only (out/seg/results.mp4), then re-run plain `node render.js` or compose.sh
+node render.js --stills 20,50,76   # PNGs at global times (s) into out/stills/ for a quick visual check
+CHROME=/path/to/chrome node render.js   # other Chrome/Chromium
+```
+Needs ffmpeg and node on PATH (found: Homebrew ffmpeg, mise node 22).
+
+## Put the live-demo recording in
+```
+./compose.sh recording.mp4 [out/triad_explainer.mp4]     # MAXS=45 ./compose.sh ...  to allow a longer recording (default cap 30 s)
+```
+Replaces the placeholder `slot` scene with the recording (scaled into the dashboard window, header + caption overlay) and re-concatenates.
+Missing scene segments are rendered first. Final length = 78 s + recording length.
+
+## Updating numbers
+Edit `data.json` (a number is `{value, unit, status, source}`; set `status` to `measured` and fill `value` when a pending run finishes).
+Pending now: `b300.launches_base`, `b300.train_s_base`, `b300.train_toks_base`, `b300.loss_end_base`, `b300.doom_fps`.
+Scene lengths and burned-in captions are in `data.json` under `scenes` (`[start_s, end_s, text]` relative to the scene).
+`tools/make_data.py` bootstraps data.json from the repo results (refuses to overwrite without --force, and does not carry the `scenes` block).
+Percentages use FA's convention, 1 - faster/slower (70.1 s vs 46.1 s = 34%).
+
+Large outputs (`out/`, `*.mp4`, `node_modules/`) are ignored by `video/.gitignore`. Not affiliated with Flapping Airplanes.

@@ -1,0 +1,298 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Triad explainer</title>
+<style>
+:root{--bg:#06080c;--panel:#0b1118;--line:#1d2a38;--ink:#e8eef5;--mut:#8a9bb0;--cy:#27c8e8;--gr:#6fe08c;--am:#f2c14e;--rd:#ff6b57;--pend:#4a5566}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{width:1920px;height:1080px;overflow:hidden;background:var(--bg);color:var(--ink);font-family:"Helvetica Neue",Helvetica,Arial,sans-serif}
+.mono{font-family:Menlo,"SF Mono",Monaco,monospace}
+#stage{position:absolute;inset:0;width:1920px;height:1080px;overflow:hidden}
+.scene{position:absolute;inset:0;display:none}
+.bgdots{position:absolute;inset:0;background-image:radial-gradient(#16212d 1.5px,transparent 1.6px);background-size:40px 40px;opacity:.9}
+#hdr{position:absolute;left:0;top:0;width:1920px;height:84px;border-bottom:1px solid var(--line);display:flex;align-items:center;padding:0 48px;gap:28px;background:#080c12}
+#hdr .tag{background:#c62f2a;color:#fff;font-weight:800;letter-spacing:.14em;padding:8px 16px;font-size:28px}
+#hdr .mid{font-size:26px;color:var(--mut);letter-spacing:.06em}
+#hdr .sp{flex:1}
+#hdr .lbl{font-size:26px;color:var(--cy);letter-spacing:.14em;font-weight:700}
+#hdr .clk{font-size:28px;color:var(--ink);width:170px;text-align:right}
+#cap{position:absolute;left:0;right:0;bottom:46px;display:flex;justify-content:center;pointer-events:none}
+#cap span{background:rgba(0,0,0,.82);border:1px solid #223;padding:16px 34px;font-size:42px;font-weight:600;line-height:1.25;max-width:1640px;text-align:center;border-radius:6px}
+#foot{position:absolute;left:48px;bottom:12px;font-size:20px;color:#5b6b7e}
+.abs{position:absolute}
+.pend{color:#9aa7b8;font-style:italic}
+svg text{font-family:"Helvetica Neue",Helvetica,Arial,sans-serif}
+svg text:not([fill]){fill:#e8eef5}
+</style></head>
+<body>
+<div id="stage">
+ <div id="scenes"></div>
+ <div id="hdr"><div class="tag">TRIAD</div><div class="mid">Single kernel launch</div><div class="sp"></div><div class="lbl" id="hl"></div><div class="clk mono" id="hc"></div></div>
+ <div id="cap"><span id="capt" style="display:none"></span></div>
+ <div id="foot">Independent reproduction. Not affiliated with Flapping Airplanes.</div>
+</div>
+<script>
+let D=null, SC=[], CUR=null;
+const $=s=>document.querySelector(s);
+const clamp=(x,a=0,b=1)=>Math.max(a,Math.min(b,x));
+const prog=(t,a,b)=>clamp((t-a)/(b-a));
+const ease=x=>x<.5?4*x*x*x:1-Math.pow(-2*x+2,3)/2;
+const eo=x=>1-Math.pow(1-x,3);
+const lerp=(a,b,x)=>a+(b-a)*x;
+const comma=(n,d=0)=>Number(n).toLocaleString('en-US',{minimumFractionDigits:d,maximumFractionDigits:d});
+// numbers: value null => pending
+const P=path=>path.split('.').reduce((o,k)=>o&&o[k],D);
+const val=path=>{const o=P(path);return o&&o.value!==undefined?o.value:null};
+const isPend=path=>val(path)===null;
+const slowPct=(fast,slow,timeBased)=>{ // FA convention: 1 - fast_cost/slow_cost
+  if(fast==null||slow==null)return null; return timeBased?(1-fast/slow)*100:(1-slow/fast)*100};
+const C={cy:'#27c8e8',gr:'#6fe08c',am:'#f2c14e',rd:'#ff6b57',mut:'#8a9bb0',line:'#1d2a38',pend:'#4a5566',panel:'#0b1118'};
+const esc=s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;');
+
+/* ---------- scenes ---------- */
+const S={};
+// 1 title
+S.title=(el,t,d)=>{
+ const a=eo(prog(t,.1,1.2)),b=eo(prog(t,.9,2)),c=eo(prog(t,1.8,3));
+ el.innerHTML=`<div class="bgdots"></div>
+ <div class="abs" style="left:0;right:0;top:250px;text-align:center;opacity:${a};transform:translateY(${(1-a)*30}px)">
+  <div style="font-size:210px;font-weight:900;letter-spacing:.22em;margin-left:.22em">TRIAD</div></div>
+ <div class="abs" style="left:0;right:0;top:520px;text-align:center;opacity:${b};font-size:44px;color:#c6d3e2;line-height:1.4">
+  One GPU kernel that <span style="color:${C.cy}">trains an LLM</span>, <span style="color:${C.gr}">serves text from its live weights</span>,<br>and plays <span style="color:${C.am}">real Doom</span>.</div>
+ <div class="abs" style="left:0;right:0;top:720px;display:flex;justify-content:center;gap:36px;opacity:${c}">
+  ${[['TRAIN',C.cy],['SERVE',C.gr],['DOOM',C.am]].map(([n,col])=>`<div style="border:2px solid ${col};color:${col};padding:14px 40px;font-size:34px;letter-spacing:.2em;font-weight:700">${n}</div>`).join('')}
+  </div>
+ <div class="abs mono" style="left:0;right:0;top:850px;text-align:center;opacity:${c};font-size:28px;color:#8a9bb0">1 launch &middot; A100 and B300 &middot; benchmarked against Flapping Airplanes' published numbers</div>`;
+};
+// 2 problem
+S.problem=(el,t,d)=>{
+ const tot=val('fa.launches_base'); const cnt=Math.round(tot*Math.pow(prog(t,.6,6.2),2.2));
+ const cols=64,rows=22,N=cols*rows,lit=Math.floor(N*cnt/tot);
+ let cells='';const cw=26,ch=22;
+ for(let i=0;i<N;i++){const x=i%cols,y=Math.floor(i/cols);cells+=`<rect x="${x*cw}" y="${y*ch}" width="${cw-5}" height="${ch-5}" rx="2" fill="${i<lit?C.rd:'#141d28'}" opacity="${i<lit?(i>lit-40?1:.8):1}"/>`}
+ const a2=eo(prog(t,5.2,6.4));
+ el.innerHTML=`<div class="bgdots"></div>
+ <svg class="abs" style="left:128px;top:300px" width="1664" height="484">${cells}</svg>
+ <div class="abs" style="left:128px;top:112px;font-size:30px;color:${C.mut};letter-spacing:.08em">FLAPPING AIRPLANES BASELINE (B200, PUBLISHED): MEGATRON + vLLM</div>
+ <div class="abs mono" style="left:128px;top:160px;font-size:112px;font-weight:800;color:${C.rd}">${comma(cnt)}<span style="font-size:44px;color:#ccd6e2;font-weight:500"> kernel launches</span></div>
+ <div class="abs" style="left:128px;top:812px;opacity:${a2};font-size:32px;line-height:1.45;color:#d4deea">
+  <span style="color:${C.cy};font-weight:700">A100, measured by us:</span> Megatron-core launches <b class="mono">${comma(val('a100.kernels_per_step_base'))}</b> kernels per training step,
+  <b class="mono" style="color:${C.rd}">${comma(val('a100.launches_base'))}</b> for 4,000 steps (training only, CUPTI profile).</div>`;
+};
+// 3 idea: SM grids
+function smGrid(cx,cy,n,cols,split,reveal,cs,gap){
+ const rows=Math.ceil(n/cols);const w=cols*(cs+gap),h=rows*(cs+gap);let s='';
+ const [a,b,c]=split;
+ // assign: infer first, then doom, then train (matches roles order)
+ for(let i=0;i<n;i++){const x=cx-w/2+(i%cols)*(cs+gap),y=cy-h/2+Math.floor(i/cols)*(cs+gap);
+  let col,grp; if(i<b){col=C.gr;grp=1}else if(i<b+c){col=C.am;grp=2}else{col=C.cy;grp=0}
+  const order=grp===0?0:grp===1?.45:.7; const on=reveal>order+(i/n)*.25?1:0;
+  s+=`<rect x="${x}" y="${y}" width="${cs}" height="${cs}" rx="3" fill="${on?col:'#18222e'}" />`}
+ return s}
+S.idea=(el,t,d)=>{
+ const A=D.hw.a100,B=D.hw.b300; const r1=prog(t,1,4.5),r2=prog(t,2,5.5);
+ const k=eo(prog(t,0,1));
+ const leg=(sp,tot)=>`<tspan fill="${C.cy}">${sp[0]} train</tspan> <tspan fill="#8a9bb0">/</tspan> <tspan fill="${C.gr}">${sp[1]} serve</tspan> <tspan fill="#8a9bb0">/</tspan> <tspan fill="${C.am}">${sp[2]} Doom</tspan>`;
+ el.innerHTML=`<div class="bgdots"></div>
+ <div class="abs" style="left:0;right:0;top:100px;text-align:center;opacity:${k}"><span class="mono" style="font-size:74px;font-weight:800">1 launch.</span> <span style="font-size:48px;color:#c6d3e2">Blocks never exit. Each takes a share of the SMs.</span></div>
+ <svg class="abs" style="left:0;top:240px" width="1920" height="680">
+  <text x="480" y="40" text-anchor="middle" font-size="40" font-weight="700" fill="#e8eef5">NVIDIA A100 <tspan fill="#8a9bb0" font-size="30">(${A.sms} SMs)</tspan></text>
+  <g transform="translate(0,40)">${smGrid(480,300,A.sms,12,A.split,r1,38,8)}</g>
+  <text x="480" y="650" text-anchor="middle" font-size="36" font-weight="700" opacity="${prog(r1,.6,1)}">${leg(A.split)}</text>
+  <text x="1440" y="40" text-anchor="middle" font-size="40" font-weight="700" fill="#e8eef5">NVIDIA B300 <tspan fill="#8a9bb0" font-size="30">(${B.sms} SMs)</tspan></text>
+  <g transform="translate(0,40)">${smGrid(1440,300,B.sms,16,B.split,r2,32,8)}</g>
+  <text x="1440" y="650" text-anchor="middle" font-size="36" font-weight="700" opacity="${prog(r2,.6,1)}">${leg(B.split)}</text>
+  <text x="960" y="360" text-anchor="middle" font-size="26" fill="#8a9bb0" opacity=".9"></text>
+ </svg>
+ <div class="abs mono" style="left:0;right:0;top:196px;text-align:center;font-size:24px;color:#8a9bb0;opacity:${prog(t,5,6)}">FA B200 published split: 116 / 24 / 8 of 148 &middot; A100 split is proportional: 85 / 17 / 6 of 108</div>`;
+};
+// 4 architecture
+S.arch=(el,t,d)=>{
+ const progs=[['TRAINING',C.cy,'fwd, bwd, AdamW'],['INFERENCE',C.gr,'one token at a time'],['DOOM',C.am,'game logic + draw']];
+ const qy=[330,540,750]; let s='';
+ // programs
+ progs.forEach(([n,c,sub],i)=>{s+=`<rect x="60" y="${qy[i]-70}" width="360" height="140" rx="10" fill="#0b1118" stroke="${c}" stroke-width="3"/><text x="240" y="${qy[i]-8}" text-anchor="middle" font-size="40" font-weight="800" fill="${c}">${n}</text><text x="240" y="${qy[i]+34}" text-anchor="middle" font-size="26" fill="#8a9bb0">${sub}</text>`});
+ // queues
+ s+=`<text x="690" y="215" text-anchor="middle" font-size="30" fill="#8a9bb0" letter-spacing="3">TASK QUEUES</text>`;
+ progs.forEach(([n,c],i)=>{s+=`<rect x="540" y="${qy[i]-45}" width="300" height="90" rx="8" fill="#0b1118" stroke="${c}" stroke-opacity=".6" stroke-width="2"/>`;
+  for(let k=0;k<7;k++){const f=((t*1.2+k/7+i*.2)%1);s+=`<rect x="${556+k*40}" y="${qy[i]-24}" width="30" height="48" rx="4" fill="${c}" opacity="${.25+.5*((k/7+t*.4)%1)}"/>`}
+  s+=`<path d="M420 ${qy[i]} H540" stroke="${c}" stroke-width="3"/>`});
+ // scheduler
+ s+=`<rect x="960" y="260" width="330" height="580" rx="12" fill="#0b1118" stroke="#e8eef5" stroke-width="3"/><text x="1125" y="320" text-anchor="middle" font-size="36" font-weight="800">SCHEDULER</text><text x="1125" y="364" text-anchor="middle" font-size="26" fill="#8a9bb0">warp 0 of every block</text>
+ <text x="1125" y="440" text-anchor="middle" font-size="28" fill="#d4deea">1. probe queue heads</text><text x="1125" y="486" text-anchor="middle" font-size="28" fill="#d4deea">2. dependency met?</text><text x="1125" y="532" text-anchor="middle" font-size="28" fill="#d4deea">3. claim ticket</text>
+ <text x="1125" y="600" text-anchor="middle" font-size="28" font-weight="700" fill="${C.am}">Doom</text><text x="1125" y="640" text-anchor="middle" font-size="28" font-weight="700" fill="${C.gr}">&gt; inference</text><text x="1125" y="680" text-anchor="middle" font-size="28" font-weight="700" fill="${C.cy}">&gt; training</text>
+ <text x="1125" y="780" text-anchor="middle" font-size="24" fill="#8a9bb0">priority order</text>`;
+ progs.forEach(([n,c],i)=>{s+=`<path d="M840 ${qy[i]} H960" stroke="${c}" stroke-width="3"/>`});
+ // workers
+ s+=`<text x="1610" y="215" text-anchor="middle" font-size="30" fill="#8a9bb0" letter-spacing="3">PERSISTENT BLOCKS</text>`;
+ for(let i=0;i<4;i++)for(let j=0;j<6;j++){const x=1420+j*66,y=290+i*100;const ph=(t*1.5+i*.37+j*.19)%3;const col=ph<1?C.cy:ph<2?C.gr:C.am;const busy=((t*2+i*.3+j*.5)%2)<1.4;s+=`<rect x="${x}" y="${y}" width="54" height="80" rx="6" fill="#0b1118" stroke="${busy?col:'#25323f'}" stroke-width="2.5"/><rect x="${x+8}" y="${y+10}" width="38" height="${busy?12+((t*30+i*7+j*13)%40):6}" fill="${busy?col:'#25323f'}" opacity=".85"/>`}
+ s+=`<text x="1610" y="720" text-anchor="middle" font-size="26" fill="#d4deea">other warps compute the task</text><path d="M1290 520 H1410" stroke="#e8eef5" stroke-width="3"/>`;
+ // packets flowing program->queue->sched->worker
+ progs.forEach(([n,c],i)=>{for(let k=0;k<4;k++){const u=((t*.45+k/4+i*.13)%1);const x=u<.33?lerp(420,540,u/.33):u<.66?lerp(540,960,(u-.33)/.33):lerp(1290,1410,(u-.66)/.34);const y=u<.66?qy[i]:lerp(qy[i],520,(u-.66)/.34)*0+lerp(i===0?330:i===1?540:750,i===1?520:i===0?400:640,(u-.66)/.34);
+  const xx=u<.33?x:u<.66?lerp(840,960,(u-.33)/.33):x; const p=u<.33?[lerp(420,540,u/.33),qy[i]]:u<.66?[lerp(840,960,(u-.33)/.33),qy[i]]:[lerp(1290,1410,(u-.66)/.34),lerp(520,qy[i]*.5+280,(u-.66)/.34)];
+  if(u>.33&&u<.35||u>.66&&u<.68)continue; s+=`<circle cx="${p[0]}" cy="${p[1]}" r="9" fill="${c}"/>`}});
+ // completion signal back
+ const u2=(t*.6)%1;s+=`<path d="M1450 800 C1300 900 700 900 560 810" stroke="#e8eef5" stroke-width="2.5" fill="none" stroke-dasharray="10 8" opacity=".7"/><circle cx="${lerp(1450,560,u2)}" cy="${860+Math.sin(u2*Math.PI)*0+0}" r="0"/>
+ <text x="1005" y="940" text-anchor="middle" font-size="30" fill="#e8eef5">fence + counter: signals the next task, no relaunch</text>`;
+ const hi=t<3.4?0:t<6.9?1:2;
+ el.innerHTML=`<div class="bgdots"></div><svg class="abs" style="left:0;top:0" width="1920" height="1080">${s}</svg>
+ <div class="abs mono" style="left:60px;top:112px;font-size:30px;color:#8a9bb0">${['1  programs enqueue tasks','2  warp 0 claims the next ready task','3  workers run it, counters release dependents'][hi]}</div>`;
+};
+// 5 doom
+S.doom=(el,t,d)=>{
+ const steps=[['doomgeneric C source','',C.am],['clang -target nvptx64','LLVM bitcode',C.cy],['tinylibc','printf, string, WAD in memory',C.cy],['llvm-link + fix_varargs.py','lower va_start / va_arg at IR level',C.cy],['llc','PTX',C.cy],['nvcc -rdc, reg cap 112','linked into the kernel',C.gr]];
+ let rows='';steps.forEach((st,i)=>{const a=eo(prog(t,.4+i*.5,1+i*.5));rows+=`<div style="opacity:${a};transform:translateX(${(1-a)*-40}px);margin-bottom:20px;border-left:5px solid ${st[2]};background:#0b1118;padding:12px 22px;width:760px"><div class="mono" style="font-size:31px;font-weight:700">${st[0]}</div><div style="font-size:24px;color:#8a9bb0;min-height:30px">${st[1]}</div></div>`});
+ const q=prog(t,7.2,9.2), ser=val('a100.doom_frame_ms_serial'),par=val('a100.doom_frame_ms_parallel');
+ const ms=lerp(ser,par,eo(q)); const fi=prog(t,3.8,5);
+ let th='';for(let i=0;i<64;i++){const on=t>7&&((t*10+i)%8<5);th+=`<rect x="${i%16*20}" y="${Math.floor(i/16)*20}" width="16" height="16" rx="2" fill="${on?C.am:'#1b2531'}"/>`}
+ el.innerHTML=`<div class="bgdots"></div>
+ <div class="abs" style="left:80px;top:130px;font-size:30px;letter-spacing:.1em;color:#8a9bb0;margin-bottom:10px">BUILD</div>
+ <div class="abs" style="left:80px;top:190px">${rows}</div>
+ <div class="abs" style="left:960px;top:130px;font-size:30px;letter-spacing:.1em;color:#8a9bb0">RUNNING ON 6 SMs (A100)</div>
+ <img src="assets/doom_gpu_frame.png" class="abs" style="left:960px;top:190px;width:480px;height:300px;object-fit:cover;border:2px solid ${C.am};opacity:${fi}">
+ <div class="abs" style="left:1480px;top:190px;width:380px;opacity:${fi};font-size:28px;line-height:1.4;color:#d4deea"><span class="mono" style="font-size:64px;font-weight:800;color:${C.am}">${comma(val('a100.doom_fps'),1)}</span> fps<br>real engine, shareware E1M1, scripted bot</div>
+ <div class="abs" style="left:960px;top:540px;opacity:${prog(t,6,7)};font-size:28px;color:#d4deea;line-height:1.35"><b>Thread 0</b> runs game logic and queues column/span draws.<br>At two flush points the <b>other 255 threads</b> draw behind one barrier.</div>
+ <svg class="abs" style="left:960px;top:650px;opacity:${prog(t,6.5,7.5)}" width="900" height="260">
+  <g transform="translate(0,10)">${th}</g>
+  <text x="360" y="60" font-size="28" fill="#8a9bb0">frame time</text>
+  <rect x="360" y="80" width="520" height="34" fill="#141d28"/><rect x="360" y="80" width="${520*ms/ser}" height="34" fill="${C.am}"/>
+  <text x="360" y="170" font-size="64" font-weight="800" fill="${C.am}" class="mono">${comma(ms,1)} ms</text>
+  <text x="360" y="215" font-size="26" fill="#8a9bb0">serial ${ser} ms &rarr; parallel ${par} ms (identical pixels)</text>
+ </svg>`;
+};
+// 6 methodology
+function curvePath(pts,x0,y0,w,h,maxS,upto,logx){let p='';const ymax=12,ymin=1.5;
+ pts.forEach(([s,l],i)=>{ if(s>upto)return;const fx=logx?Math.log10(s+1)/Math.log10(maxS+1):s/maxS;const x=x0+w*fx,y=y0+h*(1-(l-ymin)/(ymax-ymin));p+=(p?'L':'M')+x.toFixed(1)+' '+y.toFixed(1)});return p}
+S.method=(el,t,d)=>{
+ const bar=(y,lbl,col,sm,tt,a,pend)=>`<text x="0" y="${y-18}" font-size="26" fill="#d4deea">${lbl}</text><rect x="0" y="${y}" width="700" height="34" fill="#141d28"/><rect x="0" y="${y}" width="${700*sm/108*a}" height="34" fill="${col}"/><text x="${700*sm/108*a+12}" y="${y+27}" font-size="24" fill="#8a9bb0">${tt}</text>`;
+ const a=eo(prog(t,.4,2)),b=eo(prog(t,1.6,3.2)),c=eo(prog(t,3.4,5));
+ const A=D.hw.a100.split;
+ const mx=4000,upto=mx*eo(prog(t,5,8.5));const m=D.curves.megatron_a100.points,tr=D.curves.triad_b300.points;
+ const X0=1060,Y0=230,W=760,H=520;
+ let grid='';[2,4,6,8,10,12].forEach(v=>{const y=Y0+H*(1-(v-1.5)/10.5);grid+=`<line x1="${X0}" x2="${X0+W}" y1="${y}" y2="${y}" stroke="#1d2a38"/><text x="${X0-12}" y="${y+8}" text-anchor="end" font-size="22" fill="#8a9bb0">${v}</text>`});
+ [0,1000,2000,3000,4000].forEach(v=>{const x=X0+W*v/4000;grid+=`<text x="${x}" y="${Y0+H+34}" text-anchor="middle" font-size="22" fill="#8a9bb0">${v}</text>`});
+ el.innerHTML=`<div class="bgdots"></div>
+ <div class="abs" style="left:80px;top:120px;font-size:30px;letter-spacing:.1em;color:#8a9bb0">EACH SYSTEM TIMED ALONE (A100)</div>
+ <svg class="abs" style="left:80px;top:220px" width="880" height="620">
+  <g opacity="${a}">${bar(40,'Megatron-core training, alone, no Doom: 85 SMs (MPS)',C.rd,A[0],'85 SMs',a)}</g>
+  <g opacity="${b}">${bar(150,'vLLM serving, alone, no Doom: 17 SMs (MPS)',C.rd,A[1],'17 SMs',b)}</g>
+  <g opacity="${c}">
+   <text x="0" y="262" font-size="26" fill="#d4deea">Triad: all three at once, one launch</text>
+   <rect x="0" y="280" width="${700*A[0]/108}" height="34" fill="${C.cy}"/><rect x="${700*A[0]/108}" y="280" width="${700*A[1]/108}" height="34" fill="${C.gr}"/><rect x="${700*(A[0]+A[1])/108}" y="280" width="${700*A[2]/108}" height="34" fill="${C.am}"/>
+   <text x="0" y="352" font-size="24" fill="#8a9bb0">train 85 &middot; serve 17 &middot; Doom 6 = 108 SMs</text></g>
+  <g opacity="${prog(t,3.8,5)}"><text x="0" y="440" font-size="28" fill="#d4deea">Same model: 12 layers, d=768, 162M params,</text><text x="0" y="478" font-size="28" fill="#d4deea">4,096 tokens/step, 4,000 steps, same SM share.</text><text x="0" y="530" font-size="24" fill="#8a9bb0">Baselines run alone, with no Doom competing for the GPU,</text><text x="0" y="562" font-size="24" fill="#8a9bb0">which is favourable to the baseline.</text></g>
+ </svg>
+ <svg class="abs" style="left:0;top:0" width="1920" height="1080" opacity="${prog(t,4.8,5.6)}">
+  <text x="${X0}" y="${Y0-30}" font-size="30" fill="#8a9bb0" letter-spacing="2">TRAINING LOSS vs STEP</text>${grid}
+  <path d="${curvePath(m,X0,Y0,W,H,mx,upto)}" fill="none" stroke="${C.rd}" stroke-width="4"/>
+  <path d="${curvePath(tr,X0,Y0,W,H,mx,upto)}" fill="none" stroke="${C.cy}" stroke-width="4" stroke-dasharray="1 0"/>
+  <text x="${X0+W-10}" y="${Y0+60}" text-anchor="end" font-size="26" fill="${C.rd}">Megatron-core (A100, measured)</text>
+  <text x="${X0+W-10}" y="${Y0+98}" text-anchor="end" font-size="26" fill="${C.cy}">Triad (B300 run, 116/24/8)</text>
+  <text x="${X0+8}" y="${Y0+H+80}" font-size="26" fill="#d4deea">step 0 loss: ${comma(D.curves.megatron_a100.points[0][1],2)} (Megatron) and ${comma(tr[0][1],2)} (Triad)</text>
+ </svg>`;
+};
+// 7 slot placeholder
+S.slot=(el,t,d,opts)=>{
+ const ov=opts&&opts.overlay;
+ const panel=(x,y,w,h,col,title,sub)=>`<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="#0a1017" stroke="${col}" stroke-width="2" rx="6"/><text x="${x+20}" y="${y+34}" font-size="24" fill="${col}" font-weight="700" letter-spacing="2">${title}</text>${sub?`<text x="${x+w/2}" y="${y+h/2+8}" text-anchor="middle" font-size="26" fill="#566579">${sub}</text>`:''}`;
+ el.innerHTML=ov?'':`<div class="bgdots"></div>
+ <svg class="abs" style="left:0;top:0" width="1920" height="1080">
+  ${panel(80,130,1760,430,C.cy,'TRAINING LOSS','')}
+  ${panel(80,580,1000,380,C.gr,'INFERENCE: TEXT FROM THE LIVE WEIGHTS','')}
+  ${panel(1100,580,740,380,C.am,'DOOM, ON THE GPU','')}
+  <rect x="440" y="300" width="1040" height="250" fill="#06080c" stroke="#8a9bb0" stroke-dasharray="14 10" stroke-width="3" rx="10"/>
+  <text x="960" y="390" text-anchor="middle" font-size="64" font-weight="800" fill="#e8eef5">SCREEN RECORDING SLOT</text>
+  <text x="960" y="445" text-anchor="middle" font-size="32" fill="#8a9bb0">Live three-panel dashboard goes here (placeholder)</text>
+  <text x="960" y="500" text-anchor="middle" font-size="28" fill="#8a9bb0" class="mono">./compose.sh recording.mp4</text>
+ </svg>`;
+};
+// 8 results
+function rowCell(x,y,w,o,reveal){
+ const bw=w; let s='';
+ const barRow=(yy,lab,v,col,max)=>{
+   if(v==null) return `<text x="${x}" y="${yy-6}" font-size="21" fill="#8a9bb0">${lab}</text><rect x="${x}" y="${yy}" width="${bw}" height="24" fill="url(#hatch)" stroke="#3a4656"/><text x="${x+12}" y="${yy+19}" font-size="21" fill="#c3cddb" font-style="italic">pending</text>`;
+   const fr=o.logs?Math.log10(v)/Math.log10(max):v/max; const wd=Math.max(4,bw*fr*reveal);
+   const txt=o.fmt(lerp(0,v,reveal)); const inside=wd>bw*.55;
+   return `<text x="${x}" y="${yy-6}" font-size="21" fill="#8a9bb0">${lab}</text><rect x="${x}" y="${yy}" width="${bw}" height="24" fill="#111a24"/><rect x="${x}" y="${yy}" width="${wd}" height="24" fill="${col}"/><text x="${inside?x+wd-8:x+wd+10}" y="${yy+20}" text-anchor="${inside?'end':'start'}" font-size="24" font-weight="700" fill="#fff" class="mono">${txt}</text>`};
+ const max=o.max!=null?o.max:Math.max(o.ft||0,o.fb||0);
+ s+=barRow(y+22,o.labT,o.ft,C.cy,max); s+=barRow(y+76,o.labB,o.fb,C.rd,max);
+ const pc=o.pct;
+ s+=pc==null?`<text x="${x}" y="${y+130}" font-size="26" fill="#8a9bb0" font-style="italic">comparison pending</text>`:`<text x="${x}" y="${y+130}" font-size="28" font-weight="800" fill="${C.cy}" opacity="${prog(reveal,.6,1)}">${o.pctLab(pc)}</text>`;
+ return s}
+S.results=(el,t,d)=>{
+ const F=D.fa,A=D.a100,B=D.b300; const g=k=>k;
+ const sec=v=>comma(v,1)+' s', tok=v=>comma(v), cnt=v=>comma(v);
+ const colsX=[380,900,1420],cw=440;
+ const rows=[
+  {title:'Kernel launches',t0:.4,
+   c:[{ft:F.launches_kvm.value,fb:F.launches_base.value,labT:'FA KVM',labB:'FA baseline',fmt:cnt,logs:1,max:1e6,pct:1,pctLab:()=>'1 vs 514,562'},
+      {ft:A.launches_triad.value,fb:A.launches_base.value,labT:'Triad',labB:'Megatron (training only)',fmt:cnt,logs:1,max:1e7,pct:1,pctLab:()=>'1 vs 3,832,000'},
+      {ft:B.launches_triad.value,fb:B.launches_base.value,labT:'Triad',labB:'Megatron',fmt:cnt,logs:1,max:1e7,pct:null}]},
+  {title:'4,000 training steps',t0:3.6,
+   c:[{ft:F.train_s_kvm.value,fb:F.train_s_base.value,labT:'FA KVM (all three)',labB:'Megatron, 116 SMs',fmt:sec,max:F.train_s_base.value,pct:slowPct(F.train_s_kvm.value,F.train_s_base.value,1),pctLab:p=>`baseline ${comma(p)}% slower`},
+      {ft:A.train_s_triad.value,fb:A.train_s_base.value,labT:'Triad (all three)',labB:'Megatron, 85 SMs',fmt:sec,max:A.train_s_base.value,pct:slowPct(A.train_s_triad.value,A.train_s_base.value,1),pctLab:p=>`baseline ${comma(p)}% slower`},
+      {ft:B.train_s_triad.value,fb:B.train_s_base.value,labT:'Triad (116/24/8)',labB:'Megatron, 116 SMs',fmt:sec,max:A.train_s_base.value,pct:slowPct(B.train_s_triad.value,B.train_s_base.value,1),pctLab:p=>`baseline ${comma(p)}% slower`}]},
+  {title:'Training tokens/s',t0:5.6,
+   c:[{ft:F.train_toks_kvm.value,fb:F.train_toks_base.value,labT:'FA KVM',labB:'Megatron',fmt:tok,max:F.train_toks_kvm.value,pct:F.slower_pct.value,pctLab:p=>`baseline ${comma(p)}% slower`},
+      {ft:A.train_toks_triad.value,fb:A.train_toks_base.value,labT:'Triad',labB:'Megatron',fmt:tok,max:A.train_toks_triad.value,pct:slowPct(A.train_toks_triad.value,A.train_toks_base.value,0),pctLab:p=>`baseline ${comma(p)}% slower`},
+      {ft:B.train_toks_triad.value,fb:B.train_toks_base.value,labT:'Triad',labB:'Megatron',fmt:tok,max:B.train_toks_triad.value,pct:slowPct(B.train_toks_triad.value,B.train_toks_base.value,0),pctLab:p=>`baseline ${comma(p)}% slower`}]},
+  {title:'Inference tokens/s',t0:8,
+   c:[{ft:F.infer_toks_kvm.value,fb:F.infer_toks_base.value,labT:'FA KVM',labB:'vLLM, 24 SMs',fmt:tok,max:F.infer_toks_kvm.value,pct:slowPct(F.infer_toks_kvm.value,F.infer_toks_base.value,0),pctLab:p=>`baseline ${comma(p)}% slower`},
+      {ft:A.infer_toks_triad.value,fb:A.infer_toks_base.value,labT:'Triad (live weights)',labB:'vLLM, 17 SMs',fmt:tok,max:A.infer_toks_triad.value,pct:slowPct(A.infer_toks_triad.value,A.infer_toks_base.value,0),pctLab:p=>`baseline ${comma(p)}% slower`},
+      {ft:B.infer_toks_triad.value,fb:B.infer_toks_base.value,labT:'Triad (live weights)',labB:'vLLM, ~25 SMs (17% MPS)',fmt:tok,max:B.infer_toks_triad.value,pct:slowPct(B.infer_toks_triad.value,B.infer_toks_base.value,0),pctLab:p=>`baseline ${comma(p)}% slower`}]},
+  {title:'Loss, step 0 to 4,000',t0:11.4,loss:1}
+ ];
+ const rowY=[282,420,558,696,834]; let s=`<defs><pattern id="hatch" width="12" height="12" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="12" height="12" fill="#10161e"/><line x1="0" y1="0" x2="0" y2="12" stroke="#2a3441" stroke-width="5"/></pattern></defs>`;
+ // column headers
+ const heads=[['FA B200 (published)','from their video, not ours',C.mut],['Triad on A100','measured, 85/17/6 of 108 SMs',C.cy],['Triad on B300','116/24/8 of 148 SMs, B300 SXM6',C.cy]];
+ heads.forEach((h,i)=>{if(i===2)s+=`<rect x="${colsX[2]+300}" y="140" width="120" height="34" rx="4" fill="none" stroke="#f2c14e" stroke-width="2"/><text x="${colsX[2]+360}" y="164" text-anchor="middle" font-size="22" font-weight="700" letter-spacing="2" fill="#f2c14e">INTERIM</text>`;s+=`<text x="${colsX[i]}" y="214" font-size="34" font-weight="800" fill="${h[2]==C.mut?'#d4deea':C.cy}">${h[0]}</text><text x="${colsX[i]}" y="242" font-size="22" fill="#8a9bb0">${h[1]}</text>`});
+ rows.forEach((r,ri)=>{const y=rowY[ri];const rv=ease(prog(t,r.t0,r.t0+2.2));
+  s+=`<line x1="60" x2="1860" y1="${y-10}" y2="${y-10}" stroke="#1d2a38"/><text x="60" y="${y+60}" font-size="28" font-weight="700" fill="#e8eef5" opacity="${Math.max(.25,prog(t,r.t0-.3,r.t0+.3))}">${r.title}</text>`;
+  if(r.loss){
+   const L=[[F.loss_start.value,F.loss_end.value,null,null,'FA KVM'],[A.loss_start.value,A.loss_end_triad.value,A.loss_end_base.value,'Megatron','Triad'],[B.loss_start.value,B.loss_end_triad.value,B.loss_end_base.value,'Megatron','Triad']];
+   L.forEach((l,i)=>{const cur=lerp(l[0],l[1],rv);
+    s+=`<g opacity="${prog(rv,0,.2)}"><text x="${colsX[i]}" y="${y+60}" font-size="54" font-weight="800" fill="${C.cy}" class="mono">${comma(cur,l[1]<3?3:2)}</text><text x="${colsX[i]+190}" y="${y+36}" font-size="22" fill="#8a9bb0">${l[4]}: ${comma(l[0],2)} &rarr; ${comma(l[1],3)}</text>`;
+    s+=l[3]?(l[2]==null?`<text x="${colsX[i]+190}" y="${y+68}" font-size="22" fill="#8a9bb0" font-style="italic">${l[3]}: pending</text>`:`<text x="${colsX[i]+190}" y="${y+68}" font-size="22" fill="#e0867a">${l[3]}: ${comma(l[0],2)} &rarr; ${comma(l[2],3)}</text>`):'';
+    s+='</g>'});
+  } else r.c.forEach((c,i)=>{s+=rowCell(colsX[i],y-10,cw,c,rv)});
+ });
+ el.innerHTML=`<div class="bgdots"></div><svg class="abs" style="left:0;top:0" width="1920" height="1080">${s}</svg>
+ <div class="abs" style="left:60px;top:92px;font-size:19px;line-height:1.3;color:#8a9bb0;width:1800px">Triad runs training + serving + Doom together; baselines are timed alone on the same SM share, no Doom. Percent = 1 - faster/slower. FA column is published, not measured here. FA states 34%; 355k vs 230k computes to 35%. B300 column is interim (baselines incomplete); B300 inference (1,762 vs 822 tok/s) compares a different GPU and baseline than FA's 1,076 vs 710. A100: the 224 s is the merged Doom build; 604 tok/s is the mean of two 600-step runs.</div>`;
+};
+// 9 end
+S.end=(el,t,d)=>{
+ const F=D.fa,A=D.a100,B=D.b300;
+ const pT=slowPct(A.train_s_triad.value,A.train_s_base.value,1),pI=slowPct(A.infer_toks_triad.value,A.infer_toks_base.value,0),pBI=slowPct(B.infer_toks_triad.value,B.infer_toks_base.value,0);
+ const line=(lab,main,sub,col,t0)=>`<div style="opacity:${eo(prog(t,t0,t0+.8))};display:flex;align-items:baseline;gap:26px;margin-bottom:22px"><div style="width:360px;font-size:30px;font-weight:700;color:${col}">${lab}</div><div class="mono" style="font-size:44px;font-weight:800">${main}</div><div style="font-size:26px;color:#8a9bb0">${sub}</div></div>`;
+ el.innerHTML=`<div class="bgdots"></div>
+ <div class="abs" style="left:0;right:0;top:130px;text-align:center;font-size:96px;font-weight:900;letter-spacing:.06em;opacity:${eo(prog(t,0,1))}">1 kernel. 3 programs.</div>
+ <div class="abs" style="left:230px;top:300px;width:1500px">
+  ${line('FA B200 (published)','1 vs 514,562','launches; baseline 34% slower on training and inference',C.mut,.8)}
+  ${line('Triad on A100','1 vs '+comma(A.launches_base.value),`launches; Megatron ${comma(pT)}% slower, vLLM ${comma(pI)}% slower`,C.cy,1.6)}
+  ${line('Triad on B300 (interim)',B.launches_base.value==null?'1 vs pending':'1 vs '+comma(B.launches_base.value),`vLLM ${comma(pBI)}% slower; Megatron baseline and Doom run pending`,C.cy,2.4)}
+ </div>
+ <div class="abs" style="left:0;right:0;top:690px;text-align:center;font-size:32px;color:#d4deea;opacity:${prog(t,3.2,4.2)}">Loss 11.71 &rarr; ~2.15 on all runs &middot; Doom 35 fps on 6 A100 SMs &middot; one persistent launch</div>
+ <div class="abs" style="left:0;right:0;top:790px;text-align:center;font-size:26px;color:#8a9bb0;opacity:${prog(t,3.8,4.8)};line-height:1.5">Independent reproduction. Not affiliated with, endorsed by, or based on code from Flapping Airplanes.<br>FA figures are read from their public demo video. Triad tiny-vs-LLM caveats and sources: README.md, video/data.json.</div>`;
+};
+
+/* ---------- timeline ---------- */
+function buildTimeline(){let t=0;SC=D.scenes.map(s=>{const o={...s,start:t};t+=s.dur;o.el=document.createElement('div');o.el.className='scene';$('#scenes').appendChild(o.el);return o});window.TOTAL=t}
+function showScene(sc,lt,opts){
+ SC.forEach(s=>s.el.style.display=s===sc?'block':'none');
+ const d=sc.dur, fi=prog(lt,0,.3), fo=1-prog(lt,d-.3,d); sc.el.style.opacity=(opts&&opts.noFade)?1:Math.min(fi,fo);
+ S[sc.id](sc.el,lt,d,opts);
+ $('#hl').textContent=sc.label; const tt=(opts&&opts.clock!=null)?opts.clock:sc.start+lt;
+ $('#hc').textContent=opts&&opts.noClock?'':String(Math.floor(tt/60)).padStart(2,'0')+':'+(tt%60).toFixed(1).padStart(4,'0');
+ const cap=(sc.captions||[]).find(c=>lt>=c[0]&&lt<c[1]);const ce=$('#capt');
+ if(cap){ce.style.display='';ce.textContent=cap[2];const a=Math.min(prog(lt,cap[0],cap[0]+.25),1-prog(lt,cap[1]-.2,cap[1]));ce.style.opacity=a}else ce.style.display='none';
+}
+window.renderScene=(id,lt,opts)=>{const sc=SC.find(s=>s.id===id);showScene(sc,lt,opts||{});};
+window.renderGlobal=(t)=>{let sc=SC[SC.length-1];for(const s of SC){if(t<s.start+s.dur){sc=s;break}}showScene(sc,Math.min(t-sc.start,sc.dur-1e-3));};
+window.overlayMode=(id)=>{ // transparent header + caption only, for compose.sh
+ document.documentElement.style.background='transparent';document.body.style.background='transparent';
+ const sc=SC.find(s=>s.id===id);showScene(sc,sc.dur/2,{overlay:true,noFade:true,noClock:true});
+ sc.el.style.background='transparent';
+ const c=sc.captions[0];$('#capt').style.display='';$('#capt').style.opacity=1;$('#capt').textContent=c[2];};
+window.getInfo=()=>({scenes:SC.map(s=>({id:s.id,dur:s.dur,start:s.start,slot:!!s.slot})),total:window.TOTAL,fps:D.meta.fps});
+window.init=async(data)=>{D=data||await (await fetch('data.json')).json();buildTimeline();renderGlobal(0);window.READY=true};
+if(!window.__NOAUTO){ if(window.__DATA)init(window.__DATA);else init().catch(e=>{document.body.textContent=String(e)}); }
+</script>
+</body></html>

@@ -1,0 +1,1191 @@
+{
+ "meta": {
+  "fps": 30,
+  "width": 1920,
+  "height": 1080,
+  "disclaimer": "Independent reproduction. Not affiliated with, endorsed by, or based on code from Flapping Airplanes.",
+  "edit_note": "value=null renders as \"pending\" in the video. status: measured | published | pending. Derived percentages are computed in the page as 1 - slow/fast (FA convention: 70.1 s vs 46.1 s = 34%). B300 values are \"interim\" until the Megatron baseline, launch count and Doom runs are complete."
+ },
+ "hw": {
+  "a100": {
+   "label": "A100",
+   "sms": 108,
+   "split": [
+    85,
+    17,
+    6
+   ],
+   "source": "README.md, llm/triad/README.md"
+  },
+  "b300": {
+   "label": "B300",
+   "sms": 148,
+   "split": [
+    116,
+    24,
+    8
+   ],
+   "source": "llm/b200/results/mk_split_100a.txt (GPU reported: NVIDIA B300 SXM6 AC, 148 SMs; FA B200 proportions (116/24/8))"
+  },
+  "fa": {
+   "label": "FA B200",
+   "sms": 148,
+   "split": [
+    116,
+    24,
+    8
+   ],
+   "source": "benchmarks/fa_published.json"
+  }
+ },
+ "fa": {
+  "launches_kvm": {
+   "value": 1,
+   "unit": "",
+   "status": "published",
+   "source": "benchmarks/fa_published.json",
+   "note": ""
+  },
+  "launches_base": {
+   "value": 514562,
+   "unit": "",
+   "status": "published",
+   "source": "benchmarks/fa_published.json",
+   "note": ""
+  },
+  "train_s_kvm": {
+   "value": 46.1,
+   "unit": "s",
+   "status": "published",
+   "source": "benchmarks/fa_published.json",
+   "note": ""
+  },
+  "train_s_base": {
+   "value": 70.1,
+   "unit": "s",
+   "status": "published",
+   "source": "benchmarks/fa_published.json",
+   "note": ""
+  },
+  "train_toks_kvm": {
+   "value": 355000,
+   "unit": "tok/s",
+   "status": "published",
+   "source": "benchmarks/fa_published.json (353k-361k read off video)",
+   "note": ""
+  },
+  "train_toks_base": {
+   "value": 230000,
+   "unit": "tok/s",
+   "status": "published",
+   "source": "benchmarks/fa_published.json",
+   "note": ""
+  },
+  "infer_toks_kvm": {
+   "value": 1076,
+   "unit": "tok/s",
+   "status": "published",
+   "source": "benchmarks/fa_published.json",
+   "note": ""
+  },
+  "infer_toks_base": {
+   "value": 710,
+   "unit": "tok/s",
+   "status": "published",
+   "source": "benchmarks/fa_published.json",
+   "note": ""
+  },
+  "loss_start": {
+   "value": 11.5,
+   "unit": "",
+   "status": "published",
+   "source": "benchmarks/fa_published.json",
+   "note": ""
+  },
+  "loss_end": {
+   "value": 2.1094,
+   "unit": "",
+   "status": "published",
+   "source": "benchmarks/fa_published.json",
+   "note": ""
+  },
+  "slower_pct": {
+   "value": 34,
+   "unit": "%",
+   "status": "published",
+   "source": "benchmarks/fa_published.json",
+   "note": ""
+  }
+ },
+ "a100": {
+  "launches_triad": {
+   "value": 1,
+   "unit": "",
+   "status": "measured",
+   "source": "one persistent launch (README.md)",
+   "note": ""
+  },
+  "launches_base": {
+   "value": 3832000,
+   "unit": "",
+   "status": "measured",
+   "source": "llm/baseline/results/baseline_a100_20261101.json training.megatron_core.full_gpu.launches.kernels_total_extrapolated (958 kernels/step x 4000, CUPTI, training only)",
+   "note": ""
+  },
+  "kernels_per_step_base": {
+   "value": 958,
+   "unit": "",
+   "status": "measured",
+   "source": "llm/baseline/results/baseline_a100_20261101.json",
+   "note": ""
+  },
+  "train_s_triad": {
+   "value": 224.0,
+   "unit": "s",
+   "status": "measured",
+   "source": "llm/triad/README.md (S, 4000 steps, Doom ON + dashboard, 85/17/6 split)",
+   "note": ""
+  },
+  "train_s_base": {
+   "value": 354.6,
+   "unit": "s",
+   "status": "measured",
+   "source": "llm/baseline/results/baseline_a100_20261101.json Megatron-core, 4000 steps, SM-restricted (MPS 79% = 85 SMs), mean of 3",
+   "note": ""
+  },
+  "train_toks_triad": {
+   "value": 73200,
+   "unit": "tok/s",
+   "status": "measured",
+   "source": "llm/triad/README.md",
+   "note": ""
+  },
+  "train_toks_base": {
+   "value": 46213,
+   "unit": "tok/s",
+   "status": "measured",
+   "source": "llm/baseline/results/baseline_a100_20261101.json Megatron-core SM-restricted",
+   "note": ""
+  },
+  "infer_toks_triad": {
+   "value": 604,
+   "unit": "tok/s",
+   "status": "measured",
+   "source": "llm/triad/README.md (decode 611 / 597 tok/s, two 600-step runs, Doom ON; mean)",
+   "note": ""
+  },
+  "infer_toks_base": {
+   "value": 513.5,
+   "unit": "tok/s",
+   "status": "measured",
+   "source": "llm/baseline/results/baseline_a100_20261101.json vLLM, MPS 16% (17 SMs), batch 1",
+   "note": ""
+  },
+  "loss_start": {
+   "value": 11.71,
+   "unit": "",
+   "status": "measured",
+   "source": "llm/baseline/results/baseline_a100_20261101.json",
+   "note": ""
+  },
+  "loss_end_triad": {
+   "value": 2.149,
+   "unit": "",
+   "status": "measured",
+   "source": "llm/triad/README.md (4000 steps)",
+   "note": ""
+  },
+  "loss_end_base": {
+   "value": 2.152,
+   "unit": "",
+   "status": "measured",
+   "source": "llm/baseline/results/baseline_a100_20261101.json",
+   "note": ""
+  },
+  "doom_fps": {
+   "value": 35.0,
+   "unit": "fps",
+   "status": "measured",
+   "source": "llm/triad/README.md (Doom on 6 SMs)",
+   "note": ""
+  },
+  "doom_frame_ms_serial": {
+   "value": 24,
+   "unit": "ms",
+   "status": "measured",
+   "source": "README.md (Doom pipeline section)",
+   "note": ""
+  },
+  "doom_frame_ms_parallel": {
+   "value": 6.7,
+   "unit": "ms",
+   "status": "measured",
+   "source": "README.md (Doom pipeline section)",
+   "note": ""
+  },
+  "model": "S: 12 layers, d=768, 162M params, 4,096 tokens/step, cl100k vocab (100,352 padded)"
+ },
+ "b300": {
+  "launches_triad": {
+   "value": 1,
+   "unit": "",
+   "status": "interim",
+   "source": "llm/b200/results/mk_split_100a.txt",
+   "note": ""
+  },
+  "launches_base": {
+   "value": null,
+   "unit": "",
+   "status": "pending",
+   "source": "B300 launch count not run yet",
+   "note": ""
+  },
+  "train_s_triad": {
+   "value": 87.1,
+   "unit": "s",
+   "status": "interim",
+   "source": "llm/b200/results/mk_split_100a.txt (4000 steps, 116/24/8 split)",
+   "note": ""
+  },
+  "train_s_base": {
+   "value": null,
+   "unit": "s",
+   "status": "pending",
+   "source": "B300 Megatron restricted run not extracted yet (llm/b200/results/bl_gpu1.log is truncated)",
+   "note": ""
+  },
+  "train_toks_triad": {
+   "value": 188185,
+   "unit": "tok/s",
+   "status": "interim",
+   "source": "llm/b200/results/mk_split_100a.txt",
+   "note": ""
+  },
+  "train_toks_base": {
+   "value": null,
+   "unit": "tok/s",
+   "status": "pending",
+   "source": "pending, see train_s_base",
+   "note": ""
+  },
+  "infer_toks_triad": {
+   "value": 1762,
+   "unit": "tok/s",
+   "status": "interim",
+   "source": "llm/b200/results/mk_split_100a.txt (decode while training)",
+   "note": ""
+  },
+  "infer_toks_base": {
+   "value": 821.6,
+   "unit": "tok/s",
+   "status": "interim",
+   "source": "llm/b200/results/bl_gpu1.log vLLM, MPS 17%, mean of 2 runs (825.0, 818.1)",
+   "note": ""
+  },
+  "loss_start": {
+   "value": 11.71,
+   "unit": "",
+   "status": "interim",
+   "source": "llm/b200/results/mk_split_100a.txt",
+   "note": ""
+  },
+  "loss_end_triad": {
+   "value": 2.1575,
+   "unit": "",
+   "status": "interim",
+   "source": "llm/b200/results/mk_split_100a.txt (step 3999)",
+   "note": ""
+  },
+  "loss_end_base": {
+   "value": null,
+   "unit": "",
+   "status": "pending",
+   "source": "pending",
+   "note": ""
+  },
+  "doom_fps": {
+   "value": null,
+   "unit": "fps",
+   "status": "pending",
+   "source": "Doom on B300 not measured yet",
+   "note": ""
+  }
+ },
+ "curves": {
+  "megatron_a100": {
+   "source": "llm/baseline/results/baseline_a100_20261101.json loss_curve_every25_rep1 (Megatron-core, SM-restricted)",
+   "points": [
+    [
+     0,
+     11.7105
+    ],
+    [
+     25,
+     7.9421
+    ],
+    [
+     50,
+     5.7725
+    ],
+    [
+     75,
+     5.1321
+    ],
+    [
+     100,
+     4.4627
+    ],
+    [
+     125,
+     4.4644
+    ],
+    [
+     150,
+     4.1783
+    ],
+    [
+     175,
+     4.3372
+    ],
+    [
+     200,
+     4.0401
+    ],
+    [
+     225,
+     4.0362
+    ],
+    [
+     250,
+     3.9504
+    ],
+    [
+     275,
+     4.1016
+    ],
+    [
+     300,
+     4.2442
+    ],
+    [
+     325,
+     3.7999
+    ],
+    [
+     350,
+     3.9072
+    ],
+    [
+     375,
+     3.9187
+    ],
+    [
+     400,
+     3.6078
+    ],
+    [
+     425,
+     3.8253
+    ],
+    [
+     450,
+     3.6134
+    ],
+    [
+     475,
+     3.7185
+    ],
+    [
+     500,
+     3.687
+    ],
+    [
+     525,
+     3.6957
+    ],
+    [
+     550,
+     3.3647
+    ],
+    [
+     575,
+     3.38
+    ],
+    [
+     600,
+     3.649
+    ],
+    [
+     625,
+     3.4312
+    ],
+    [
+     650,
+     3.5444
+    ],
+    [
+     675,
+     3.5331
+    ],
+    [
+     700,
+     3.3359
+    ],
+    [
+     725,
+     3.338
+    ],
+    [
+     750,
+     3.3829
+    ],
+    [
+     775,
+     3.3586
+    ],
+    [
+     800,
+     3.3275
+    ],
+    [
+     825,
+     3.0925
+    ],
+    [
+     850,
+     2.9054
+    ],
+    [
+     875,
+     3.0641
+    ],
+    [
+     900,
+     3.1512
+    ],
+    [
+     925,
+     3.011
+    ],
+    [
+     950,
+     2.8158
+    ],
+    [
+     975,
+     3.0563
+    ],
+    [
+     1000,
+     3.001
+    ],
+    [
+     1025,
+     3.1305
+    ],
+    [
+     1050,
+     3.0171
+    ],
+    [
+     1075,
+     2.7539
+    ],
+    [
+     1100,
+     3.0808
+    ],
+    [
+     1125,
+     3.0528
+    ],
+    [
+     1150,
+     2.9634
+    ],
+    [
+     1175,
+     2.9131
+    ],
+    [
+     1200,
+     2.8052
+    ],
+    [
+     1225,
+     3.1558
+    ],
+    [
+     1250,
+     2.8897
+    ],
+    [
+     1275,
+     3.0098
+    ],
+    [
+     1300,
+     2.7188
+    ],
+    [
+     1325,
+     2.813
+    ],
+    [
+     1350,
+     2.6816
+    ],
+    [
+     1375,
+     3.0407
+    ],
+    [
+     1400,
+     2.6246
+    ],
+    [
+     1425,
+     2.7297
+    ],
+    [
+     1450,
+     2.6005
+    ],
+    [
+     1475,
+     2.742
+    ],
+    [
+     1500,
+     2.9023
+    ],
+    [
+     1525,
+     2.5989
+    ],
+    [
+     1550,
+     2.519
+    ],
+    [
+     1575,
+     2.5204
+    ],
+    [
+     1600,
+     2.4567
+    ],
+    [
+     1625,
+     2.5663
+    ],
+    [
+     1650,
+     2.4825
+    ],
+    [
+     1675,
+     2.7243
+    ],
+    [
+     1700,
+     2.5097
+    ],
+    [
+     1725,
+     2.4451
+    ],
+    [
+     1750,
+     2.6159
+    ],
+    [
+     1775,
+     2.5998
+    ],
+    [
+     1800,
+     2.7221
+    ],
+    [
+     1825,
+     2.4292
+    ],
+    [
+     1850,
+     2.7967
+    ],
+    [
+     1875,
+     2.6134
+    ],
+    [
+     1900,
+     2.468
+    ],
+    [
+     1925,
+     2.6523
+    ],
+    [
+     1950,
+     2.3746
+    ],
+    [
+     1975,
+     2.416
+    ],
+    [
+     2000,
+     2.3917
+    ],
+    [
+     2025,
+     2.8394
+    ],
+    [
+     2050,
+     2.529
+    ],
+    [
+     2075,
+     2.5321
+    ],
+    [
+     2100,
+     2.4757
+    ],
+    [
+     2125,
+     2.6053
+    ],
+    [
+     2150,
+     2.5319
+    ],
+    [
+     2175,
+     2.3932
+    ],
+    [
+     2200,
+     2.3202
+    ],
+    [
+     2225,
+     2.4977
+    ],
+    [
+     2250,
+     2.4724
+    ],
+    [
+     2275,
+     2.6265
+    ],
+    [
+     2300,
+     2.262
+    ],
+    [
+     2325,
+     2.1667
+    ],
+    [
+     2350,
+     2.2514
+    ],
+    [
+     2375,
+     2.3936
+    ],
+    [
+     2400,
+     2.3593
+    ],
+    [
+     2425,
+     2.277
+    ],
+    [
+     2450,
+     2.4933
+    ],
+    [
+     2475,
+     2.385
+    ],
+    [
+     2500,
+     2.48
+    ],
+    [
+     2525,
+     2.367
+    ],
+    [
+     2550,
+     2.4662
+    ],
+    [
+     2575,
+     2.3473
+    ],
+    [
+     2600,
+     2.3273
+    ],
+    [
+     2625,
+     2.4068
+    ],
+    [
+     2650,
+     2.2052
+    ],
+    [
+     2675,
+     2.2532
+    ],
+    [
+     2700,
+     2.2221
+    ],
+    [
+     2725,
+     2.4034
+    ],
+    [
+     2750,
+     2.087
+    ],
+    [
+     2775,
+     2.2452
+    ],
+    [
+     2800,
+     2.2852
+    ],
+    [
+     2825,
+     2.4406
+    ],
+    [
+     2850,
+     2.3831
+    ],
+    [
+     2875,
+     2.1069
+    ],
+    [
+     2900,
+     2.3156
+    ],
+    [
+     2925,
+     2.2774
+    ],
+    [
+     2950,
+     2.1992
+    ],
+    [
+     2975,
+     2.315
+    ],
+    [
+     3000,
+     2.1847
+    ],
+    [
+     3025,
+     2.4737
+    ],
+    [
+     3050,
+     2.2003
+    ],
+    [
+     3075,
+     2.1227
+    ],
+    [
+     3100,
+     2.3966
+    ],
+    [
+     3125,
+     2.1272
+    ],
+    [
+     3150,
+     1.9541
+    ],
+    [
+     3175,
+     2.115
+    ],
+    [
+     3200,
+     2.1849
+    ],
+    [
+     3225,
+     1.9067
+    ],
+    [
+     3250,
+     2.0764
+    ],
+    [
+     3275,
+     2.4326
+    ],
+    [
+     3300,
+     2.0109
+    ],
+    [
+     3325,
+     2.2516
+    ],
+    [
+     3350,
+     2.0837
+    ],
+    [
+     3375,
+     2.3449
+    ],
+    [
+     3400,
+     1.9424
+    ],
+    [
+     3425,
+     2.3541
+    ],
+    [
+     3450,
+     2.1867
+    ],
+    [
+     3475,
+     2.3471
+    ],
+    [
+     3500,
+     2.2492
+    ],
+    [
+     3525,
+     2.2568
+    ],
+    [
+     3550,
+     2.1697
+    ],
+    [
+     3575,
+     2.162
+    ],
+    [
+     3600,
+     2.1374
+    ],
+    [
+     3625,
+     2.1507
+    ],
+    [
+     3650,
+     2.0947
+    ],
+    [
+     3675,
+     2.0325
+    ],
+    [
+     3700,
+     2.1593
+    ],
+    [
+     3725,
+     2.2115
+    ],
+    [
+     3750,
+     1.9024
+    ],
+    [
+     3775,
+     2.1625
+    ],
+    [
+     3800,
+     2.3374
+    ],
+    [
+     3825,
+     2.0673
+    ],
+    [
+     3850,
+     1.99
+    ],
+    [
+     3875,
+     2.2815
+    ],
+    [
+     3900,
+     2.1759
+    ],
+    [
+     3925,
+     1.9112
+    ],
+    [
+     3950,
+     2.4397
+    ],
+    [
+     3975,
+     1.9454
+    ],
+    [
+     3999,
+     2.1522
+    ]
+   ]
+  },
+  "triad_b300": {
+   "source": "llm/b200/results/mk_split_100a.txt",
+   "points": [
+    [
+     0,
+     11.7106
+    ],
+    [
+     1,
+     11.2639
+    ],
+    [
+     2,
+     10.7522
+    ],
+    [
+     5,
+     9.9998
+    ],
+    [
+     10,
+     9.6331
+    ],
+    [
+     20,
+     8.5514
+    ],
+    [
+     50,
+     5.6934
+    ],
+    [
+     100,
+     4.4137
+    ],
+    [
+     200,
+     4.0631
+    ],
+    [
+     500,
+     3.6659
+    ],
+    [
+     1000,
+     2.9972
+    ],
+    [
+     2000,
+     2.4032
+    ],
+    [
+     3000,
+     2.2013
+    ],
+    [
+     3999,
+     2.1575
+    ]
+   ]
+  }
+ },
+ "text_sample": {
+  "prompt": "What is a megakernel?",
+  "source": "llm/baseline/results/baseline_a100_20261101.json inference.text_sample (vLLM on the trained weights; Triad live text is shown in the recording)"
+ },
+ "scenes": [
+  {
+   "id": "title",
+   "dur": 5,
+   "label": "TRIAD",
+   "captions": [
+    [
+     0.3,
+     4.8,
+     "Triad: one persistent GPU kernel running three programs at once."
+    ]
+   ]
+  },
+  {
+   "id": "problem",
+   "dur": 9,
+   "label": "THE PROBLEM",
+   "captions": [
+    [
+     0.3,
+     4.3,
+     "A normal GPU stack launches hundreds of thousands of small kernels."
+    ],
+    [
+     4.6,
+     8.7,
+     "Each launch is CPU work, a gap on the GPU, and a sync point."
+    ]
+   ]
+  },
+  {
+   "id": "idea",
+   "dur": 10,
+   "label": "THE IDEA",
+   "captions": [
+    [
+     0.3,
+     4.6,
+     "The idea: launch ONE kernel and never let it exit."
+    ],
+    [
+     5.0,
+     9.7,
+     "Each program gets a fixed share of the SMs, same proportions on both chips."
+    ]
+   ]
+  },
+  {
+   "id": "arch",
+   "dur": 11,
+   "label": "ARCHITECTURE",
+   "captions": [
+    [
+     0.3,
+     3.3,
+     "Training, inference and Doom all enqueue tasks."
+    ],
+    [
+     3.5,
+     6.8,
+     "Warp 0 of every block claims the next ready task. Doom first."
+    ],
+    [
+     7.0,
+     10.7,
+     "Tasks signal dependents through counters and fences. No relaunch."
+    ]
+   ]
+  },
+  {
+   "id": "doom",
+   "dur": 11,
+   "label": "REAL DOOM ON A GPU",
+   "captions": [
+    [
+     0.3,
+     4.3,
+     "The real Doom engine, compiled with clang for NVPTX."
+    ],
+    [
+     4.6,
+     7.6,
+     "A tiny custom libc, with the WAD held in memory."
+    ],
+    [
+     7.9,
+     10.8,
+     "Drawing runs in parallel on 255 threads: 24 ms down to 6.7 ms a frame."
+    ]
+   ]
+  },
+  {
+   "id": "method",
+   "dur": 9,
+   "label": "METHODOLOGY",
+   "captions": [
+    [
+     0.3,
+     4.3,
+     "Each baseline is timed individually, restricted to the same SM share."
+    ],
+    [
+     4.6,
+     8.7,
+     "Same model, same init: both loss curves start at 11.71."
+    ]
+   ]
+  },
+  {
+   "id": "slot",
+   "dur": 8,
+   "slot": true,
+   "label": "LIVE DEMO",
+   "captions": [
+    [
+     0.3,
+     7.7,
+     "Live demo: loss falling, text from the live weights, and Doom, on one GPU."
+    ]
+   ]
+  },
+  {
+   "id": "results",
+   "dur": 16,
+   "label": "RESULTS",
+   "captions": [
+    [
+     0.3,
+     3.3,
+     "Kernel launches: one, against hundreds of thousands."
+    ],
+    [
+     3.6,
+     7.6,
+     "4,000 training steps and tokens per second, baseline vs Triad."
+    ],
+    [
+     7.9,
+     11.6,
+     "Inference tokens per second, measured against vLLM on the same SM share."
+    ],
+    [
+     11.9,
+     15.7,
+     "Loss goes from about 11.7 to about 2.1. Hatched cells are not measured yet."
+    ]
+   ]
+  },
+  {
+   "id": "end",
+   "dur": 7,
+   "label": "SUMMARY",
+   "captions": [
+    [
+     0.3,
+     6.7,
+     "One kernel. Three programs. Numbers marked pending are not measured yet."
+    ]
+   ]
+  }
+ ]
+}
