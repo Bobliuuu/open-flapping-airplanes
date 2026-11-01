@@ -1,0 +1,22 @@
+.DS_Store
+*.o
+*.ptx
+*.bc
+*.ll
+*.cubin
+obj/
+src_gpu/
+doomgeneric/
+*.wad
+*.WAD
+*.log
+__pycache__/
+*.ppm
+# compiled binaries
+demo
+demo_*
+vm
+vm[0-9]*
+mk
+doomtest
+bt*

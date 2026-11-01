@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Megakernel live</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<style>
+:root{--bg:#07090d;--panel:#0b0f16;--line:#1c2430;--dim:#6b7788;--txt:#cfd8e3;--accent:#ff4d4d;--cyan:#27c8e8;--green:#5be08a;}
+*{box-sizing:border-box} html,body{margin:0;height:100%;background:var(--bg);color:var(--txt);font:13px/1.45 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;overflow:hidden}
+#app{height:100vh;display:flex;flex-direction:column;padding:10px 14px;gap:10px;position:relative}
+header{display:flex;align-items:center;justify-content:space-between;color:var(--dim);font-size:13px;letter-spacing:.04em}
+header .logo{color:var(--accent);font-weight:800;font-size:17px;letter-spacing:.02em}
+header .mid{color:var(--txt)} header b{color:var(--txt);font-weight:600}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:3px;padding:8px 12px;position:relative;min-height:0}
+.tag{position:absolute;top:-8px;left:10px;background:var(--bg);padding:0 6px;font-size:11px;color:var(--cyan)}
+#train{flex:1.15;display:flex;flex-direction:column}
+#train .top{display:flex;justify-content:space-between;align-items:flex-start}
+#train .lbl{color:var(--dim);font-size:12px}
+#loss{font-size:46px;font-weight:700;line-height:1;color:#e8eef6;letter-spacing:.01em}
+#train .stat{text-align:right;color:var(--dim)} #train .stat b{color:var(--txt)}
+#chartwrap{flex:1 1 0;position:relative;min-height:0;overflow:hidden} canvas#chart{position:absolute;left:0;top:0;width:100%;height:100%}
+#row{flex:1.05;display:flex;gap:10px;min-height:0}
+#infer{flex:2;display:flex;flex-direction:column}
+#infer .prompt{color:#e8eef6;margin-bottom:6px} #infer .out{flex:1 1 0;min-height:0;overflow:hidden;white-space:pre-wrap;word-break:break-word;color:#aeb9c7;font-size:14px;line-height:1.35}
+#infer .rate{position:absolute;top:6px;right:12px;color:var(--cyan);font-size:12px}
+#cur{display:inline-block;width:7px;height:14px;background:var(--cyan);vertical-align:-2px;animation:b 1s steps(2) infinite}@keyframes b{50%{opacity:0}}
+#game{flex:1;display:flex;align-items:center;justify-content:center;padding:6px}
+canvas#fb{width:100%;max-height:100%;aspect-ratio:320/200;image-rendering:pixelated;border:1px solid var(--line);background:#000;object-fit:contain}
+#caption{position:absolute;left:50%;bottom:22px;transform:translateX(-50%);background:rgba(0,0,0,.78);padding:8px 18px;border-radius:3px;font-size:19px;color:#fff;opacity:0;transition:opacity .6s;pointer-events:none;text-align:center}
+#foot{color:#3d4756;font-size:10.5px;text-align:center}
+#cmp{position:absolute;inset:0;background:rgba(5,7,10,.93);display:none;flex-direction:column;align-items:center;justify-content:center;gap:22px;padding:30px;z-index:5}
+#cmp h1{margin:0;font-size:30px;font-weight:600;color:#fff;text-align:center}
+#cmp .cols{display:flex;gap:18px;width:min(1100px,96%)}
+#cmp .col{flex:1;background:var(--panel);border:1px solid var(--line);padding:14px 16px;border-radius:4px}
+#cmp .col h3{margin:0 0 10px;font-size:15px;color:var(--cyan);letter-spacing:.05em}
+#cmp .col.base h3{color:#e0a458}
+#cmp .big{font-size:30px;color:#fff;font-weight:700;margin:6px 0} #cmp .sub{color:var(--dim);font-size:12px}
+#cmp .cards{display:flex;gap:14px;width:min(1100px,96%)}
+#cmp .card{flex:1;background:var(--panel);border:1px solid var(--line);padding:12px;border-radius:4px;text-align:center}
+#cmp .card .k{color:var(--dim);font-size:12px} #cmp .card .v{font-size:20px;color:#fff;font-weight:700;margin-top:4px}
+#final{font-size:22px;color:#fff;text-align:center;max-width:1000px}
+#wait{position:absolute;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;color:var(--dim);font-size:15px;z-index:9}
+</style></head><body>
+<div id="app">
+  <div id="wait">connecting to the GPU...</div>
+  <header><span class="logo">MEGAKERNEL</span><span class="mid">Single kernel launch &nbsp;&middot;&nbsp; <span id="gpu">1 GPU</span></span><span>Real-time <b id="clock">00:00.000</b></span></header>
+  <section class="panel" id="train"><span class="tag" id="ttag">Training</span>
+    <div class="top"><div><div class="lbl">Training loss</div><div id="loss">-</div></div>
+      <div class="stat">Step <b id="step">0</b> &nbsp;&middot;&nbsp; <b id="ttok">0</b> tok/s<br><span style="font-size:11px">char-level language model, SGD, batch <span id="batch">256</span></span></div></div>
+    <div id="chartwrap"><canvas id="chart"></canvas></div></section>
+  <div id="row">
+    <section class="panel" id="infer"><span class="tag" id="itag">Inference</span><span class="rate"><b id="itok">0</b> tok/s</span>
+      <div class="prompt">&gt; What is a megakernel?</div><div class="out" id="out"></div></section>
+    <section class="panel" id="game"><span class="tag" id="gtag">Game</span><canvas id="fb" width="320" height="200"></canvas></section>
+  </div>
+  </div>
+<script>
+const $=id=>document.getElementById(id);
+const fmt=n=>Math.round(n).toLocaleString('en-US');
+const cv=$('chart'),cx=cv.getContext('2d');let S=null,fbOK=false;
+const fb=$('fb'),fx=fb.getContext('2d'),img=fx.createImageData(320,200);
+function clock(t){const m=Math.floor(t/60),s=t-m*60;return String(m).padStart(2,'0')+':'+s.toFixed(3).padStart(6,'0')}
+function drawChart(){
+  const r=cv.getBoundingClientRect(),dpr=devicePixelRatio||1;const cw=Math.round(r.width*dpr),ch=Math.round(r.height*dpr);if(cv.width!==cw||cv.height!==ch){cv.width=cw;cv.height=ch}
+  cx.setTransform(dpr,0,0,dpr,0,0);const W=r.width,Hh=r.height;cx.clearRect(0,0,W,Hh);
+  const c=S&&S.curve;if(!c||c.length<2)return;
+  const padL=34,padB=16,padT=4,padR=6;let tmax=Math.max(c[c.length-1][0],1);let lmax=0,lmin=1e9;for(const p of c){lmax=Math.max(lmax,p[1]);lmin=Math.min(lmin,p[1])}
+  lmax=Math.ceil(lmax*1.05);lmin=Math.max(0,Math.floor(lmin*0.9*2)/2);
+  cx.strokeStyle='#18212c';cx.fillStyle='#5b6676';cx.font='10px monospace';cx.lineWidth=1;
+  for(let i=0;i<=4;i++){const y=padT+(Hh-padT-padB)*i/4;cx.beginPath();cx.moveTo(padL,y);cx.lineTo(W-padR,y);cx.stroke();cx.fillText((lmax-(lmax-lmin)*i/4).toFixed(1),2,y+3)}
+  cx.fillText('seconds',W-52,Hh-3);
+  cx.strokeStyle='#e8eef6';cx.lineWidth=1.6;cx.beginPath();
+  c.forEach((p,i)=>{const x=padL+(W-padL-padR)*p[0]/tmax,y=padT+(Hh-padT-padB)*(1-(p[1]-lmin)/(lmax-lmin||1));i?cx.lineTo(x,y):cx.moveTo(x,y)});cx.stroke();
+  const l=c[c.length-1],x=padL+(W-padL-padR)*l[0]/tmax,y=padT+(Hh-padT-padB)*(1-(l[1]-lmin)/(lmax-lmin||1));cx.fillStyle='#ff4d4d';cx.beginPath();cx.arc(x,y,3,0,7);cx.fill();
+}
+async function poll(){try{const r=await fetch('/state');const d=await r.json();$('wait').style.display='none';
+  $('clock').textContent=clock(d.t);$('loss').textContent=d.steps?d.loss.toFixed(4):'-';$('step').textContent=fmt(d.steps);
+  $('ttok').textContent=fmt(d.steps_s*d.batch);$('batch').textContent=d.batch;$('itok').textContent=fmt(d.chars_s);
+  const sm=d.sm,f1=x=>Math.max(0,x).toFixed(1);
+  $('ttag').textContent='Training \u00b7 '+f1(sm[0])+' SMs busy';$('itag').textContent='Inference \u00b7 '+f1(sm[1])+' SMs busy';$('gtag').textContent='Doom \u00b7 '+d.fps.toFixed(0)+' fps \u00b7 '+f1(sm[2])+' SMs busy';
+  S=d;const ob=$('out');ob.innerHTML=(d.text||'').replace(/&/g,'&amp;').replace(/</g,'&lt;')+'<span id="cur"></span>';ob.scrollTop=ob.scrollHeight;drawChart();
+}catch(e){}setTimeout(poll,110)}
+const FBSZ=64000+1024;let latest=null,gotFrames=0,lastCount=0,lastT=performance.now(),shownFps=0;
+async function frames(){
+  for(;;){try{
+    const r=await fetch('/stream');const rd=r.body.getReader();let buf=new Uint8Array(FBSZ*2),have=0;
+    for(;;){const {value,done}=await rd.read();if(done)break;
+      if(have+value.length>buf.length){const nb=new Uint8Array(Math.max(buf.length*2,have+value.length));nb.set(buf.subarray(0,have));buf=nb}
+      buf.set(value,have);have+=value.length;
+      let off=0;while(have-off>=FBSZ){latest=buf.slice(off,off+FBSZ);off+=FBSZ;gotFrames++}
+      if(off){buf.copyWithin(0,off,have);have-=off}
+    }}catch(e){}
+    await new Promise(r=>setTimeout(r,300))}}
+function paint(){
+  if(latest){const idx=latest,pal=new Uint32Array(latest.buffer,latest.byteOffset+64000,256),o=new Uint32Array(img.data.buffer);
+    for(let i=0;i<64000;i++){const c=pal[idx[i]];o[i]=0xff000000|((c&255)<<16)|(c&0xff00)|((c>>16)&255)}fx.putImageData(img,0,0);latest=null}
+  const now=performance.now();if(now-lastT>1000){shownFps=(gotFrames-lastCount)*1000/(now-lastT);lastCount=gotFrames;lastT=now}
+  requestAnimationFrame(paint)}
+poll();frames();requestAnimationFrame(paint);addEventListener('resize',drawChart);
+</script></body></html>
