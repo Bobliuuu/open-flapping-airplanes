@@ -53,3 +53,7 @@ video/frames/
 *.mp4
 *.mov
 *.webm
+
+# release video, exactly this path
+!video/release/
+!video/release/*.mp4
