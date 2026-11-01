@@ -1,0 +1,33 @@
+{
+  "source": "Flapping Airplanes demo video (HD, 45.6 s), read frame by frame. Numbers are what the video shows; nothing here was measured by us.",
+  "gpu": "NVIDIA B200",
+  "gpu_sms": 148,
+  "system": "KVM: training + serving + Doom, one kernel launch on one GPU",
+  "baseline_system": "Megatron (training) + vLLM (serving), each timed individually, no Doom",
+  "kernel_launches": {"kvm": 1, "baseline": 514562},
+  "training": {
+    "steps": 4000,
+    "seconds_kvm": 46.1,
+    "seconds_baseline": 70.1,
+    "baseline_slower_pct": 34,
+    "tok_s_kvm": [353000, 361000],
+    "tok_s_baseline_at_frame": 230000,
+    "loss_initial": 11.5,
+    "loss_final": 2.1094
+  },
+  "inference": {
+    "tok_s_kvm": 1076,
+    "tok_s_kvm_range": [1067, 1088],
+    "tok_s_baseline": 710,
+    "tok_s_baseline_range": [690, 710],
+    "baseline_slower_pct": 34
+  },
+  "sm_split": {"training": 116, "inference": 24, "doom": 8, "total": 148},
+  "doom": {"kvm": "plays Doom throughout", "baseline": "none (shown as 'no Doom ???')"},
+  "total_run_seconds": 46,
+  "notes": [
+    "The baseline is Megatron and vLLM each timed on their own (not sharing the GPU), against KVM running all three jobs at once.",
+    "Training loss starts near 11.5 (about ln of a 100k vocabulary), so the model is a real LLM-sized vocabulary; training throughput is about 355k tokens per second.",
+    "The SM split is a static partition: 116 SMs training, 24 inference, 8 Doom."
+  ]
+}

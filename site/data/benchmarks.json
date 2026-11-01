@@ -1,0 +1,569 @@
+{
+ "ours": {
+  "gpu": "NVIDIA A100-SXM4-40GB",
+  "sms": 108,
+  "reps": 5,
+  "secs": 6.0,
+  "date": "2026-11-01T04:19:19Z",
+  "model": "char-level MLP LM, 512 hidden units, 96-way softmax, 8-char context",
+  "mega_all": {
+   "train_steps_s": {
+    "mean": 13507.6307,
+    "sd": 214.0994
+   },
+   "train_tok_s": {
+    "mean": 3457953.4653,
+    "sd": 54809.4537
+   },
+   "infer_tok_s": {
+    "mean": 53211.552,
+    "sd": 751.2332
+   },
+   "doom_fps": {
+    "mean": 35.0058,
+    "sd": 0.0134
+   }
+  },
+  "mega_live": {
+   "train_steps_s": {
+    "mean": 14224.7709,
+    "sd": 56.2116
+   },
+   "infer_tok_s": {
+    "mean": 998.9697,
+    "sd": 0.421
+   },
+   "doom_fps": {
+    "mean": 34.9939,
+    "sd": 0.0178
+   }
+  },
+  "mega_alone": {
+   "train_steps_s": 14309.4084,
+   "infer_tok_s": 62511.8563,
+   "doom_fps_capacity": 197.9632
+  },
+  "seconds_for_4000_steps_mega": 0.29612891326678037,
+  "kernel_launches_per_step_perop": 4,
+  "kernel_launches_per_token_perop": 3,
+  "sm_busy_equiv": {
+   "train": 19.9097,
+   "infer": 0.0421,
+   "doom": 0.1753,
+   "total": 20.127100000000002,
+   "gpu_sms": 108
+  },
+  "same_work": {
+   "steps": 4000,
+   "tokens": 295.82381164744163,
+   "seconds_mega": 0.29612891326678037,
+   "launches_perop": 16887.471434942327,
+   "launches_mega": 1
+  }
+ },
+ "baselines": [
+  {
+   "baseline": "eager",
+   "label": "per-op kernels, eager launches (the method the video uses)",
+   "train_steps_s": 15281.633,
+   "infer_tok_s": 52070.3403,
+   "train_slower_pct": -13.133334330794222,
+   "infer_slower_pct": 2.144669074865546,
+   "seconds_for_4000_steps": 0.2617521308095804,
+   "gpu_equivalents": 1.905829511603232
+  },
+  {
+   "baseline": "graph",
+   "label": "per-op kernels, CUDA graphs (best case for the baseline)",
+   "train_steps_s": 16295.6363,
+   "infer_tok_s": 60343.0651,
+   "train_slower_pct": -20.64022671274246,
+   "infer_slower_pct": -13.402189622283522,
+   "seconds_for_4000_steps": 0.24546448671046983,
+   "gpu_equivalents": 1.7107280974144126
+  },
+  {
+   "baseline": "streams_both",
+   "label": "both jobs in one process, two CUDA-graph streams",
+   "train_steps_s": 14960.2649,
+   "infer_tok_s": 53377.1232,
+   "train_slower_pct": -10.754174675503968,
+   "infer_slower_pct": -0.31115649474009466,
+   "seconds_for_4000_steps": 0.2673749446776173,
+   "gpu_equivalents": null
+  },
+  {
+   "baseline": "procs_both",
+   "label": "two separate processes sharing the GPU (time-sliced)",
+   "train_steps_s": 7464.674,
+   "infer_tok_s": 27277.9693,
+   "train_slower_pct": 44.73735501223023,
+   "infer_slower_pct": 48.736753064447356,
+   "seconds_for_4000_steps": 0.5358572926292562,
+   "gpu_equivalents": null
+  }
+ ],
+ "fa": {
+  "source": "Flapping Airplanes demo video (HD, 45.6 s), read frame by frame. Numbers are what the video shows; nothing here was measured by us.",
+  "gpu": "NVIDIA B200",
+  "gpu_sms": 148,
+  "system": "KVM: training + serving + Doom, one kernel launch on one GPU",
+  "baseline_system": "Megatron (training) + vLLM (serving), each timed individually, no Doom",
+  "kernel_launches": {
+   "kvm": 1,
+   "baseline": 514562
+  },
+  "training": {
+   "steps": 4000,
+   "seconds_kvm": 46.1,
+   "seconds_baseline": 70.1,
+   "baseline_slower_pct": 34,
+   "tok_s_kvm": [
+    353000,
+    361000
+   ],
+   "tok_s_baseline_at_frame": 230000,
+   "loss_initial": 11.5,
+   "loss_final": 2.1094
+  },
+  "inference": {
+   "tok_s_kvm": 1076,
+   "tok_s_kvm_range": [
+    1067,
+    1088
+   ],
+   "tok_s_baseline": 710,
+   "tok_s_baseline_range": [
+    690,
+    710
+   ],
+   "baseline_slower_pct": 34
+  },
+  "sm_split": {
+   "training": 116,
+   "inference": 24,
+   "doom": 8,
+   "total": 148
+  },
+  "doom": {
+   "kvm": "plays Doom throughout",
+   "baseline": "none (shown as 'no Doom ???')"
+  },
+  "total_run_seconds": 46,
+  "notes": [
+   "The baseline is Megatron and vLLM each timed on their own (not sharing the GPU), against KVM running all three jobs at once.",
+   "Training loss starts near 11.5 (about ln of a 100k vocabulary), so the model is a real LLM-sized vocabulary; training throughput is about 355k tokens per second.",
+   "The SM split is a static partition: 116 SMs training, 24 inference, 8 Doom."
+  ]
+ },
+ "all_metrics": {
+  "mega_all.train_steps_s": {
+   "mean": 13507.6307,
+   "sd": 214.0994,
+   "min": 13269.7009,
+   "max": 13756.0522,
+   "n": 5,
+   "values": [
+    13615.238,
+    13601.0238,
+    13296.1388,
+    13756.0522,
+    13269.7009
+   ]
+  },
+  "mega_all.train_tok_s": {
+   "mean": 3457953.4653,
+   "sd": 54809.4537,
+   "min": 3397043.4234,
+   "max": 3521549.3533,
+   "n": 5,
+   "values": [
+    3485500.9205,
+    3481862.1022,
+    3403811.5272,
+    3521549.3533,
+    3397043.4234
+   ]
+  },
+  "mega_all.sm_train": {
+   "mean": 18.5009,
+   "sd": 0.2576,
+   "min": 18.2119,
+   "max": 18.7061,
+   "n": 5,
+   "values": [
+    18.6598,
+    18.7061,
+    18.2119,
+    18.6997,
+    18.2271
+   ]
+  },
+  "mega_all.infer_tok_s": {
+   "mean": 53211.552,
+   "sd": 751.2332,
+   "min": 52425.5049,
+   "max": 54134.7929,
+   "n": 5,
+   "values": [
+    53488.6727,
+    53563.2049,
+    52445.5847,
+    54134.7929,
+    52425.5049
+   ]
+  },
+  "mega_all.sm_infer": {
+   "mean": 2.2958,
+   "sd": 0.031,
+   "min": 2.2582,
+   "max": 2.3239,
+   "n": 5,
+   "values": [
+    2.3239,
+    2.3122,
+    2.2663,
+    2.3184,
+    2.2582
+   ]
+  },
+  "mega_all.doom_fps": {
+   "mean": 35.0058,
+   "sd": 0.0134,
+   "min": 34.9902,
+   "max": 35.0256,
+   "n": 5,
+   "values": [
+    34.9982,
+    35.0108,
+    35.0045,
+    35.0256,
+    34.9902
+   ]
+  },
+  "mega_all.sm_doom": {
+   "mean": 0.1882,
+   "sd": 0.0041,
+   "min": 0.1833,
+   "max": 0.1942,
+   "n": 5,
+   "values": [
+    0.1942,
+    0.1871,
+    0.1863,
+    0.19,
+    0.1833
+   ]
+  },
+  "mega_all_live.train_steps_s": {
+   "mean": 14224.7709,
+   "sd": 56.2116,
+   "min": 14163.3611,
+   "max": 14283.6485,
+   "n": 5,
+   "values": [
+    14166.5243,
+    14246.1731,
+    14283.6485,
+    14163.3611,
+    14264.1475
+   ]
+  },
+  "mega_all_live.train_tok_s": {
+   "mean": 3641541.3549,
+   "sd": 14390.1752,
+   "min": 3625820.441,
+   "max": 3656614.0283,
+   "n": 5,
+   "values": [
+    3626630.2144,
+    3647020.3196,
+    3656614.0283,
+    3625820.441,
+    3651621.7712
+   ]
+  },
+  "mega_all_live.sm_train": {
+   "mean": 19.9097,
+   "sd": 0.1126,
+   "min": 19.7637,
+   "max": 20.0274,
+   "n": 5,
+   "values": [
+    19.7637,
+    20.0274,
+    19.9818,
+    19.8194,
+    19.9562
+   ]
+  },
+  "mega_all_live.infer_tok_s": {
+   "mean": 998.9697,
+   "sd": 0.421,
+   "min": 998.2166,
+   "max": 999.1593,
+   "n": 5,
+   "values": [
+    998.2166,
+    999.1588,
+    999.1593,
+    999.1554,
+    999.1581
+   ]
+  },
+  "mega_all_live.sm_infer": {
+   "mean": 0.0421,
+   "sd": 0.0004,
+   "min": 0.0416,
+   "max": 0.0426,
+   "n": 5,
+   "values": [
+    0.0424,
+    0.0419,
+    0.0418,
+    0.0426,
+    0.0416
+   ]
+  },
+  "mega_all_live.doom_fps": {
+   "mean": 34.9939,
+   "sd": 0.0178,
+   "min": 34.9815,
+   "max": 35.0245,
+   "n": 5,
+   "values": [
+    35.0245,
+    34.9942,
+    34.9843,
+    34.9815,
+    34.9851
+   ]
+  },
+  "mega_all_live.sm_doom": {
+   "mean": 0.1753,
+   "sd": 0.0022,
+   "min": 0.173,
+   "max": 0.1778,
+   "n": 5,
+   "values": [
+    0.1778,
+    0.1757,
+    0.173,
+    0.1769,
+    0.1731
+   ]
+  },
+  "mega_train.train_steps_s": {
+   "mean": 14309.4084,
+   "sd": 1.9032,
+   "min": 14307.0041,
+   "max": 14311.3525,
+   "n": 5,
+   "values": [
+    14311.0894,
+    14309.622,
+    14307.0041,
+    14307.9742,
+    14311.3525
+   ]
+  },
+  "mega_train.train_tok_s": {
+   "mean": 3663208.562,
+   "sd": 487.207,
+   "min": 3662593.0612,
+   "max": 3663706.2316,
+   "n": 5,
+   "values": [
+    3663638.8751,
+    3663263.2412,
+    3662593.0612,
+    3662841.4009,
+    3663706.2316
+   ]
+  },
+  "mega_train.sm_train": {
+   "mean": 19.976,
+   "sd": 0.0026,
+   "min": 19.9726,
+   "max": 19.9794,
+   "n": 5,
+   "values": [
+    19.9794,
+    19.9773,
+    19.9726,
+    19.9748,
+    19.9759
+   ]
+  },
+  "mega_infer.infer_tok_s": {
+   "mean": 62511.8563,
+   "sd": 13.7419,
+   "min": 62494.7317,
+   "max": 62532.0999,
+   "n": 5,
+   "values": [
+    62505.1225,
+    62494.7317,
+    62513.2022,
+    62532.0999,
+    62514.1251
+   ]
+  },
+  "mega_infer.sm_infer": {
+   "mean": 2.3898,
+   "sd": 0.0009,
+   "min": 2.3888,
+   "max": 2.3907,
+   "n": 5,
+   "values": [
+    2.3907,
+    2.3906,
+    2.3888,
+    2.3896,
+    2.3892
+   ]
+  },
+  "mega_doom.doom_fps": {
+   "mean": 197.9632,
+   "sd": 0.2412,
+   "min": 197.6273,
+   "max": 198.2993,
+   "n": 5,
+   "values": [
+    198.0296,
+    198.2993,
+    197.9183,
+    197.9417,
+    197.6273
+   ]
+  },
+  "mega_doom.sm_doom": {
+   "mean": 0.5057,
+   "sd": 0.0001,
+   "min": 0.5056,
+   "max": 0.5059,
+   "n": 5,
+   "values": [
+    0.5058,
+    0.5056,
+    0.5059,
+    0.5056,
+    0.5057
+   ]
+  },
+  "eager_train.train_steps_s": {
+   "mean": 15281.633,
+   "sd": 77.6564,
+   "min": 15175.6786,
+   "max": 15394.101,
+   "n": 5,
+   "values": [
+    15267.5855,
+    15282.1603,
+    15175.6786,
+    15288.6395,
+    15394.101
+   ]
+  },
+  "eager_infer.infer_tok_s": {
+   "mean": 52070.3403,
+   "sd": 888.2668,
+   "min": 50929.4136,
+   "max": 53380.8921,
+   "n": 5,
+   "values": [
+    52001.4937,
+    52271.9371,
+    50929.4136,
+    51767.9649,
+    53380.8921
+   ]
+  },
+  "graph_train.train_steps_s": {
+   "mean": 16295.6363,
+   "sd": 12.4713,
+   "min": 16284.105,
+   "max": 16314.4797,
+   "n": 5,
+   "values": [
+    16284.105,
+    16285.686,
+    16300.9304,
+    16314.4797,
+    16292.9803
+   ]
+  },
+  "graph_infer.infer_tok_s": {
+   "mean": 60343.0651,
+   "sd": 190.0175,
+   "min": 60173.9909,
+   "max": 60576.4915,
+   "n": 5,
+   "values": [
+    60173.9909,
+    60235.7279,
+    60520.9346,
+    60576.4915,
+    60208.1808
+   ]
+  },
+  "streams_both.train_steps_s": {
+   "mean": 14960.2649,
+   "sd": 123.5555,
+   "min": 14748.0913,
+   "max": 15065.8199,
+   "n": 5,
+   "values": [
+    15019.4822,
+    14748.0913,
+    14972.2558,
+    14995.6753,
+    15065.8199
+   ]
+  },
+  "streams_both.infer_tok_s": {
+   "mean": 53377.1232,
+   "sd": 716.8841,
+   "min": 52583.318,
+   "max": 54380.1717,
+   "n": 5,
+   "values": [
+    53021.2238,
+    54380.1717,
+    53825.9772,
+    53074.9251,
+    52583.318
+   ]
+  },
+  "procs_both.train_steps_s": {
+   "mean": 7464.674,
+   "sd": 82.6827,
+   "min": 7405.9017,
+   "max": 7608.2574,
+   "n": 5,
+   "values": [
+    7456.4297,
+    7414.6406,
+    7438.1405,
+    7608.2574,
+    7405.9017
+   ]
+  },
+  "procs_both.infer_tok_s": {
+   "mean": 27277.9693,
+   "sd": 390.8386,
+   "min": 26608.0029,
+   "max": 27559.9553,
+   "n": 5,
+   "values": [
+    27301.2699,
+    27548.6537,
+    27559.9553,
+    26608.0029,
+    27371.9647
+   ]
+  }
+ },
+ "generated": "2026-11-01T04:21:57Z",
+ "source_file": "latest.json"
+}
