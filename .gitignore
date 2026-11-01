@@ -20,3 +20,36 @@ vm[0-9]*
 mk
 doomtest
 bt*
+
+# LLM workstreams: large data and test binaries never go in git
+*.f32
+*.u32
+*.bin
+*.pt
+*.ckpt
+*.npy
+*.safetensors
+llm/baseline/golden/*.f32
+llm/baseline/golden/*.u32
+ew_test
+decode_test
+gemm_test*
+attn_test*
+test_attention
+test_gemm
+test_decode
+test_elementwise
+ofa_llm
+ofa_llm_*
+
+# never commit: golden data, backup copies, credentials, rendered media
+llm/baseline/golden/
+*.orig
+.modal.toml
+.env
+node_modules/
+video/out/
+video/frames/
+*.mp4
+*.mov
+*.webm
