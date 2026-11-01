@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en"><head><meta charset="utf-8"><title>Megakernel benchmarks</title><meta name="viewport" content="width=device-width,initial-scale=1">
+<html lang="en"><head><meta charset="utf-8"><title>open-flapping-airplanes · one kernel, three programs</title><meta name="viewport" content="width=device-width,initial-scale=1">
 <style>
 :root{--bg:#07090d;--panel:#0d121a;--line:#1d2633;--dim:#7a8798;--txt:#d6dee8;--hi:#ffffff;--cyan:#27c8e8;--red:#ff5757;--yel:#f2c14e;--grn:#5be08a}
 *{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--bg);color:var(--txt);font:15px/1.6 ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif}
@@ -27,31 +27,49 @@ tr:last-child td{border-bottom:0}td.num{font-family:ui-monospace,Menlo,monospace
 code,pre{font-family:ui-monospace,Menlo,monospace;font-size:13px}pre{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:14px;overflow:auto;color:var(--txt)}
 ul{color:var(--dim);padding-left:20px}li{margin:5px 0}li b{color:var(--txt)}footer{border-top:1px solid var(--line);padding:24px 20px;text-align:center;color:var(--dim);font-size:13px}
 @media(max-width:820px){.tiles{grid-template-columns:repeat(2,1fr)}.cards,.shots{grid-template-columns:1fr}.hero h1{font-size:36px}.bar{grid-template-columns:1fr}.bar .n{text-align:left}th,td{padding:8px 6px;font-size:12px}}
+
+body::before,body::after{content:"";position:fixed;z-index:-1;border-radius:50%;filter:blur(90px);opacity:.16;pointer-events:none}
+body::before{width:520px;height:520px;background:var(--cyan);left:-120px;top:10vh;animation:drift1 22s ease-in-out infinite alternate}
+body::after{width:460px;height:460px;background:var(--red);right:-100px;top:55vh;animation:drift2 26s ease-in-out infinite alternate}
+@keyframes drift1{to{transform:translate(220px,260px)}}@keyframes drift2{to{transform:translate(-240px,-220px)}}
+.hero{padding-top:34px}.banner{width:100%;display:block;border-radius:10px;border:1px solid var(--line)}.hero p{margin-top:22px}
+.diagram{width:100%;display:block;border:1px solid var(--line);border-radius:10px;background:#07090d}
+.reveal{opacity:0;transform:translateY(22px);transition:opacity .8s ease,transform .8s cubic-bezier(.2,.7,.2,1)}.reveal.in{opacity:1;transform:none}
+.tile{transition:transform .25s,border-color .25s,box-shadow .25s}.tile:hover{transform:translateY(-4px);border-color:var(--cyan);box-shadow:0 8px 30px rgba(39,200,232,.12)}
+.card{transition:transform .25s,border-color .25s}.card:hover{transform:translateY(-3px);border-color:#2c3a4d}
+.bar .t i{width:0;transition:width 1.2s cubic-bezier(.2,.8,.2,1)}.bar.mega .t i{box-shadow:0 0 14px rgba(39,200,232,.5)}
+tr{transition:background .2s}tbody tr:hover,table tr:hover td{background:#101826}
+@media (prefers-reduced-motion:reduce){body::before,body::after{animation:none}.reveal{opacity:1;transform:none;transition:none}}
 </style></head><body>
-<header><nav><span class="logo">MEGAKERNEL</span><a href="#what">What runs</a><a href="#bench">Benchmarks</a><a href="#fa">vs Flapping Airplanes</a><a href="#how">Reproduce</a></nav></header>
+<header><nav><span class="logo">OFA</span><a href="#what">🧩 What runs</a><a href="#arch">🏗️ Architecture</a><a href="#bench">📊 Benchmarks</a><a href="#fa">🆚 vs Flapping Airplanes</a><a href="#how">🚀 Reproduce</a></nav></header>
 <main>
-<section class="hero"><h1>One kernel. <span>Three programs.</span></h1>
-<p>A language model trains, the same weights stream out text, and Doom plays, all at the same time inside a single persistent GPU kernel launch. These are the measurements.</p>
+<section class="hero"><img class="banner" src="assets/hero.svg" alt="OFA: one kernel, three programs">
+<p class="reveal">🧠 A language model trains, 💬 the same weights stream out text, and 👹 Doom plays, all at the same time inside a single persistent GPU kernel launch. These are the measurements.</p>
 <div class="tiles" id="tiles"></div></section>
 
-<section id="what"><h2>What runs in the kernel</h2><p class="lead">A tiny virtual machine inside the kernel claims the next ready task, runs it and signals the tasks waiting on it. The demo itself shows only the three programs; this site is where the numbers live.</p>
+<section id="what" class="reveal"><h2>🧩 What runs in the kernel</h2><p class="lead">A tiny virtual machine inside the kernel claims the next ready task, runs it and signals the tasks waiting on it. The demo itself shows only the three programs; this site is where the numbers live.</p>
 <div class="cards"><div class="card c1"><h3>Training</h3><p>A character-level language model: forward, backward and SGD run as kernel tasks. The loss falls while you watch.</p></div>
 <div class="card c2"><h3>Inference</h3><p>Text is generated from the live training weights, so the output visibly improves as the loss drops.</p></div>
 <div class="card c3"><h3>Doom</h3><p>The real engine (doomgeneric, shareware E1M1) runs its own game loop on the GPU, with its pixel drawing spread over the whole thread block.</p></div></div>
 <div class="shots"><img src="assets/dashboard.png" alt="live dashboard"><img src="assets/doom_gpu_frame.png" alt="a Doom frame rendered on the GPU"></div></section>
 
-<section id="bench"><h2>Megakernel vs the same jobs launched normally</h2><p class="lead" id="bench-lead"></p>
+<section id="arch" class="reveal"><h2>🏗️ Architecture</h2><p class="lead">Every block is a long-lived worker. Warp 0 claims the next <i>ready</i> task from sharded ticket queues (Doom, then inference, then training); dependency counters with memory fences release the next phase, so nothing ever returns to the host. Watch the tasks flow:</p>
+<img class="diagram" src="assets/architecture.svg" alt="animated architecture diagram">
+<h3 style="margin:30px 0 8px;color:var(--hi)">👹 One Doom frame</h3><p class="lead">Thread 0 runs the game and queues draws; 255 workers execute them behind one barrier. 24 ms becomes 6.7 ms and the picture stays pixel-identical.</p>
+<img class="diagram" src="assets/doom-pipeline.svg" alt="animated Doom frame pipeline"></section>
+
+<section id="bench" class="reveal"><h2>📊 open-flapping-airplanes vs the same jobs launched normally</h2><p class="lead" id="bench-lead"></p>
 <div class="bars" id="bars"></div>
 <h3 style="margin:26px 0 8px;color:var(--hi)">Every configuration</h3><table id="tbl-all"></table>
 <h3 style="margin:26px 0 8px;color:var(--hi)">Baselines compared to the megakernel</h3><table id="tbl-base"></table>
 <div class="note" id="bench-note"></div></section>
 
-<section id="fa"><h2>Against what Flapping Airplanes publish</h2><p class="lead">Their numbers are read frame by frame from the HD demo video. Ours are measured here. Hardware and model differ, so read the ratios, not the absolute values.</p>
+<section id="fa" class="reveal"><h2>🆚 Against what Flapping Airplanes publish</h2><p class="lead">Their numbers are read frame by frame from the HD demo video. Ours are measured here. Hardware and model differ, so read the ratios, not the absolute values.</p>
 <table id="tbl-fa"></table>
 <div class="grp">Kernel launches for the same 4,000-step workload</div><div class="bars" id="bars-launch"></div>
 <div class="note">Where we do not match: their per-op baseline is 34% slower in both training and serving, using a Megatron/vLLM stack on a B200 whose step is hundreds of thousands of launches. Our per-op baseline reuses the megakernel's own task code with few, fairly large kernels, so launch overhead is a small part of its time. The megakernel gives up a little raw speed per job here and wins on running everything at once on one GPU.</div></section>
 
-<section id="how"><h2>Reproduce</h2>
+<section id="how" class="reveal"><h2>🚀 Reproduce</h2>
 <pre>git clone https://github.com/Bobliuuu/flapping-airplanes &amp;&amp; cd flapping-airplanes
 ./doom-gpu/setup_box.sh ubuntu@&lt;ip&gt;        # once: clang, engine source, shareware WAD (md5 checked)
 ./live-demo/run_demo.sh ubuntu@&lt;ip&gt;        # the three-program demo, tunnelled to your browser
@@ -59,7 +77,7 @@ ul{color:var(--dim);padding-left:20px}li{margin:5px 0}li b{color:var(--txt)}foot
 <ul><li><b>Method.</b> Each number is the mean of <span id="reps"></span> repetitions of a few seconds each, with the standard deviation shown. Doom measurements run in their own process because the engine cannot be re-created in one.</li>
 <li><b>Baselines.</b> The "individually timed" rows run one program alone on the GPU, like the video. The "streams" and "processes" rows run both at once.</li>
 <li><b>Limits.</b> One GPU, one model size, a scripted Doom player, no sound. Loss and text are from a small corpus the model largely memorises.</li></ul></section>
-</main><footer>Megakernel on an NVIDIA A100 · numbers generated from <code id="srcfile"></code> · <a href="https://github.com/Bobliuuu/flapping-airplanes">github.com/Bobliuuu/flapping-airplanes</a></footer>
+</main><footer>open-flapping-airplanes on an NVIDIA A100 · numbers generated from <code id="srcfile"></code> · <a href="https://github.com/Bobliuuu/flapping-airplanes">github.com/Bobliuuu/flapping-airplanes</a></footer>
 <script src="data/benchmarks.js"></script>
 <script>
 const B=window.BENCH,O=B.ours,FA=B.fa,$=id=>document.getElementById(id);
@@ -68,10 +86,10 @@ const pm=(m,d=0)=>m&&m.mean!=null?`${f(m.mean,d)} <small>± ${f(m.sd,d)}</small>
 const pct=v=>v==null?'n/a':(v>=0?`<span class="pos">${f(v,1)}% slower</span>`:`<span class="neg">${f(-v,1)}% faster</span>`);
 const M=B.all_metrics;const mm=k=>M[k];
 $('reps').textContent=O.reps;$('srcfile').textContent=B.source_file;
-$('tiles').innerHTML=[['Kernel launches','1',`vs ${f(O.same_work.launches_perop)} per-op for the same work`],['Training',f(O.mega_all.train_tok_s.mean/1e6,2)+'M','tok/s while serving and playing'],['Inference',f(O.mega_all.infer_tok_s.mean/1000,1)+'k','tok/s from the live weights'],['Doom',f(O.mega_all.doom_fps.mean,0)+' fps','real E1M1, native 35 Hz']].map(t=>`<div class="tile"><div class="k">${t[0]}</div><div class="v">${t[1]}</div><div class="s">${t[2]}</div></div>`).join('');
+$('tiles').innerHTML=[['🚀 Kernel launches',1,0,'','','vs '+f(O.same_work.launches_perop)+' per-op for the same work'],['🧠 Training',O.mega_all.train_tok_s.mean/1e6,2,'','M','tok/s while serving and playing'],['💬 Inference',O.mega_all.infer_tok_s.mean/1000,1,'','k','tok/s from the live weights'],['👹 Doom',O.mega_all.doom_fps.mean,0,'',' fps','real E1M1, native 35 Hz']].map(t=>`<div class="tile reveal"><div class="k">${t[0]}</div><div class="v" data-num="${t[1]}" data-dec="${t[2]}" data-suf="${t[4]}">0${t[4]}</div><div class="s">${t[5]}</div></div>`).join('');
 $('bench-lead').textContent=`${O.gpu}, ${O.sms} SMs. "Megakernel, all three" runs training, inference and Doom together in one launch; the baselines run the same task code as ordinary per-op kernels.`;
 // bars: rates relative to the largest in the group
-function bars(el,groups){el.innerHTML=groups.map(g=>`<div class="grp">${g.title}</div>`+g.rows.map(r=>{const w=Math.max(1,r.v/g.max*100);return `<div class="bar ${r.cls}"><span>${r.name}</span><span class="t"><i style="width:${w}%"></i></span><span class="n">${f(r.v,g.d||0)}${g.unit||''}</span></div>`}).join('')).join('')}
+function bars(el,groups){el.innerHTML=groups.map(g=>`<div class="grp">${g.title}</div>`+g.rows.map(r=>{const w=Math.max(1,r.v/g.max*100);return `<div class="bar ${r.cls}"><span>${r.name}</span><span class="t"><i data-w="${w}"></i></span><span class="n">${f(r.v,g.d||0)}${g.unit||''}</span></div>`}).join('')).join('')}
 const base=Object.fromEntries(B.baselines.map(b=>[b.baseline,b]));
 const tmax=Math.max(O.mega_all.train_steps_s.mean,...B.baselines.map(b=>b.train_steps_s||0)),imax=Math.max(O.mega_all.infer_tok_s.mean,...B.baselines.map(b=>b.infer_tok_s||0));
 bars($('bars'),[{title:'Training, steps per second',max:tmax,rows:[{name:'Megakernel, all three at once',v:O.mega_all.train_steps_s.mean,cls:'mega'},{name:'Per-op eager, alone',v:base.eager.train_steps_s,cls:'base'},{name:'Per-op CUDA graph, alone',v:base.graph.train_steps_s,cls:'base'},{name:'Per-op, both jobs on two streams',v:base.streams_both.train_steps_s,cls:'base'},{name:'Per-op, two processes sharing the GPU',v:base.procs_both.train_steps_s,cls:'base'}]},
@@ -98,4 +116,12 @@ const faRows=[
 ['SM allocation',`${FA.sm_split.training} training / ${FA.sm_split.inference} inference / ${FA.sm_split.doom} Doom of ${FA.sm_split.total} (static)`,`${f(sm.train,1)} / ${f(sm.infer,1)} / ${f(sm.doom,1)} busy of ${sm.gpu_sms} (measured, dynamic)`,'Our workload is small; most of the GPU is idle']];
 $('tbl-fa').innerHTML='<tr><th>Metric</th><th>Flapping Airplanes (video)</th><th>This repo (measured)</th><th>Note</th></tr>'+faRows.map(r=>`<tr><td>${r[0]}</td><td class="num">${r[1]}</td><td class="num">${r[2]}</td><td style="text-align:left;color:var(--dim)">${r[3]}</td></tr>`).join('');
 const L=O.same_work.launches_perop;bars($('bars-launch'),[{title:'Per-op baseline launches',max:Math.max(FA.kernel_launches.baseline,L),rows:[{name:'Flapping Airplanes: Megatron + vLLM (their whole run)',v:FA.kernel_launches.baseline,cls:'fa'},{name:'Ours: per-op, 4,000 steps + serving',v:L,cls:'base'},{name:'Megakernel (both)',v:1,cls:'mega'}]}]);
+
+// ---- motion: scroll reveal, count-up numbers, growing bars
+const io=new IntersectionObserver(es=>es.forEach(e=>{if(!e.isIntersecting)return;e.target.classList.add('in');io.unobserve(e.target);
+  e.target.querySelectorAll('.bar i[data-w]').forEach(i=>{i.style.width=i.dataset.w+'%'});
+  e.target.querySelectorAll('.v[data-num]').forEach(v=>{const t=+v.dataset.num,d=+v.dataset.dec,s=v.dataset.suf||'',t0=performance.now();(function step(n){const p=Math.min(1,(n-t0)/1100),e2=1-Math.pow(1-p,3);v.textContent=(t*e2).toLocaleString('en-US',{minimumFractionDigits:d,maximumFractionDigits:d})+s;if(p<1)requestAnimationFrame(step)})(t0)});
+}),{threshold:.12});
+document.querySelectorAll('.reveal').forEach((el,i)=>{el.style.transitionDelay=(el.classList.contains('tile')?i*80:0)+'ms';io.observe(el)});
+document.querySelectorAll('.bars').forEach(el=>io.observe(el));
 </script></body></html>
