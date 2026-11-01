@@ -213,9 +213,9 @@ function rowCell(x,y,w,o,reveal){
    const txt=o.fmt(lerp(0,v,reveal)); const inside=wd>bw*.55;
    return `<text x="${x}" y="${yy-6}" font-size="21" fill="#8a9bb0">${lab}</text><rect x="${x}" y="${yy}" width="${bw}" height="24" fill="#111a24"/><rect x="${x}" y="${yy}" width="${wd}" height="24" fill="${col}"/><text x="${inside?x+wd-8:x+wd+10}" y="${yy+20}" text-anchor="${inside?'end':'start'}" font-size="24" font-weight="700" fill="#fff" class="mono">${txt}</text>`};
  const max=o.max!=null?o.max:Math.max(o.ft||0,o.fb||0);
- s+=barRow(y+22,o.labT,o.ft,C.cy,max); s+=barRow(y+76,o.labB,o.fb,C.rd,max);
+ s+=barRow(y+18,o.labT,o.ft,C.cy,max); s+=barRow(y+66,o.labB,o.fb,C.rd,max);
  const pc=o.pct;
- s+=pc==null?`<text x="${x}" y="${y+130}" font-size="26" fill="#8a9bb0" font-style="italic">comparison pending</text>`:`<text x="${x}" y="${y+130}" font-size="28" font-weight="800" fill="${C.cy}" opacity="${prog(reveal,.6,1)}">${o.pctLab(pc)}</text>`;
+ s+=pc==null?`<text x="${x}" y="${y+122}" font-size="26" fill="#8a9bb0" font-style="italic">comparison pending</text>`:`<text x="${x}" y="${y+122}" font-size="28" font-weight="800" fill="${C.cy}" opacity="${prog(reveal,.6,1)}">${o.pctLab(pc)}</text>`;
  return s}
 S.results=(el,t,d)=>{
  const F=D.fa,A=D.a100,B=D.b300; const g=k=>k;
