@@ -1,0 +1,115 @@
+GPU NVIDIA B300 SXM6 AC (sm_103), 148 SMs; smem/SM 233472 B, opt-in/block 232448 B, reserved/block 1024 B; kernel needs 65536 B dyn -> 3 blocks/SM fit by smem, 2 by occupancy (target 2)
+  smem headroom per SM at 2 blocks/SM: 100352 B (a larger GEMM_STAGES / GEMM100_STAGES can use it)
+296 persistent blocks (2 per SM)
+smid probe: 148 distinct SMs seen, max %smid 147 (device reports 148 SMs)
+model: L=12 d=768 H=12 T=512 V=100352  params=162.4M  tokens/step=4096
+init weights from /vol/data/init_flat_S.f32
+data: /vol/data/tinystories_cl100k_train.u32 (73910428 tokens)
+batch starts: /vol/data/starts_4000.u32 (4000 steps)
+device memory used: 7.9 GB of 287.4 GB
+training graph: 278 phases, 125287 tasks per step
+launching ONE persistent kernel (296 blocks)...
+
+kernel time 72.694 s (event) / 72.888 s (wall incl. launch)
+steady state: 18.17 ms/step (median 18.17) -> 225383 tok/s;  4,000 steps = 72.7 s
+loss: step0 11.7106  s1 11.2639  s2 10.7522  s5 9.9998  s10 9.6331  s20 8.5514  s50 5.6934  s100 4.4137  s200 4.0631  s500 3.6659  s1000 2.9972  s2000 2.4032  s3000 2.2013  s3999 2.1575
+
+busy time by phase kind (all steps, block-seconds; % of train busy):
+  data                  0.101 s    0.0%
+  embed                 5.216 s    0.0%
+  ln1                  54.166 s    0.3%
+  qkv                 688.824 s    3.8%
+  attn                292.022 s    1.6%
+  wo+res              293.332 s    1.6%
+  ln2                  50.981 s    0.3%
+  up+gelu            1036.115 s    5.8%
+  down+res            790.488 s    4.4%
+  lnf                   4.251 s    0.0%
+  logits             2505.096 s   14.0%
+  cross-entropy       712.129 s    4.0%
+  loss mean             0.023 s    0.0%
+  head dX            2111.854 s   11.8%
+  head dWte          1949.791 s   10.9%
+  lnf bwd               6.140 s    0.0%
+  lnf dgamma            0.097 s    0.0%
+  dpre               1201.956 s    6.7%
+  dWdown              779.118 s    4.4%
+  dln2                742.266 s    4.1%
+  dWup                726.557 s    4.1%
+  ln2 bwd             110.863 s    0.6%
+  dgamma2               1.042 s    0.0%
+  dO                  220.368 s    1.2%
+  dWo                 188.299 s    1.1%
+  attn prep            73.617 s    0.4%
+  attn bwd            801.081 s    4.5%
+  dln1                576.841 s    3.2%
+  dWqkv               590.653 s    3.3%
+  ln1 bwd             114.137 s    0.6%
+  dgamma1               1.106 s    0.0%
+  embed bwd wte (+adamw)  618.758 s    3.5%
+  embed bwd wpe        10.090 s    0.1%
+  adamw wpe             3.084 s    0.0%
+  adamw L11            60.215 s    0.3%
+  adamw L10            52.672 s    0.3%
+  adamw L9             56.274 s    0.3%
+  adamw L8             53.515 s    0.3%
+  adamw L7             53.199 s    0.3%
+  adamw L6             55.561 s    0.3%
+  adamw L5             51.873 s    0.3%
+  adamw L4             53.695 s    0.3%
+  adamw L3             55.232 s    0.3%
+  adamw L2             51.521 s    0.3%
+  adamw L1             52.898 s    0.3%
+  adamw L0             50.171 s    0.3%
+  step barrier          0.017 s    0.0%
+
+phase wall-clock at step 2000 (first task start -> last task end, ms from step start):
+  data                 0.00 ->     0.00 ms  (  0.00 ms)  tasks=8
+  embed                0.01 ->     0.01 ms  (  0.01 ms)  tasks=256
+  L1 ln1               0.36 ->     0.37 ms  (  0.00 ms)  tasks=256
+  L1 qkv               0.37 ->     0.43 ms  (  0.06 ms)  tasks=576
+  L1 attn              0.43 ->     0.45 ms  (  0.03 ms)  tasks=768
+  L1 wo+res            0.45 ->     0.49 ms  (  0.04 ms)  tasks=192
+  L1 ln2               0.49 ->     0.50 ms  (  0.00 ms)  tasks=256
+  L1 up+gelu           0.50 ->     0.59 ms  (  0.10 ms)  tasks=768
+  L1 down+res          0.59 ->     0.70 ms  (  0.11 ms)  tasks=192
+  lnf                  4.11 ->     4.11 ms  (  0.00 ms)  tasks=256
+  logits               4.11 ->     6.42 ms  (  2.30 ms)  tasks=25088
+  cross-entropy        6.42 ->     7.12 ms  (  0.70 ms)  tasks=1024
+  loss mean            7.12 ->     7.12 ms  (  0.01 ms)  tasks=1
+  head dX              7.12 ->    10.48 ms  (  3.37 ms)  tasks=192
+  head dWte            7.12 ->    10.65 ms  (  3.54 ms)  tasks=4704
+  lnf bwd             10.55 ->    10.58 ms  (  0.03 ms)  tasks=256
+  lnf dgamma          10.58 ->    10.59 ms  (  0.01 ms)  tasks=3
+  L1 dpre             15.72 ->    15.83 ms  (  0.11 ms)  tasks=768
+  L1 dWdown           15.80 ->    15.95 ms  (  0.15 ms)  tasks=144
+  L1 dln2             15.83 ->    15.97 ms  (  0.13 ms)  tasks=192
+  L1 dWup             15.90 ->    16.06 ms  (  0.15 ms)  tasks=144
+  L1 ln2 bwd          15.97 ->    15.99 ms  (  0.02 ms)  tasks=256
+  L1 dgamma2          15.99 ->    16.00 ms  (  0.01 ms)  tasks=3
+  L1 dO               15.99 ->    16.04 ms  (  0.05 ms)  tasks=192
+  L1 dWo              16.02 ->    16.14 ms  (  0.12 ms)  tasks=36
+  L1 attn prep        16.04 ->    16.05 ms  (  0.01 ms)  tasks=768
+  L1 attn bwd         16.05 ->    16.13 ms  (  0.07 ms)  tasks=1536
+  L1 dln1             16.13 ->    16.21 ms  (  0.08 ms)  tasks=192
+  L1 dWqkv            16.13 ->    16.28 ms  (  0.16 ms)  tasks=108
+  L1 ln1 bwd          16.21 ->    16.23 ms  (  0.02 ms)  tasks=256
+  L1 dgamma1          16.23 ->    16.24 ms  (  0.01 ms)  tasks=3
+  embed bwd wte (+adamw)    16.75 ->    18.19 ms  (  1.44 ms)  tasks=784
+  embed bwd wpe       17.17 ->    17.22 ms  (  0.05 ms)  tasks=128
+  adamw wpe           17.22 ->    17.36 ms  (  0.14 ms)  tasks=6
+  adamw L11           17.20 ->    17.44 ms  (  0.24 ms)  tasks=109
+  adamw L10           17.31 ->    17.47 ms  (  0.17 ms)  tasks=109
+  adamw L9            17.35 ->    17.50 ms  (  0.15 ms)  tasks=109
+  adamw L8            17.36 ->    17.58 ms  (  0.22 ms)  tasks=109
+  adamw L7            17.45 ->    17.62 ms  (  0.16 ms)  tasks=109
+  adamw L6            17.49 ->    17.64 ms  (  0.16 ms)  tasks=109
+  adamw L5            17.51 ->    17.72 ms  (  0.21 ms)  tasks=109
+  adamw L4            17.60 ->    17.76 ms  (  0.16 ms)  tasks=109
+  adamw L3            17.63 ->    17.80 ms  (  0.17 ms)  tasks=109
+  adamw L2            17.69 ->    17.86 ms  (  0.17 ms)  tasks=109
+  adamw L1            17.74 ->    17.89 ms  (  0.15 ms)  tasks=109
+  adamw L0            17.77 ->    17.93 ms  (  0.16 ms)  tasks=109
+  step barrier        18.20 ->    18.20 ms  (  0.00 ms)  tasks=1
+
+SM utilisation (task time / wall, 2 blocks per SM): training 123.2 SM-equivalents, serving 0.0 SM-equivalents (of 148 SMs)
