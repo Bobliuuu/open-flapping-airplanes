@@ -1,0 +1,300 @@
+// test_gemm.cu -- verifies and benchmarks gemm.cuh against an fp32 reference and cuBLAS.
+// build: nvcc -arch=sm_80 -O3 -std=c++17 -o gemm_test test_gemm.cu -lcublas
+// run:   ./gemm_test [--M] [--only substr] [--nobench] [--nopersist]
+#include "gemm.cuh"
+#include <cublas_v2.h>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+#include <string>
+#include <vector>
+#include <algorithm>
+#include <numeric>
+#include <random>
+using namespace gemm;
+
+#define CK(x) do { cudaError_t e_ = (x); if (e_ != cudaSuccess) { printf("CUDA error %s at %s:%d\n", cudaGetErrorString(e_), __FILE__, __LINE__); exit(1);} } while (0)
+#define CB(x) do { cublasStatus_t s_ = (x); if (s_ != CUBLAS_STATUS_SUCCESS) { printf("cuBLAS error %d at %s:%d\n", (int)s_, __FILE__, __LINE__); exit(1);} } while (0)
+
+// ---------------- kernels under test: grid launch and persistent launch ----------------
+template <int L, int E>
+__global__ void __launch_bounds__(256, 2) gemm_grid(Args p, int tilesM) {
+  extern __shared__ __align__(128) char smem[];
+  int t = blockIdx.x;
+  gemm_tile<L, E>(p, t % tilesM, t / tilesM, smem);
+}
+template <int L, int E>
+__global__ void __launch_bounds__(256, 2) gemm_persist(Args p, int tilesM, int ntiles, const int* order) {
+  extern __shared__ __align__(128) char smem[];
+  for (int i = blockIdx.x; i < ntiles; i += gridDim.x) {  // arbitrary (shuffled) tile order
+    int t = order[i];
+    gemm_tile<L, E>(p, t % tilesM, t / tilesM, smem);
+  }
+}
+template <int L, int E> void launch(const Args& p, bool persist, const int* order, int nblocks, cudaStream_t s) {
+  static bool init = false;
+  constexpr int SM = smem_bytes();
+  if (!init) {
+    CK(cudaFuncSetAttribute(gemm_grid<L, E>, cudaFuncAttributeMaxDynamicSharedMemorySize, SM));
+    CK(cudaFuncSetAttribute(gemm_persist<L, E>, cudaFuncAttributeMaxDynamicSharedMemorySize, SM));
+    cudaFuncAttributes a, b;
+    cudaFuncGetAttributes(&a, gemm_grid<L, E>); cudaFuncGetAttributes(&b, gemm_persist<L, E>);
+    printf("  [kernel L=%d E=%d] regs grid=%d persist=%d, local(spill)=%zu B, static smem=%zu B, dyn smem=%d B\n",
+           L, E, a.numRegs, b.numRegs, a.localSizeBytes, a.sharedSizeBytes, SM);
+    init = true;
+  }
+  int tm = p.M / BM, tn = p.N / BN;
+  if (persist) gemm_persist<L, E><<<nblocks, THREADS, SM, s>>>(p, tm, tm * tn, order);
+  else gemm_grid<L, E><<<tm * tn, THREADS, SM, s>>>(p, tm);
+}
+void run(int L, int E, const Args& p, bool persist, const int* order, int nblocks, cudaStream_t s = 0) {
+#define D(L_, E_) if (L == L_ && E == E_) { launch<L_, E_>(p, persist, order, nblocks, s); return; }
+  D(NN, EPI_BF16) D(NN, EPI_RES) D(NN, EPI_GELU) D(NT, EPI_F32) D(NT, EPI_DGELU) D(NT, EPI_RES) D(NT, EPI_BF16) D(TN, EPI_F32)
+#undef D
+  printf("unsupported combo in test dispatcher\n"); exit(1);
+}
+
+// ---------------- helpers ----------------
+__device__ __forceinline__ float hash_u(uint32_t x) {
+  x ^= x >> 16; x *= 0x7feb352d; x ^= x >> 15; x *= 0x846ca68b; x ^= x >> 16;
+  return (x >> 8) * (1.f / 16777216.f);
+}
+__global__ void init_bf16(bf16* p, size_t n, uint32_t seed, float scale) {
+  for (size_t i = blockIdx.x * (size_t)blockDim.x + threadIdx.x; i < n; i += (size_t)gridDim.x * blockDim.x)
+    p[i] = __float2bfloat16((hash_u((uint32_t)i + seed * 0x9e3779b9u) * 2.f - 1.f) * scale);
+}
+__global__ void init_f32(float* p, size_t n, uint32_t seed, float scale) {
+  for (size_t i = blockIdx.x * (size_t)blockDim.x + threadIdx.x; i < n; i += (size_t)gridDim.x * blockDim.x)
+    p[i] = (hash_u((uint32_t)i + seed * 0x9e3779b9u) * 2.f - 1.f) * scale;
+}
+// naive fp32 reference (inputs bf16 -> exact in fp32)
+__global__ void __launch_bounds__(256) ref_gemm(const bf16* A, const bf16* B, float* R, int M, int N, int K, int lda, int ldb, int akc, int bkc) {
+  __shared__ float sA[16][65], sB[16][65];
+  int tx = threadIdx.x & 15, ty = threadIdx.x >> 4;
+  int m0 = blockIdx.y * 64, n0 = blockIdx.x * 64;
+  float acc[4][4] = {};
+  for (int k0 = 0; k0 < K; k0 += 16) {
+    for (int i = threadIdx.x; i < 1024; i += 256) {
+      int kk, mm;
+      if (akc) { kk = i & 15; mm = i >> 4; } else { mm = i & 63; kk = i >> 6; }
+      sA[kk][mm] = __bfloat162float(akc ? A[(size_t)(m0 + mm) * lda + k0 + kk] : A[(size_t)(k0 + kk) * lda + m0 + mm]);
+      if (bkc) { kk = i & 15; mm = i >> 4; } else { mm = i & 63; kk = i >> 6; }
+      sB[kk][mm] = __bfloat162float(bkc ? B[(size_t)(n0 + mm) * ldb + k0 + kk] : B[(size_t)(k0 + kk) * ldb + n0 + mm]);
+    }
+    __syncthreads();
+#pragma unroll
+    for (int kk = 0; kk < 16; kk++) {
+      float a[4], b[4];
+      for (int i = 0; i < 4; i++) { a[i] = sA[kk][ty * 4 + i]; b[i] = sB[kk][tx * 4 + i]; }
+      for (int i = 0; i < 4; i++) for (int j = 0; j < 4; j++) acc[i][j] = fmaf(a[i], b[j], acc[i][j]);
+    }
+    __syncthreads();
+  }
+  for (int i = 0; i < 4; i++) for (int j = 0; j < 4; j++) R[(size_t)(m0 + ty * 4 + i) * N + n0 + tx * 4 + j] = acc[i][j];
+}
+constexpr int EXPECT_IDENT = 100;
+__device__ float gelu_acc(float x) { float t = tanhf(0.7978845608028654f * (x + 0.044715f * x * x * x)); return 0.5f * x * (1.f + t); }
+__device__ float dgelu_acc(float x) { float t = tanhf(0.7978845608028654f * (x + 0.044715f * x * x * x));
+  return 0.5f * (1.f + t) + 0.5f * x * (1.f - t * t) * 0.7978845608028654f * (1.f + 3.f * 0.044715f * x * x); }
+__device__ __forceinline__ float ldv(const void* p, int is_bf16, size_t i) {
+  return is_bf16 ? __bfloat162float(((const bf16*)p)[i]) : ((const float*)p)[i];
+}
+// compare got vs expected. expected = exp_buf element if given, else from fp32 ref (+C0) with epilogue applied.
+__global__ void cmp_kernel(const void* got, int got_bf16, int ldg, const void* exp_buf, int exp_bf16, const float* ref, int epi,
+                           const bf16* aux, int ldaux, const float* C0, int M, int N, unsigned* maxbits, double* sums) {
+  float emax = 0.f, amax = 0.f; double es = 0, as = 0;
+  for (size_t i = blockIdx.x * (size_t)blockDim.x + threadIdx.x; i < (size_t)M * N; i += (size_t)gridDim.x * blockDim.x) {
+    size_t r = i / N, c = i % N;
+    float e;
+    if (exp_buf) e = ldv(exp_buf, exp_bf16, i);
+    else {
+      e = ref[i];
+      if (C0) e += C0[i];
+      if (epi == EPI_GELU) e = gelu_acc(e);
+      else if (epi == EPI_DGELU) e *= dgelu_acc(__bfloat162float(aux[r * ldaux + c]));
+      else if (epi == EPI_RES) e += __bfloat162float(aux[r * ldaux + c]);
+    }
+    float g = ldv(got, got_bf16, r * ldg + c);
+    float d = fabsf(g - e);
+    if (!(d == d)) d = 1e30f;  // NaN
+    emax = fmaxf(emax, d); amax = fmaxf(amax, fabsf(e)); es += d; as += fabsf(e);
+  }
+  for (int o = 16; o; o >>= 1) {
+    emax = fmaxf(emax, __shfl_xor_sync(~0u, emax, o)); amax = fmaxf(amax, __shfl_xor_sync(~0u, amax, o));
+    es += __shfl_xor_sync(~0u, es, o); as += __shfl_xor_sync(~0u, as, o);
+  }
+  if ((threadIdx.x & 31) == 0) {
+    atomicMax(&maxbits[0], __float_as_uint(emax)); atomicMax(&maxbits[1], __float_as_uint(amax));
+    atomicAdd(&sums[0], es); atomicAdd(&sums[1], as);
+  }
+}
+__global__ void count_diff(const uint32_t* a, const uint32_t* b, size_t n, unsigned long long* cnt) {
+  unsigned long long c = 0;
+  for (size_t i = blockIdx.x * (size_t)blockDim.x + threadIdx.x; i < n; i += (size_t)gridDim.x * blockDim.x) c += (a[i] != b[i]);
+  atomicAdd(cnt, c);
+}
+struct Stat { double rmax, rmean; };
+Stat compare(const void* got, int got_bf16, int ldg, const void* exp_buf, int exp_bf16, const float* ref, int epi, const bf16* aux, int ldaux,
+             const float* C0, int M, int N) {
+  unsigned* mb; double* sm;
+  CK(cudaMalloc(&mb, 8)); CK(cudaMalloc(&sm, 16)); CK(cudaMemset(mb, 0, 8)); CK(cudaMemset(sm, 0, 16));
+  cmp_kernel<<<1080, 256>>>(got, got_bf16, ldg, exp_buf, exp_bf16, ref, epi, aux, ldaux, C0, M, N, mb, sm);
+  CK(cudaDeviceSynchronize());
+  unsigned hm[2]; double hs[2];
+  CK(cudaMemcpy(hm, mb, 8, cudaMemcpyDeviceToHost)); CK(cudaMemcpy(hs, sm, 16, cudaMemcpyDeviceToHost));
+  cudaFree(mb); cudaFree(sm);
+  float emax, amax; memcpy(&emax, &hm[0], 4); memcpy(&amax, &hm[1], 4);
+  return {emax / std::max(amax, 1e-30f), hs[0] / std::max(hs[1], 1e-30)};
+}
+
+// ---------------- cases ----------------
+struct Case { std::string name; int L, E; int M, N, K; bool bwd; };
+std::vector<Case> make_cases(int T, int d, int h, int V) {
+  std::vector<Case> c;
+  c.push_back({"qkv_fwd      NN BF16 ", NN, EPI_BF16, T, 3 * d, d, false});
+  c.push_back({"wo_fwd       NN RES  ", NN, EPI_RES, T, d, d, false});
+  c.push_back({"up_fwd       NN GELU ", NN, EPI_GELU, T, h, d, false});
+  c.push_back({"down_fwd     NN RES  ", NN, EPI_RES, T, d, h, false});
+  c.push_back({"logits       NT F32  ", NT, EPI_F32, T, V, d, false});
+  c.push_back({"down_bwd_dX  NT DGELU", NT, EPI_DGELU, T, h, d, true});
+  c.push_back({"up_bwd_dX    NT RES  ", NT, EPI_RES, T, d, h, true});
+  c.push_back({"wo_bwd_dX    NT BF16 ", NT, EPI_BF16, T, d, d, true});
+  c.push_back({"qkv_bwd_dX   NT RES  ", NT, EPI_RES, T, d, 3 * d, true});
+  c.push_back({"head_bwd_dX  NN BF16 ", NN, EPI_BF16, T, d, V, true});
+  c.push_back({"dW_qkv       TN F32  ", TN, EPI_F32, d, 3 * d, T, true});
+  c.push_back({"dW_o         TN F32  ", TN, EPI_F32, d, d, T, true});
+  c.push_back({"dW_up        TN F32  ", TN, EPI_F32, d, h, T, true});
+  c.push_back({"dW_down      TN F32  ", TN, EPI_F32, h, d, T, true});
+  c.push_back({"dwte         TN F32  ", TN, EPI_F32, V, d, T, true});
+  return c;
+}
+
+cublasHandle_t g_cb;
+void cublas_gemm(int L, const bf16* A, const bf16* B, void* C, bool c_bf16, int M, int N, int K, int lda, int ldb, int ldc, float beta) {
+  bool akc = L != TN, bkc = L == NT;
+  float alpha = 1.f;
+  CB(cublasGemmEx(g_cb, bkc ? CUBLAS_OP_T : CUBLAS_OP_N, akc ? CUBLAS_OP_N : CUBLAS_OP_T, N, M, K, &alpha, B, CUDA_R_16BF, ldb, A,
+                  CUDA_R_16BF, lda, &beta, C, c_bf16 ? CUDA_R_16BF : CUDA_R_32F, ldc, CUBLAS_COMPUTE_32F, CUBLAS_GEMM_DEFAULT_TENSOR_OP));
+}
+template <class F> float time_ms(F f, int iters) {
+  cudaEvent_t a, b; cudaEventCreate(&a); cudaEventCreate(&b);
+  f(); f(); CK(cudaDeviceSynchronize());
+  float best = 1e30f;
+  for (int rep = 0; rep < 6; rep++) {
+    cudaEventRecord(a);
+    for (int i = 0; i < iters; i++) f();
+    cudaEventRecord(b); CK(cudaEventSynchronize(b));
+    float ms; cudaEventElapsedTime(&ms, a, b); best = std::min(best, ms / iters);
+  }
+  return best;
+}
+template <class T> T* dalloc(size_t n) { T* p; CK(cudaMalloc(&p, n * sizeof(T))); return p; }
+
+int main(int argc, char** argv) {
+  bool cfgM = false, bench = true, persist = true; std::string only;
+  for (int i = 1; i < argc; i++) {
+    if (!strcmp(argv[i], "--M")) cfgM = true;
+    else if (!strcmp(argv[i], "--nobench")) bench = false;
+    else if (!strcmp(argv[i], "--nopersist")) persist = false;
+    else if (!strcmp(argv[i], "--only") && i + 1 < argc) only = argv[++i];
+  }
+  CB(cublasCreate(&g_cb));
+  int nsm; CK(cudaDeviceGetAttribute(&nsm, cudaDevAttrMultiProcessorCount, 0));
+  auto cases = cfgM ? make_cases(4096, 1024, 4096, 100352) : make_cases(4096, 768, 3072, 100352);
+  printf("config %s, %d SMs, smem/tile %d B\n", cfgM ? "M (d=1024,h=4096)" : "S (d=768,h=3072)", nsm, smem_bytes());
+  int nfail = 0;
+  printf("%-22s %-18s | %-9s %-9s %-9s | %-6s %-5s | %8s %8s %6s\n", "case", "M x N x K", "relmax", "relmean", "cublas_rm", "persist", "alias", "ours", "cublas", "ratio");
+  for (auto& cs : cases) {
+    if (!only.empty() && cs.name.find(only) == std::string::npos) continue;
+    int M = cs.M, N = cs.N, K = cs.K, L = cs.L, E = cs.E;
+    bool akc = L != TN, bkc = L == NT;
+    Args p{}; p.M = M; p.N = N; p.K = K;
+    p.lda = akc ? K : M; p.ldb = bkc ? K : N; p.ldc = N; p.ldaux = N; p.accumulate = (L == TN) ? 1 : 0;
+    bf16* A = dalloc<bf16>((size_t)M * K); bf16* B = dalloc<bf16>((size_t)K * N);
+    init_bf16<<<2048, 256>>>(A, (size_t)M * K, 1, 1.f); init_bf16<<<2048, 256>>>(B, (size_t)K * N, 2, 1.f);
+    bool cbf = E != EPI_F32;
+    void* C = nullptr; void* C2 = nullptr; float* C0 = nullptr; bf16* aux = nullptr; bf16* aux2 = nullptr;
+    size_t cbytes = (size_t)M * N * (cbf ? 2 : 4);
+    CK(cudaMalloc(&C, cbytes)); CK(cudaMalloc(&C2, cbytes));
+    if (E == EPI_RES || E == EPI_DGELU || E == EPI_GELU) aux = dalloc<bf16>((size_t)M * N);
+    if (E == EPI_GELU) aux2 = dalloc<bf16>((size_t)M * N);
+    if (E == EPI_RES) init_bf16<<<2048, 256>>>(aux, (size_t)M * N, 3, sqrtf((float)K) * 0.5f);
+    if (E == EPI_DGELU) init_bf16<<<2048, 256>>>(aux, (size_t)M * N, 4, 4.f);
+    if (L == TN) {
+      C0 = dalloc<float>((size_t)M * N);
+      init_f32<<<2048, 256>>>(C0, (size_t)M * N, 5, 100.f);
+      CK(cudaMemcpy(C, C0, cbytes, cudaMemcpyDeviceToDevice));
+    }
+    float* ref = dalloc<float>((size_t)M * N);
+    ref_gemm<<<dim3(N / 64, M / 64), 256>>>(A, B, ref, M, N, K, p.lda, p.ldb, akc, bkc);
+    CK(cudaGetLastError());
+    p.A = A; p.B = B; p.C = C; p.aux = aux;
+    // schedule orders
+    int tm = M / BM, tn = N / BN, nt = tm * tn;
+    std::vector<int> ord(nt); std::iota(ord.begin(), ord.end(), 0);
+    std::mt19937 rng(1234); std::shuffle(ord.begin(), ord.end(), rng);
+    int* dord = dalloc<int>(nt); CK(cudaMemcpy(dord, ord.data(), nt * 4, cudaMemcpyHostToDevice));
+
+    run(L, E, p, false, nullptr, 0);
+    CK(cudaDeviceSynchronize()); CK(cudaGetLastError());
+    double tol = cs.bwd ? 5e-2 : 2e-2;
+    Stat s = compare(C, cbf, N, nullptr, 0, ref, E, aux, N, C0, M, N);
+    bool ok = s.rmax <= tol;
+    if (E == EPI_GELU) {  // check saved pre-activation too
+      Stat s2 = compare(aux, 1, N, nullptr, 0, ref, EXPECT_IDENT, nullptr, 0, nullptr, M, N);
+      ok = ok && s2.rmax <= tol; s.rmax = std::max(s.rmax, s2.rmax);
+    }
+    // cuBLAS (raw product; bf16 out for bf16 epilogues, fp32 out otherwise)
+    void* CB_ = nullptr; CK(cudaMalloc(&CB_, cbytes));
+    if (L == TN) CK(cudaMemcpy(CB_, C0, cbytes, cudaMemcpyDeviceToDevice));
+    cublas_gemm(L, A, B, CB_, cbf, M, N, K, p.lda, p.ldb, N, L == TN ? 1.f : 0.f);
+    CK(cudaDeviceSynchronize());
+    Stat sc = compare(CB_, cbf, N, nullptr, 0, ref, EXPECT_IDENT, nullptr, 0, C0, M, N);
+    if (E == EPI_BF16 || E == EPI_F32) {  // ours vs cuBLAS directly
+      Stat so = compare(C, cbf, N, CB_, cbf, nullptr, 0, nullptr, 0, nullptr, M, N);
+      (void)so;
+    }
+    // persistent, shuffled order: bit-identical?
+    std::string pers = "skip", alias = "n/a";
+    if (persist) {
+      Args q = p; q.C = C2; if (E == EPI_GELU) q.aux = aux2;
+      if (L == TN) CK(cudaMemcpy(C2, C0, cbytes, cudaMemcpyDeviceToDevice));
+      run(L, E, q, true, dord, 2 * nsm);
+      CK(cudaDeviceSynchronize()); CK(cudaGetLastError());
+      unsigned long long* cnt; CK(cudaMalloc(&cnt, 8)); CK(cudaMemset(cnt, 0, 8));
+      count_diff<<<1024, 256>>>((const uint32_t*)C, (const uint32_t*)C2, cbytes / 4, cnt);
+      if (E == EPI_GELU) count_diff<<<1024, 256>>>((const uint32_t*)aux, (const uint32_t*)aux2, (size_t)M * N / 2, cnt);
+      unsigned long long h; CK(cudaMemcpy(&h, cnt, 8, cudaMemcpyDeviceToHost)); cudaFree(cnt);
+      pers = h == 0 ? "bitexact" : "DIFF"; ok = ok && h == 0;
+    }
+    if (E == EPI_RES && persist) {  // C aliases R
+      CK(cudaMemcpy(C2, aux, cbytes, cudaMemcpyDeviceToDevice));
+      Args q = p; q.C = C2; q.aux = (bf16*)C2;
+      run(L, E, q, false, nullptr, 0); CK(cudaDeviceSynchronize());
+      unsigned long long* cnt; CK(cudaMalloc(&cnt, 8)); CK(cudaMemset(cnt, 0, 8));
+      count_diff<<<1024, 256>>>((const uint32_t*)C, (const uint32_t*)C2, cbytes / 4, cnt);
+      unsigned long long h; CK(cudaMemcpy(&h, cnt, 8, cudaMemcpyDeviceToHost)); cudaFree(cnt);
+      alias = h == 0 ? "ok" : "DIFF"; ok = ok && h == 0;
+    }
+    // timing
+    float tours = 0, tcb = 0;
+    if (bench) {
+      char ut[64]; FILE* f = popen("nvidia-smi --query-gpu=utilization.gpu,memory.used --format=csv,noheader", "r");
+      if (f) { if (fgets(ut, sizeof ut, f)) { ut[strcspn(ut, "\n")] = 0; } fclose(f); } else ut[0] = 0;
+      int it = (2.0 * M * N * K > 5e11) ? 5 : 20;
+      tours = time_ms([&] { run(L, E, p, false, nullptr, 0); }, it);
+      tcb = time_ms([&] { cublas_gemm(L, A, B, CB_, cbf, M, N, K, p.lda, p.ldb, N, L == TN ? 1.f : 0.f); }, it);
+      (void)ut;
+    }
+    double fl = 2.0 * M * N * K;
+    char shape[64]; snprintf(shape, 64, "%dx%dx%d", M, N, K);
+    printf("%-22s %-18s | %-9.2e %-9.2e %-9.2e | %-6s %-5s | %6.1fTF %6.1fTF %5.2f  %s\n", cs.name.c_str(), shape, s.rmax, s.rmean, sc.rmax,
+           pers.c_str(), alias.c_str(), bench ? fl / tours * 1e-9 : 0.0, bench ? fl / tcb * 1e-9 : 0.0, bench ? tcb / tours : 0.0, ok ? "PASS" : "FAIL");
+    fflush(stdout);
+    if (!ok) nfail++;
+    cudaFree(A); cudaFree(B); cudaFree(C); cudaFree(C2); cudaFree(CB_); cudaFree(ref); cudaFree(dord);
+    if (C0) cudaFree(C0); if (aux) cudaFree(aux); if (aux2) cudaFree(aux2);
+  }
+  printf(nfail ? "OVERALL FAIL (%d)\n" : "OVERALL PASS\n", nfail);
+  return nfail != 0;
+}
