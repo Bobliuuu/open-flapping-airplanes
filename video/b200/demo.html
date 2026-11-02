@@ -289,9 +289,9 @@ function place(el, x, y, w) { el.style.transform = `translate(${x}px,${y}px) sca
 
 // ---------------------------------------------------------------- per-frame state
 const CAP = {
-  live: `<span><b>Live recording.</b> One program on one GPU trains an AI model, answers a question with it, and plays Doom, all at once.</span>`,
-  zoom: `<span><b>One program, one GPU.</b> The GPU's ${SPLIT.total} processors are split between the three jobs.</span>`,
-  code: `<span><b>The code.</b> Three jobs in one GPU program, started only once.</span>`};
+  live: `<span><b>Live recording.</b> One megakernel on one GPU trains an AI model, answers a question with it, and plays Doom, all at once.</span>`,
+  zoom: `<span><b>One megakernel, one GPU.</b> The GPU's ${SPLIT.total} processors are split between the three jobs.</span>`,
+  code: `<span><b>The code.</b> Three jobs in one megakernel, started only once.</span>`};
 const REC0 = {x: 120, y: 8, w: 1680};       // the recording in the opening: full width minus margins, the caption below it
 window.seek = async function (t) {
   const inS = k => t >= S[k][0] && t < S[k][1];
