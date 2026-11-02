@@ -10,7 +10,8 @@ follow its aggregate_v2.py, which, with fa_compare.py, writes the summary.
   modal run b200-run/modal_app.py --step build     # CPU: build the megakernel image (prints ptxas registers / spills)
   modal run b200-run/modal_app.py --step env       # GPU, ~2 min: torch, Transformer Engine, Megatron-core and vLLM on the B200
   modal run b200-run/modal_app.py --step mk        # megakernel: 20-step loss check, then 4,000 steps x reps with split + Doom + serving
-  modal run b200-run/modal_app.py --step gemm      # the untested tcgen05 GEMM backend's test plan (mma.sync control first)
+  modal run b200-run/modal_app.py --step gemm      # the tcgen05 GEMM backend's test (mma.sync control first); --tag picks results/<tag>
+  modal run b200-run/modal_app.py --step tccmp     # the tcgen05 megakernel (2 and 3 stages) on FA's split with FA's prompt, two B200s
   modal run b200-run/modal_app.py --step train     # Megatron-core (TE and local) and PyTorch eager: 4,000 steps each, alone
   modal run b200-run/modal_app.py --step serve     # vLLM batch-1 decode of the trained weights, alone
   modal run b200-run/modal_app.py --step mk --serving fa --tag megakernel_fa     # serving FA's prompt, asked again every 256 tokens
@@ -65,13 +66,11 @@ gemm_img = mk_img.run_commands(
     " && nvcc $F -DTRIAD_GEMM_BACKEND=1 -DGEMM100_LAYOUT_MASK=3 -o t_nn test_gemm_sm100.cu -lcublas"
     " && nvcc $F -DTRIAD_GEMM_BACKEND=1 -o t_all test_gemm_sm100.cu -lcublas"
 )
-# The megakernel with the tcgen05 GEMM backend: tc4 routes only TN GEMMs (weight gradients, all faster in the GEMM test) to tcgen05,
-# tc7 routes every layout; the rest stays on mma.sync.
+# The megakernel with the tcgen05 GEMM backend (every GEMM layout), 2 blocks per SM: triad_tc2 with 2 pipeline stages (66,432 B of shared
+# memory per block, the same L1 as triad_s), triad_tc3 with 3 (99,200 B; faster training, less L1 for the serving SMs).
 tc_img = mk_img.run_commands(
-    f"cd {MK} && MODEL=S bash build.sh sm_100a triad_tc4 -DTRIAD_GEMM_BACKEND=1 -DGEMM100_LAYOUT_MASK=4"
-    " && MODEL=S bash build.sh sm_100a triad_tc7 -DTRIAD_GEMM_BACKEND=1"
-).run_commands(  # 3 tcgen05 stages (100 KB of shared memory per block) leave room for only 1 block per SM; 2 stages fit 2 blocks per SM
-    f"cd {MK} && MODEL=S bash build.sh sm_100a triad_tc7s2 -DTRIAD_GEMM_BACKEND=1 -DGEMM100_STAGES=2"
+    f"cd {MK} && MODEL=S bash build.sh sm_100a triad_tc2 -DTRIAD_GEMM_BACKEND=1 -DGEMM100_STAGES=2"
+    " && MODEL=S bash build.sh sm_100a triad_tc3 -DTRIAD_GEMM_BACKEND=1 -DGEMM100_STAGES=3"
 )
 # --step video: the megakernel's dashboard in Google Chrome on a virtual X display, recorded by ffmpeg. The page asks for macOS monospace
 # fonts; on Linux the generic monospace family is used, which fontconfig points at JetBrains Mono.
@@ -225,7 +224,7 @@ def decode_answers(tokens_path, vocab_path, out_path, picks=(0, 0.25, 0.5, 0.75,
 @app.function(gpu=GPU, image=tc_img, volumes={V: vol}, timeout=5400)
 def mk(reps: int = 3, steps: int = 4000, binary: str = "triad_s", tag: str = "megakernel", trainonly: bool = True, serve: str = "story"):
     """The megakernel on one B200: a 20-step loss check (no Doom), then `reps` runs of training + serving + Doom on FA's split, then
-    training alone on all 148 SMs for reference. binary: triad_s (mma.sync GEMMs), triad_tc4 or triad_tc7 (tcgen05). serve: story | fa."""
+    training alone on all 148 SMs for reference. binary: triad_s (mma.sync GEMMs), triad_tc2 or triad_tc3 (tcgen05). serve: story | fa."""
     vol.reload()
     out = f"{RES}/{tag}"
     os.makedirs(out, exist_ok=True)
@@ -337,11 +336,11 @@ def video(steps: int = 4000, width: int = 1920, height: int = 1080, scale: float
 
 
 @app.function(gpu=GPU, image=gemm_img, volumes={V: vol}, timeout=2400)
-def gemm():
-    """llm/b200/gemm_tcgen05's test plan, its first run on a Blackwell GPU: the mma.sync control, then tcgen05 for NT only, NT + NN, all
-    layouts, then speed against cuBLAS. Every run is under timeout -s KILL (a wrong barrier phase hangs); stops at the first failure."""
+def gemm(tag: str = "gemm"):
+    """llm/b200/gemm_tcgen05's test plan: the mma.sync control, then tcgen05 for NT only, NT + NN, all layouts, then speed against
+    cuBLAS. Every run is under timeout -s KILL (a wrong barrier phase hangs); stops at the first failure. Results go to results/<tag>."""
     vol.reload()
-    out, d = f"{RES}/gemm", "/opt/triad/llm/b200/gemm_tcgen05"
+    out, d = f"{RES}/{tag}", "/opt/triad/llm/b200/gemm_tcgen05"
     os.makedirs(out, exist_ok=True)
     plan = [("t_mma", "./t_mma", 600), ("t_nt_logits", "./t_nt --only logits --nobench", 90), ("t_nt", "./t_nt --nobench", 300),
             ("t_nn", "./t_nn --nobench", 300), ("t_all", "./t_all --nobench", 300), ("t_all_bench", "./t_all", 900)]
@@ -458,14 +457,14 @@ def main(step: str = "prep", reps: int = 3, steps: int = 4000, binary: str = "tr
         for t, png in r["stills"].items():
             (dst / f"b200_llm_dashboard_t{t:05.1f}.png").write_bytes(png)
         print(f"saved {dst / 'b200_llm_dashboard.mp4'} ({r['mb']:.1f} MB, {r['seconds']:.1f} s); final {r['final']}", *r["summary"], sep="\n  ")
-    elif step == "tccmp":                              # both tcgen05 builds, 600 steps on FA's split, in parallel on two B200s
-        names = ("triad_tc4", "triad_tc7")
-        calls = [mk.spawn(1, 600, b, f"megakernel_{b}_600", False) for b in names]
+    elif step == "tccmp":                              # both tcgen05 builds on FA's split with FA's prompt, in parallel on two B200s
+        names = ("triad_tc2", "triad_tc3")
+        calls = [mk.spawn(reps, steps, b, f"megakernel_{b[6:]}_fa", trainonly, "fa") for b in names]
         for b, c in zip(names, calls):
             for name, r in c.get().items():
                 print(b, name, r if isinstance(r, str) else f"rc={r['rc']}", *([] if isinstance(r, str) else r["lines"]), sep="\n  ")
     elif step == "gemm":
-        print(json.dumps(gemm.remote(), indent=1))
+        print(json.dumps(gemm.remote(tag if tag != "megakernel" else "gemm"), indent=1))
     elif step == "train":
         print(json.dumps(train.remote(reps, steps, sub), indent=1))
     elif step == "serve_both":
