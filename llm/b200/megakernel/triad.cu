@@ -1,4 +1,4 @@
-// B200 PORT (UNTESTED ON B200; sm_80 path regression-checked on A100, see README): SM partition derived from the device, see "SM PARTITION" below.
+// B200 PORT (tested on a B200; sm_80 path regression-checked on A100, see README): SM partition derived from the device, see "SM PARTITION" below.
 // triad.cu : model "S" (GPT, 162M params) TRAINING + live DECODE + real DOOM inside ONE persistent kernel launch (A100, sm_80),
 // with an embedded HTTP dashboard server (the three-panel Triad page). Derived from llm/megakernel/triad_llm.cu.
 //

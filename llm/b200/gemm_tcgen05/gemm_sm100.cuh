@@ -1,7 +1,7 @@
 // gemm_sm100.cuh -- Blackwell (sm_100a) GEMM backend for the Triad megakernel: TMA loads + tcgen05.mma into TMEM, single-CTA (cta_group::1).
 //
-// *** UNTESTED. Written WITHOUT B200 hardware, from the PTX ISA 8.7 tcgen05 chapter and CUTLASS 3.8+/4.x sm100 code. It may not even be correct
-// *** on the first run; see README.md (test plan). Compile-checked only (nvcc 12.8 -arch=sm_100a, ptxas) where the README says so. ***
+// Written from the PTX ISA 8.7 tcgen05 chapter and CUTLASS 3.8+/4.x sm100 code; tested on a B200 (test_gemm_sm100: all 15 S shapes PASS,
+// persistent == grid bit-exact) and used by the B200 megakernel (-DTRIAD_GEMM_BACKEND=1), see README.md.
 //
 // Same task contract as llm/gemm/gemm.cuh: one task = one 128x128 output tile of C[M,N], executed by ALL 256 threads of a block that call
 // tile<LAYOUT,EPI>(p, tile_m, tile_n, smem). Same Layout (NN/NT/TN) and Epi enums, same epilogues (they are the epilogue helpers of gemm.cuh,
@@ -19,7 +19,7 @@
 //     mma.sync path of gemm.cuh, so the same source builds everywhere. -DGEMM100_LAYOUT_MASK=<bits> chooses per layout (bit0 NN, bit1 NT, bit2 TN)
 //     which layouts use tcgen05; the rest use mma.sync (debug switch: start with 2 = NT only, K-major on both operands, the best-understood case).
 //
-// Mirrored sources (from memory, unverified against the files):
+// Mirrored sources (from memory):
 //   cutlass/include/cute/arch/mma_sm100_umma.hpp     SM100_MMA_F16BF16_SS: "tcgen05.mma.cta_group::1.kind::f16 [d], a_desc, b_desc, i_desc, p;"
 //   cutlass/include/cute/arch/mma_sm100_desc.hpp     UMMA::SmemDescriptor (start>>4 @0, LBO>>4 @16, SBO>>4 @32, version=1 @46, layout_type @61),
 //                                                    UMMA::InstrDescriptor (c_fmt@4, a_fmt@7, b_fmt@10, a_major@15, b_major@16, N>>3 @17, M>>4 @24),

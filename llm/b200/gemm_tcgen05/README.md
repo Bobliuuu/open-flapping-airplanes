@@ -1,13 +1,22 @@
 # gemm_tcgen05: Blackwell GEMM backend (TMA + tcgen05.mma + TMEM), first attempt
 
-> **Update 2026-11-02, first run on a B200:** `test_gemm_sm100` prints PASS for all 15 S cases with NT only, NT + NN and every layout, at
-> 15-42% of cuBLAS (the mma.sync control: 13-33%). Inside the megakernel the build runs 1 block per SM (occupancy, not shared memory) and the
-> step gets slower. Logs: [`../../../b200-run/results/gemm/`](../../../b200-run/results/gemm/), summary in [`../../../b200-run/README.md`](../../../b200-run/README.md).
+**Status (2026-11-02, B200):** `test_gemm_sm100` prints PASS for all 15 S shapes, every layout, persistent == grid bit-exact, at 34-73%
+of cuBLAS ([`../../../b200-run/results/gemm_v2/`](../../../b200-run/results/gemm_v2/); the `mma.sync` control: 13-33%). The B200 megakernel
+builds with it (`-DTRIAD_GEMM_BACKEND=1`) and trains about 2x faster than with `mma.sync`
+([`../../../b200-run/README.md`](../../../b200-run/README.md#the-gemms-from-mmasync-to-tcgen05)). It was first written without B200 hardware;
+what the first runs found and fixed:
 
-**STATUS: UNTESTED ON B200. It has never executed.** Written without B200 hardware from the PTX ISA tcgen05 chapter and from memory of
-CUTLASS 3.8+/4.x sm100 code. What *was* done here: it compiles with nvcc 12.8 for `-arch=sm_100a` (ptxas accepts every tcgen05/TMA instruction, 0 spills,
-72-108 registers), and the SASS contains `UTCHMMA`, `UTMALDG.2D`, `LDTM`, `UTCBAR`. Compiling says nothing about whether descriptors, layouts or
-barrier phases are right. Treat every number and every line as a hypothesis until `test_gemm_sm100` prints PASS on a B200.
+* **TMEM and blocks per SM.** The occupancy API reports 1 block per SM for any kernel that contains a `tcgen05` instruction, and a block
+  that holds its TMEM allocation permit makes the next block's `tcgen05.alloc` on that SM wait until the holder exits. So each block
+  allocates `TMEM_COLS` columns once in `block_init()` (all 256 threads, before its first tile), relinquishes the permit immediately, and
+  frees them in `block_exit()`; `tile()` never allocates. Callers size their grid from registers and shared memory (2 blocks per SM fit).
+  A per-tile allocation without the relinquish serializes co-resident blocks, and in a persistent kernel can deadlock them.
+* **Epilogue.** The accumulator goes TMEM -> registers -> a 64 KB fp32 staging tile in the idle pipeline buffers (16-B chunks XOR-
+  swizzled by row) -> one tile row per warp store; the per-element math is `gemm::epi_store`'s, so the results are bit-identical. This
+  roughly doubled the K=768 GEMMs (qkv 300 -> 764 TFLOP/s).
+* **Shared memory.** The mbarriers live in static shared memory and the alignment slack is 896 B: `smem_bytes()` is 66,432 B for 2
+  stages, 99,200 B for 3 (`-DGEMM100_STAGES`).
+* The `tcgen05` GEMMs round exactly like the `mma.sync` ones on every shape we ran: the megakernel's loss is bit-identical with either.
 
 ## Files
 | file | what |
@@ -21,8 +30,8 @@ Same task contract: one 128x128 output tile per call, all 256 threads of the blo
 same `Epi` (BF16, RES, GELU, DGELU, F32 with accumulate) and the same epilogue code (`gemm::epi_store`, reused). Differences:
 1. `Args` becomes `ArgsTC` (= `gemm::Args` + `tmA`, `tmB`). Call `prepare(args, layout)` once on the host (the megakernel does it inside `mkgemm`).
 2. `K % 64 == 0` (all S/F/M shapes satisfy it: 768, 2048, 3072, 4096, 8192, 100352).
-3. `smem_bytes()` = 100,352 B (3 stages x 32 KB + 1 KB barriers + 1 KB slack to 1024-B align). 2 blocks/SM = ~197 KB of 227 KB.
-4. Each tile allocates/frees 128 of the 512 TMEM columns (2 blocks per SM => 256 columns, fine).
+3. `smem_bytes()` = stages x 32 KB + 896 B of alignment slack (66,432 B for 2 stages, 99,200 B for 3); barriers in static shared memory.
+4. Each block holds 128 of the 512 TMEM columns from `block_init()` to `block_exit()` (2 blocks per SM => 256 columns).
 5. Compiled for any target without `__CUDA_ARCH_FEAT_SM100_ALL` (sm_80, sm_90, plain sm_100) the same source silently becomes the mma.sync GEMM, so a TRIAD_GEMM_BACKEND=1 binary still builds and runs on the A100 (it just is not tcgen05; checked: test builds for sm_80).
 
 ## Design (single CTA, cta_group::1, M=128, N=128, K=16 per instruction, 4 MMAs per 64-wide K stage)
@@ -45,8 +54,8 @@ same `Epi` (BF16, RES, GELU, DGELU, F32 with accumulate) and the same epilogue c
 * **R2 K-major descriptors** (NT, and A of NN): LBO field = 16 B ("unused"), SBO = 1024, +32 B per k16. If NT fails with garbage in a stripe pattern, check SBO and the version bit (bit 46 = 1) first.
 * **R3 mbarrier parities / commit semantics**: `empty` wait uses `(use&1)^1` (first pass falls through), `full` `use&1`, `accum` parity 0. If the kernel hangs (test prints nothing and the GPU stays at 100%), this is the suspect; run `compute-sanitizer --tool synccheck` and shrink to K=64.
 * **R4 proxy fences**: the megakernel's earlier phases write operands with the generic proxy; the TMA reads them through the async proxy. The producer executes `fence.proxy.async` once per tile; if stale data shows up only inside the megakernel (and the stand-alone test passes), add `fence.proxy.async.global` after the dependency acquire in `job_loop` and run with `--opt-mode 0`.
-* **R5 epilogue speed**: each thread stores its own row (4-8 B, uncoalesced across the warp). Correct but slow; the first optimisation is to stage the tile through smem and write 16 B/lane (or TMA store). Not done on purpose.
-* **R6 TMEM alloc inside a tile** (alloc/dealloc per task, no `relinquish_alloc_permit`): costs a few hundred cycles per tile. If it shows in the profile, allocate once per block (needs a stateful hook in `job_loop`).
+* **R5 epilogue speed**: done (staged, coalesced; see the status above). A TMA store would also free the warps earlier.
+* **R6 TMEM alloc inside a tile**: done (once per block with the permit relinquished; this was what held the megakernel at 1 block per SM).
 * Not implemented: 2-CTA (cta_group::2, 256x128 per CTA pair), FP8/NVFP4 kinds, multicast TMA, persistent tile scheduler with accumulator double-buffering (epilogue overlap with the next tile's MMAs). Those are the tuning list for hour 4.
 
 ## Build and test plan (reuses test_gemm.cu through make_test.sh; run on the B200)
