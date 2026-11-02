@@ -224,18 +224,62 @@ __device__ __forceinline__ void tile_tc(const ArgsTC& p, int tile_m, int tile_n,
   __syncwarp();
 
   // ---- epilogue: all 8 warps. Warp w owns TMEM lane quadrant (w&3) and column half (w>>2): thread = one row, 64 columns.
+  // TMEM -> registers -> fp32 staging tile in the (now idle) pipeline buffers, 16-B chunks XOR-swizzled by row so both the row-per-thread
+  // writes and the row-per-warp reads are free of bank conflicts -> coalesced global stores, one tile row per warp instruction.
+  // The per-element math is gemm::epi_store's, so results are bit-identical to the row-per-thread epilogue.
   mbar_wait(accum, 0);
   tc_fence_after();
   __syncwarp();
-  const int q = warp & 3, half = warp >> 2;
-  const int row = m0 + q * 32 + lane;
+  static_assert(STAGES100 * STAGE_BYTES >= 128 * 128 * 4, "staging tile needs 64 KB of pipeline buffers");
+  float* stg = reinterpret_cast<float*>(gbase);
+  {
+    const int q = warp & 3, half = warp >> 2, row = q * 32 + lane;
 #pragma unroll
-  for (int c = 0; c < 2; c++) {
-    uint32_t r[32];
-    const int col0 = n0 + half * 64 + c * 32;
-    tmem_ld32(tmem + ((uint32_t)(q * 32) << 16) + (uint32_t)(half * 64 + c * 32), r);
+    for (int c = 0; c < 2; c++) {
+      uint32_t r[32];
+      tmem_ld32(tmem + ((uint32_t)(q * 32) << 16) + (uint32_t)(half * 64 + c * 32), r);
 #pragma unroll
-    for (int j = 0; j < 16; j++) gemm::epi_store<EPI>(p, row, col0 + 2 * j, __uint_as_float(r[2 * j]), __uint_as_float(r[2 * j + 1]));
+      for (int j = 0; j < 8; j++) {
+        const int chunk = half * 16 + c * 8 + j;                  // 16-B chunk of the 512-B fp32 row, 0..31
+        *reinterpret_cast<float4*>(stg + row * 128 + ((chunk ^ (row & 7)) << 2)) =
+            make_float4(__uint_as_float(r[4 * j]), __uint_as_float(r[4 * j + 1]), __uint_as_float(r[4 * j + 2]), __uint_as_float(r[4 * j + 3]));
+      }
+    }
+  }
+  __syncthreads();
+#pragma unroll 4
+  for (int rr = warp; rr < 128; rr += 8) {                        // lane = 4 consecutive columns of row rr
+    const float4 a = *reinterpret_cast<const float4*>(stg + rr * 128 + ((lane ^ (rr & 7)) << 2));
+    const size_t gr = (size_t)(m0 + rr);
+    const int gc = n0 + lane * 4;
+    if constexpr (EPI == EPI_F32) {
+      float4* dst = reinterpret_cast<float4*>(reinterpret_cast<float*>(p.C) + gr * p.ldc + gc);
+      float4 v = a;
+      if (p.accumulate) { const float4 o = *dst; v.x += o.x; v.y += o.y; v.z += o.z; v.w += o.w; }
+      *dst = v;
+    } else {
+      float v0 = a.x, v1 = a.y, v2 = a.z, v3 = a.w;
+      bf16* C = reinterpret_cast<bf16*>(p.C);
+      if constexpr (EPI == EPI_RES) {
+        const uint2 rw = *reinterpret_cast<const uint2*>(p.aux + gr * p.ldaux + gc);
+        const __nv_bfloat162 r01 = *reinterpret_cast<const __nv_bfloat162*>(&rw.x), r23 = *reinterpret_cast<const __nv_bfloat162*>(&rw.y);
+        v0 += __bfloat162float(r01.x); v1 += __bfloat162float(r01.y); v2 += __bfloat162float(r23.x); v3 += __bfloat162float(r23.y);
+      } else if constexpr (EPI == EPI_GELU) {
+        const __nv_bfloat162 p01 = __floats2bfloat162_rn(v0, v1), p23 = __floats2bfloat162_rn(v2, v3);
+        uint2 pw; pw.x = *reinterpret_cast<const uint32_t*>(&p01); pw.y = *reinterpret_cast<const uint32_t*>(&p23);
+        *reinterpret_cast<uint2*>(p.aux + gr * p.ldaux + gc) = pw;
+        v0 = gelu_tanh(__bfloat162float(p01.x)); v1 = gelu_tanh(__bfloat162float(p01.y));
+        v2 = gelu_tanh(__bfloat162float(p23.x)); v3 = gelu_tanh(__bfloat162float(p23.y));
+      } else if constexpr (EPI == EPI_DGELU) {
+        const uint2 pw = *reinterpret_cast<const uint2*>(p.aux + gr * p.ldaux + gc);
+        const __nv_bfloat162 p01 = *reinterpret_cast<const __nv_bfloat162*>(&pw.x), p23 = *reinterpret_cast<const __nv_bfloat162*>(&pw.y);
+        v0 *= gelu_tanh_grad(__bfloat162float(p01.x)); v1 *= gelu_tanh_grad(__bfloat162float(p01.y));
+        v2 *= gelu_tanh_grad(__bfloat162float(p23.x)); v3 *= gelu_tanh_grad(__bfloat162float(p23.y));
+      }
+      const __nv_bfloat162 o01 = __floats2bfloat162_rn(v0, v1), o23 = __floats2bfloat162_rn(v2, v3);
+      uint2 ow; ow.x = *reinterpret_cast<const uint32_t*>(&o01); ow.y = *reinterpret_cast<const uint32_t*>(&o23);
+      *reinterpret_cast<uint2*>(C + gr * p.ldc + gc) = ow;
+    }
   }
   tc_fence_before();                                              // TMEM reads done before the next tile's MMAs overwrite the columns
   __syncthreads();                                                // smem (incl. barriers) is free for the caller's next task
