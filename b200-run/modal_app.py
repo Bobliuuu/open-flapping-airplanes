@@ -13,13 +13,14 @@ follow its aggregate_v2.py, which, with fa_compare.py, writes the summary.
   modal run b200-run/modal_app.py --step gemm      # the tcgen05 GEMM backend's test (mma.sync control first); --tag picks results/<tag>
   modal run b200-run/modal_app.py --step tccmp     # the tcgen05 megakernel (2 and 3 stages) on FA's split with FA's prompt, two B200s
   modal run b200-run/modal_app.py --step train     # Megatron-core (TE and local) and PyTorch eager: 4,000 steps each, alone
+  modal run b200-run/modal_app.py --step train_graphs   # the same two with CUDA graphs (--cuda_graph), default and 16-core containers
   modal run b200-run/modal_app.py --step serve     # vLLM batch-1 decode of the trained weights, alone
   modal run b200-run/modal_app.py --step mk --serving fa --tag megakernel_fa     # serving FA's prompt, asked again every 256 tokens
   modal run b200-run/modal_app.py --step serve --prompt 'What is a megakernel?' --sub runs_v2_fa   # vLLM on FA's prompt
-  modal run b200-run/modal_app.py --step video     # screen recording of a full run's dashboard (FA's prompt) -> video/out/
+  modal run b200-run/modal_app.py --step video     # screen recording of a full run's dashboard (FA's prompt, --binary triad_tc2) -> video/out/
   modal run b200-run/modal_app.py --step report    # aggregate, then copy the Volume's results/ to b200-run/results/
 """
-import json, os, shutil, subprocess, sys, threading, time
+import json, os, re, shutil, subprocess, sys, threading, time
 from pathlib import Path
 
 import modal
@@ -76,7 +77,7 @@ tc_img = mk_img.run_commands(
 # fonts; on Linux the generic monospace family is used, which fontconfig points at JetBrains Mono.
 FONTS_CONF = ('<?xml version="1.0"?><!DOCTYPE fontconfig SYSTEM "fonts.dtd"><fontconfig><alias><family>monospace</family>'
               '<prefer><family>JetBrains Mono</family></prefer></alias></fontconfig>')
-vid_img = mk_img.apt_install("xvfb", "ffmpeg", "wget", "fonts-dejavu-core", "fonts-jetbrains-mono").run_commands(
+vid_img = tc_img.apt_install("xvfb", "ffmpeg", "wget", "fonts-dejavu-core", "fonts-jetbrains-mono").run_commands(
     "wget -q -O /tmp/chrome.deb https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb"
     " && apt-get update -q && apt-get install -y -q /tmp/chrome.deb && rm /tmp/chrome.deb && google-chrome --version",
     f"echo '{FONTS_CONF}' > /etc/fonts/local.conf && fc-cache -f && fc-match monospace",
@@ -251,7 +252,7 @@ def mk(reps: int = 3, steps: int = 4000, binary: str = "triad_s", tag: str = "me
 
 
 @app.function(gpu=GPU, image=vid_img, volumes={V: vol}, cpu=8.0, memory=32768, timeout=2400)
-def video(steps: int = 4000, width: int = 1920, height: int = 1080, scale: float = 4 / 3, fps: int = 30) -> dict:
+def video(steps: int = 4000, width: int = 1920, height: int = 1080, scale: float = 4 / 3, fps: int = 30, binary: str = "triad_tc2") -> dict:
     """Screen recording of the megakernel's dashboard for a full run on FA's split: the training loss, answers to FA's prompt from the live
     weights, Doom. Google Chrome shows the page on a virtual X display and ffmpeg records it in real time; the dashboard is served
     --start-delay seconds before the launch, so the recording starts at step 0. The MP4 goes to the Volume's video/; stills come back."""
@@ -261,9 +262,9 @@ def video(steps: int = 4000, width: int = 1920, height: int = 1080, scale: float
     vol.reload()
     gpu, env, delay = sh(GPU_INFO)[1].strip(), dict(os.environ, DISPLAY=":99"), 15.0
     procs = [subprocess.Popen(["Xvfb", ":99", "-screen", "0", f"{width}x{height}x24", "-nolisten", "tcp"])]
-    cmd = (f"./triad_s --split b200 --wad /opt/triad/doom-gpu/doom1.wad --vocab {DATA}/cl100k_vocab.bin {serve_args('fa')} {BASE_ARGS}"
-           f" --steps {steps} --port 8080 --start-delay {delay}")
-    demo = subprocess.Popen(f"timeout -k 5 {int(delay + 900)} {cmd}", shell=True, executable="/bin/bash", cwd=MK,
+    cmd = (f"./{binary} --split b200 --wad /opt/triad/doom-gpu/doom1.wad --vocab {DATA}/cl100k_vocab.bin {serve_args('fa')} {BASE_ARGS}"
+           f" --steps {steps} --port 8080 --start-delay {delay} --loss-out /tmp/video_loss.txt")
+    demo = subprocess.Popen(f"timeout -k 5 {int(delay + 900)} stdbuf -oL -eL {cmd}", shell=True, executable="/bin/bash", cwd=MK,   # line-buffered: the log keeps the run's summary
                             stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, errors="replace")
     procs.append(demo)
     log = []
@@ -323,7 +324,21 @@ def video(steps: int = 4000, width: int = 1920, height: int = 1080, scale: float
     if rc:
         return {"gpu": gpu, "error": "encoding failed: " + out[-500:]}
     os.makedirs(f"{V}/video", exist_ok=True)
-    shutil.copy("/tmp/llm_dashboard.mp4", f"{V}/video/b200_llm_dashboard.mp4")
+    name = f"b200_llm_dashboard_{binary}"
+    shutil.copy("/tmp/llm_dashboard.mp4", f"{V}/video/{name}.mp4")
+    Path(f"{V}/video/{name}.log").write_text("".join(log))                       # the recorded run's own console output
+    if os.path.exists("/tmp/video_loss.txt"):
+        shutil.copy("/tmp/video_loss.txt", f"{V}/video/{name}_loss.txt")
+    full = "".join(log)
+    def grab(pat, conv):
+        m = re.search(pat, full)
+        return conv(m.group(1)) if m else None
+    timing = {"binary": binary, "gpu": gpu, "launch_at_s": round(t_start - t_rec - ss, 3), "run_wall_s": round(t_end - t_start, 3),
+              "video_s": round(dur, 3), "fps": fps, "size": [width, height],
+              "note": "launch_at_s: seconds into the MP4 at which the dashboard first reported the kernel running (polled at 20 Hz)",
+              "run": {"kernel_s": grab(r"kernel time ([\d.]+) s \(event\)", float), "serve_tok_s": grab(r"-> (\d+) tok/s sampled", int),
+                      "doom_fps": grab(r"([\d.]+) fps over the run", float), "loss_final": grab(r"s3999 ([\d.]+)", float)}}
+    Path(f"{V}/video/{name}.json").write_text(json.dumps(timing, indent=1))
     vol.commit()
     stills = {}
     for t in (0.5, lead + 5, lead + 30, dur / 2, dur - 1.0):
@@ -389,6 +404,29 @@ def train(reps: int = 3, steps: int = 4000, sub: str = "runs_v2"):
     return _run_jobs(jobs, "python", sub)
 
 
+def _graph_jobs(reps, steps):
+    """The training baselines with CUDA graphs (their scripts' --cuda_graph): PyTorch replays the whole step from one graph, Megatron its
+    forward and backward (its optimizer stays eager); each alone on 116 SMs."""
+    jobs = [(f"pytorch_graph_S_mps_r{i}", TRAIN_PCT, f"train_pytorch.py --cuda_graph --steps {steps} --tag mps116") for i in range(1, reps + 1)]
+    jobs += [(f"megatron_te_graph_S_mps_r{i}", TRAIN_PCT, f"megatron_train.py --impl te --cuda_graph --steps {steps} --tag mps116")
+             for i in range(1, reps + 1)]
+    return jobs
+
+
+@app.function(gpu=GPU, image=train_img, volumes={V: vol}, memory=65536, timeout=7200)
+def train_graphs(reps: int = 3, steps: int = 4000, sub: str = "runs_v3_graph"):
+    """CUDA-graph training baselines in a container without reserved cores (where Megatron ran fastest, results/runs_v2/)."""
+    vol.reload()
+    return _run_jobs(_graph_jobs(reps, steps), "python", sub)
+
+
+@app.function(gpu=GPU, image=train_img, volumes={V: vol}, cpu=CPUS, memory=65536, timeout=7200)
+def train_graphs_cpu16(reps: int = 3, steps: int = 4000, sub: str = "runs_v3_graph_cpu16"):
+    """The same with 16 reserved cores."""
+    vol.reload()
+    return _run_jobs(_graph_jobs(reps, steps), "python", sub)
+
+
 @app.function(gpu=GPU, image=serve_img, volumes={V: vol}, cpu=CPUS, memory=65536, timeout=7200)
 def serve_both(reps: int = 3, sub: str = "runs_v2_cpu16"):
     """vLLM, both prompts in ONE container (same host and CPU), alone, on 24 SMs and on the whole GPU: separates a prompt effect from a
@@ -447,16 +485,23 @@ def main(step: str = "prep", reps: int = 3, steps: int = 4000, binary: str = "tr
     elif step == "mk":
         for name, r in mk.remote(reps, steps, binary, tag, trainonly, serving).items():
             print(name, r if isinstance(r, str) else f"rc={r['rc']}", *([] if isinstance(r, str) else r["lines"]), sep="\n  ")
-    elif step == "video":                              # dashboard recording -> video/out/ (ignored by video/.gitignore)
-        r = video.remote(steps)
+    elif step == "video":                              # dashboard recording -> video/out/ (ignored by video/.gitignore); --binary picks the build
+        b = binary if binary != "triad_s" else "triad_tc2"
+        r = video.remote(steps, binary=b)
         if "error" in r:
             raise SystemExit(f"video failed: {r['error']}\n{r.get('log', '')}")
         dst = ROOT / "video" / "out"
         dst.mkdir(parents=True, exist_ok=True)
-        subprocess.run([sys.executable, "-m", "modal", "volume", "get", "--force", "triad-b200-data", "video/b200_llm_dashboard.mp4", str(dst)], check=True)
+        for ext in (".mp4", ".json", ".log", "_loss.txt"):
+            subprocess.run([sys.executable, "-m", "modal", "volume", "get", "--force", "triad-b200-data", f"video/b200_llm_dashboard_{b}{ext}",
+                            str(dst)], check=True)
         for t, png in r["stills"].items():
-            (dst / f"b200_llm_dashboard_t{t:05.1f}.png").write_bytes(png)
-        print(f"saved {dst / 'b200_llm_dashboard.mp4'} ({r['mb']:.1f} MB, {r['seconds']:.1f} s); final {r['final']}", *r["summary"], sep="\n  ")
+            (dst / f"b200_llm_dashboard_{b}_t{t:05.1f}.png").write_bytes(png)
+        keep = ROOT / "b200-run" / "results" / f"video_{b}"   # the recorded run's timing, log and losses are kept with the results
+        keep.mkdir(parents=True, exist_ok=True)
+        for ext in (".json", ".log", "_loss.txt"):
+            shutil.copy(dst / f"b200_llm_dashboard_{b}{ext}", keep)
+        print(f"saved {dst / f'b200_llm_dashboard_{b}.mp4'} ({r['mb']:.1f} MB, {r['seconds']:.1f} s); final {r['final']}", *r["summary"], sep="\n  ")
     elif step == "tccmp":                              # both tcgen05 builds on FA's split with FA's prompt, in parallel on two B200s
         names = ("triad_tc2", "triad_tc3")
         calls = [mk.spawn(reps, steps, b, f"megakernel_{b[6:]}_fa", trainonly, "fa") for b in names]
@@ -467,6 +512,10 @@ def main(step: str = "prep", reps: int = 3, steps: int = 4000, binary: str = "tr
         print(json.dumps(gemm.remote(tag if tag != "megakernel" else "gemm"), indent=1))
     elif step == "train":
         print(json.dumps(train.remote(reps, steps, sub), indent=1))
+    elif step == "train_graphs":                       # CUDA-graph baselines, both container kinds in parallel
+        calls = [train_graphs.spawn(reps, steps), train_graphs_cpu16.spawn(reps, steps)]
+        for c in calls:
+            print(json.dumps(c.get(), indent=1))
     elif step == "serve_both":
         print(json.dumps(serve_both.remote(reps, sub if sub != "runs_v2" else "runs_v2_cpu16"), indent=1))
     elif step == "serve":
