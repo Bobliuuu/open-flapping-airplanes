@@ -1,7 +1,7 @@
 # MERGE.md: what to port from `llm/megakernel/triad_llm.cu` into the Doom/dashboard copy (`llm/triad/`)
 
 Everything below is already in `llm/megakernel/triad_llm.cu`. `triad_llm_perf.patch` is the complete diff against
-`triad_llm.cu.orig` (the file as the integration agent delivered it, plus `#include <unistd.h>`), so
+`triad_llm.cu.orig` (the file as first integrated, plus `#include <unistd.h>`), so
 `patch -p0 triad.cu < triad_llm_perf.patch` should apply to a copy that only added Doom/dashboard code. Hunks are
 independent; port in this order.
 

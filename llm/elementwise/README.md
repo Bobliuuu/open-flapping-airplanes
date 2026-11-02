@@ -47,7 +47,7 @@ Speed (GB/s of actual minimum traffic):
 | AdamW 162M | 3.63 ms | ~1330 (30 B/param) |
 | AdamW + fused zero G | 4.17 ms | ~1320 (34 B/param) |
 | zero_task / grad_sumsq (162M) | 0.44 ms | ~1480 |
-(A100 HBM peak 1555 GB/s; another agent's jobs were running intermittently, run-to-run spread ~5-10%.) LN is 256 blocks of 256 threads, latency-limited at ~13-22 us; CE is ALU/latency limited at ~57% of HBM (two exp2 per element); an attempt with `ex2.approx.ftz` and cheaper one-hot handling measured slower and was reverted.
+(A100 HBM peak 1555 GB/s; other jobs were running intermittently, run-to-run spread ~5-10%.) LN is 256 blocks of 256 threads, latency-limited at ~13-22 us; CE is ALU/latency limited at ~57% of HBM (two exp2 per element); an attempt with `ex2.approx.ftz` and cheaper one-hot handling measured slower and was reverted.
 
 ## Limits / open issues
 - CE at ~0.88 TB/s is the weakest op; the per-element exp is the cost (2 exps/element: could be halved by caching probabilities, which does not fit smem). Overlap with the GEMM in the megakernel will hide some of it.

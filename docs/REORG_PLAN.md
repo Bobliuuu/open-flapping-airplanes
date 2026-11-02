@@ -1,6 +1,6 @@
 # Planned reorganisation (not yet executed)
 
-Deferred because other agents are still editing these paths. Use `git mv` so history follows.
+Deferred while these paths are still being edited. Use `git mv` so history follows.
 Already done: `live-demo/` -> `a100-demo/`; `m0-a100/` and `m1-demo/` (Pong-era prototypes, no Doom) removed (tag `pre-trim` keeps them).
 `doom-gpu/` stays as the shared Doom-engine build used by every demo (scripts also use the box path `~/doom-gpu`).
 
