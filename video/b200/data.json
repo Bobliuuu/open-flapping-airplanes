@@ -714,8 +714,8 @@
   "binary": "triad_tc2",
   "gpu": "NVIDIA B200, 610.57.04, 183359 MiB, 1965 MHz\ncpus=8 unknown",
   "launch_at_s": 1.5,
-  "run_wall_s": 52.927,
-  "video_s": 57.927,
+  "run_wall_s": 52.502,
+  "video_s": 57.502,
   "fps": 30,
   "size": [
    1920,
@@ -723,16 +723,15 @@
   ],
   "note": "launch_at_s: seconds into the MP4 at which the dashboard first reported the kernel running (polled at 20 Hz)",
   "run": {
-   "kernel_s": 52.743,
-   "serve_tok_s": null,
-   "doom_fps": null,
+   "kernel_s": 52.328,
+   "serve_tok_s": 1745,
+   "doom_fps": 35.0,
    "loss_final": 2.1575
   },
-  "run_note": "from the run's console output; that log was cut at 4 KB by stdout buffering, so later summary lines are missing (null)",
   "file": "b200-run/results/video_triad_tc2/b200_llm_dashboard_triad_tc2.mp4",
-  "kernel_s": 52.743,
-  "serve_tok_s": 1741,
-  "doom_fps": null,
+  "kernel_s": 52.328,
+  "serve_tok_s": 1745,
+  "doom_fps": 35.0,
   "loss_final": 2.1575,
   "loss_curve": [
    [
@@ -2339,8 +2338,7 @@
     3999,
     2.157486
    ]
-  ],
-  "serve_tok_s_note": "not in the recorded run's log (cut before its summary); the race uses the 3-run mean"
+  ]
  },
  "training_baselines": {
   "megatron_te": {
