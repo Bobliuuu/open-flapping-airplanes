@@ -54,8 +54,8 @@ html,body{margin:0;background:var(--bg)}
 .base .row b{color:var(--text)}
 #chart{position:absolute;left:44px;top:790px;width:1832px;height:270px}
 /* cards */
-#cardrow{position:absolute;left:56px;top:104px;width:1808px;display:flex;gap:30px}
-.card{border-radius:20px;border:1px solid var(--line);background:var(--panel);padding:28px 32px;min-height:700px;opacity:0;box-sizing:border-box}
+#cardrow{position:absolute;left:56px;top:150px;width:1808px;display:flex;gap:30px}
+.card{border-radius:20px;border:1px solid var(--line);background:var(--panel);padding:28px 32px;min-height:560px;opacity:0;box-sizing:border-box}
 #c1{width:520px} #c2{width:738px} #c3{width:490px}
 .card .k{font-size:20px;letter-spacing:2px;color:var(--muted);text-transform:uppercase;margin-bottom:18px}
 .card .big{font-size:82px;font-weight:750;color:var(--ofa);letter-spacing:-1px;line-height:1}
@@ -70,13 +70,13 @@ html,body{margin:0;background:var(--bg)}
 .card td.t{text-align:right;padding-right:18px;font-family:"JetBrains Mono",monospace;color:#fff;white-space:nowrap}
 .card td.r{text-align:right;font-weight:650;white-space:nowrap}
 .card .fn{font-size:17px;color:var(--dim);line-height:1.45;margin-top:20px}
-#cardfoot{position:absolute;left:56px;right:56px;top:960px;font-size:19px;color:var(--muted);line-height:1.5;opacity:0}
+#cardfoot{position:absolute;left:56px;right:56px;top:760px;font-size:21px;color:var(--muted);line-height:1.5;opacity:0}
 /* fairness */
-#fairgrid{position:absolute;left:56px;top:110px;right:56px;display:flex;gap:40px}
+#fairgrid{position:absolute;left:56px;top:250px;right:56px;display:flex;gap:40px}
 .fcol{flex:1;border:1px solid var(--line);border-radius:20px;background:var(--panel);padding:28px 34px}
 .fcol .t{font-size:32px;font-weight:700;margin-bottom:16px}
 .fcol ul{padding:0;margin:0}
-.fcol li{font-size:22.5px;line-height:1.48;margin:0 0 13px 0;color:var(--text);list-style:none;position:relative;padding-left:38px}
+.fcol li{font-size:28px;line-height:1.4;margin:0 0 26px 0;color:var(--text);list-style:none;position:relative;padding-left:42px}
 .fcol li:before{position:absolute;left:0;top:0;font-weight:800}
 .ok li:before{content:"✓";color:var(--good)}
 .no li:before{content:"•";color:var(--doom);font-size:30px;line-height:30px}
@@ -94,12 +94,12 @@ html,body{margin:0;background:var(--bg)}
 
   <div id="chip" class="layer">
     <div id="chipwrap">
-      <div id="chiptitle">One <b style="color:#fff">NVIDIA B200</b>: 148 streaming multiprocessors (schematic)</div>
+      <div id="chiptitle">One <b style="color:#fff">NVIDIA B200</b> GPU: 148 processors</div>
       <div id="chipbox"><svg id="chipsvg" width="788" height="372"></svg></div>
       <div id="chiplegend">
-        <span><i style="background:var(--train)"></i><b id="lg-train"></b> SMs train</span>
-        <span><i style="background:var(--serve)"></i><b id="lg-serve"></b> SMs serve</span>
-        <span><i style="background:var(--doom)"></i><b id="lg-doom"></b> SMs Doom</span>
+        <span><i style="background:var(--train)"></i><b id="lg-train"></b> train</span>
+        <span><i style="background:var(--serve)"></i><b id="lg-serve"></b> answer</span>
+        <span><i style="background:var(--doom)"></i><b id="lg-doom"></b> play Doom</span>
       </div>
     </div>
   </div>
@@ -108,13 +108,13 @@ html,body{margin:0;background:var(--bg)}
     <div id="codepanel"><div id="codefile" class="mono"></div><div id="codelines" class="mono"></div><div id="launchline" class="mono"></div></div>
     <div id="progs">
       <div class="prog" id="pg-train"><div class="t" style="color:var(--train)">Training</div><div class="d" id="pg-train-d"></div></div>
-      <div class="prog" id="pg-serve"><div class="t" style="color:var(--serve)">Serving</div><div class="d" id="pg-serve-d"></div></div>
+      <div class="prog" id="pg-serve"><div class="t" style="color:var(--serve)">Answering</div><div class="d" id="pg-serve-d"></div></div>
       <div class="prog" id="pg-doom"><div class="t" style="color:var(--doom)">Doom</div><div class="d" id="pg-doom-d"></div></div>
     </div>
   </div>
 
   <div id="race" class="layer">
-    <div id="racetitle">The same work on the same B200: open-flapping-airplanes does it all at once, each baseline runs alone on its share</div>
+    <div id="racetitle">open-flapping-airplanes next to the usual tools</div>
     <div id="racesub"></div>
     <div id="raceclock">real time <b class="mono" id="clock">0.0 s</b></div>
     <div id="ofapanel"><div class="hd">open-flapping-airplanes <span id="ofahd"></span></div><div id="recslot"></div><div class="statrow" id="ofastats"></div></div>
@@ -127,7 +127,7 @@ html,body{margin:0;background:var(--bg)}
   <div id="fair" class="layer">
     <div id="fairgrid">
       <div class="fcol ok"><div class="t">How it was measured</div><ul id="fair-ok"></ul></div>
-      <div class="fcol no"><div class="t">What differs from Flapping Airplanes' demo</div><ul id="fair-no"></ul></div>
+      <div class="fcol no"><div class="t">What is different from Flapping Airplanes</div><ul id="fair-no"></ul></div>
     </div>
   </div>
 
@@ -191,94 +191,75 @@ function hl(src) {   // one-pass tokenizer: strings, keywords, functions, everyt
   }
   return out + esc(src.slice(last));
 }
-$("codefile").textContent = D.code.file + " · the persistent kernel (comments trimmed)";
+$("codefile").textContent = D.code.file;
 $("codelines").innerHTML = D.code.kernel.map((l, i) => `<div id="cl${i}">${hl(l)}</div>`).join("");
-$("launchline").innerHTML = `<span style="color:var(--muted)">launched once:</span> ${hl(D.code.launch)}`;
-$("pg-train-d").innerHTML = `A ${D.model.params}-parameter GPT learning ${D.model.data} with AdamW, ${fmt(D.model.tokens_per_step)} tokens per step: ` +
-  `${TR.phases_per_step} phases, ${fmt(TR.tasks_per_step)} tasks per step, on <b>${SPLIT.training} SMs</b>`;
-$("pg-serve-d").innerHTML = `Answers “${D.model.prompt}” from the weights as they train, ${D.model.answer_tokens} tokens per answer: ` +
-  `${TR.decode_phases} phases, ${fmt(TR.decode_tasks_per_token)} tasks per token, on <b>${SPLIT.inference} SMs</b>`;
-$("pg-doom-d").innerHTML = `The original C engine (doomgeneric, shareware E1M1), compiled for the GPU and played by a bot, on <b>${SPLIT.doom} SMs</b>`;
+$("launchline").innerHTML = `<span style="color:var(--muted)">started once:</span> ${hl(D.code.launch)}`;
+$("pg-train-d").innerHTML = `Teaches a ${D.model.params.replace(/\.\d+M$/, "M")}-parameter language model · <b>${SPLIT.training} processors</b>`;
+$("pg-serve-d").innerHTML = `Answers “${D.model.prompt}” while it learns · <b>${SPLIT.inference} processors</b>`;
+$("pg-doom-d").innerHTML = `The original game, played by a scripted AI · <b>${SPLIT.doom} processors</b>`;
 
-$("racesub").innerHTML = `Left: the recorded open-flapping-airplanes run. Right: each baseline's measured run on the same B200, alone on its share of the SMs, ` +
-  `replayed at its measured mean speed.`;
-$("ofahd").textContent = `· one kernel launch · trains on ${SPLIT.training} SMs, serves on ${SPLIT.inference}, plays Doom on ${SPLIT.doom} · recorded run`;
+$("racesub").innerHTML = `Megatron and PyTorch train, vLLM answers: replays of their measured runs.`;
+$("ofahd").textContent = `· recorded live`;
 function baseCard(id, color, name, sub) {
   return `<div class="base" id="${id}"><div class="nm" style="color:${color}">${name} <span>${sub}</span></div>
     <div class="bar"><i id="${id}-bar" style="background:${color}"></i></div>
     <div class="row"><span id="${id}-prog"></span><span id="${id}-l"></span><span id="${id}-time"></span></div></div>`;
 }
-$("basepanel").innerHTML = ORDER.map(k => baseCard("b-" + k, COL[k], `${BL[k].label}, ${BL[k].short}`, `· alone on ${SPLIT.training} SMs`)).join("") +
-  baseCard("b-vllm", COL.vllm, "vLLM 0.33, CUDA graphs", `· alone on ${SPLIT.inference} SMs · the same ${fmt(tokens)} tokens open-flapping-airplanes served`);
+const NAME = {megatron_te: "Megatron + TE", megatron_te_graph: "Megatron + TE, CUDA graphs", pytorch: "PyTorch", pytorch_graph: "PyTorch, CUDA graph"};
+$("basepanel").innerHTML = ORDER.map(k => baseCard("b-" + k, COL[k], NAME[k], `· ${SPLIT.training} processors`)).join("") +
+  baseCard("b-vllm", COL.vllm, "vLLM", `· ${SPLIT.inference} processors`);
 
 // result cards
 const trainTable = ORDER.map(k => {
   const p = DV.train_vs_each_pct[k];
-  return `<tr><td class="n">${BL[k].label} <span>· ${BL[k].short}</span></td><td class="t">${fmt(BL[k].train_s_mean, 1)} s</td>` +
+  return `<tr><td class="n">${NAME[k]}</td><td class="t">${fmt(BL[k].train_s_mean, 1)} s</td>` +
          `<td class="r" style="color:${relCol(p)}">${rel(p)}</td></tr>`;
 }).join("");
 const bestP = DV.train_vs_best_pct;
 const lGraph = DV.launches_megatron_graph_vllm_host;
 $("cardrow").innerHTML = `
- <div class="card" id="c1"><div class="k">Kernel launches · the same work</div>
-   <div class="big mono">1</div><div class="who">open-flapping-airplanes, for all three programs</div>
-   <div class="vs"><div class="line">Megatron-core + TE and vLLM:</div>
+ <div class="card" id="c1"><div class="k">Kernel launches</div>
+   <div class="big mono">1</div><div class="who">open-flapping-airplanes, for all three jobs</div>
+   <div class="vs"><div class="line">Megatron + TE and vLLM:</div>
    <div class="head" style="color:${COL.megatron_te}">${lGraph ? fmt(lGraph / 1e6, 1) + " to " : ""}${fmt(DV.launches_megatron_vllm_host / 1e6, 1)} million</div>
-   <div class="line" style="color:var(--muted)">host launch calls, with${lGraph ? " and without" : "out"} CUDA graphs</div></div>
-   <div class="fn">${DV.same_work}. Counted with torch.profiler: ${fmt(meg.launches_per_step)} per Megatron step eager${lGraph ? ", " + fmt(BL.megatron_te_graph.launches_per_step) + " with CUDA graphs" : ""};
-   ${fmt(VL.launches_per_token, 1)} per vLLM token. ${fmt(DV.launches_megatron_vllm_kernels / 1e6, 1)} million kernels run on the GPU either way.</div></div>
+   <div class="line" style="color:var(--muted)">with${lGraph ? " and without" : "out"} CUDA graphs</div></div></div>
  <div class="card" id="c2"><div class="k">${fmt(D.model.steps)} training steps</div>
-   <div class="big mono">${fmt(TR.train_s_mean, 1)} s</div><div class="who">open-flapping-airplanes on ${SPLIT.training} SMs, while it serves and plays Doom</div>
+   <div class="big mono">${fmt(TR.train_s_mean, 1)} s</div><div class="who">open-flapping-airplanes, while answering and playing Doom</div>
    <div class="vs"><table>${trainTable}</table>
-   <div class="head" style="color:${relCol(bestP)}">Fastest baseline: ${best.label}, ${best.short}, ${fmt(best.train_s_mean, 1)} s: ${rel(bestP)} than open-flapping-airplanes</div></div>
-   <div class="fn">Each baseline alone on ${SPLIT.training} SMs (CUDA MPS), the same model, data, initial weights and batch order; the faster of two
-   containers; mean of 3 runs (open-flapping-airplanes: ${TR.train_s.map(x => fmt(x, 2)).join(", ")} s). Final loss ${fmt(TR.loss_final, 4)} (open-flapping-airplanes), ${fmt(meg.loss_final_mean, 3)} (Megatron).</div></div>
- <div class="card" id="c3"><div class="k">Serving “${D.model.prompt}”</div>
-   <div class="big mono">${fmt(TR.serve_tok_s_mean)}</div><div class="who">tokens/s, open-flapping-airplanes on ${SPLIT.inference} SMs, while it trains</div>
-   <div class="vs"><div class="line">vLLM 0.33 alone, CUDA graphs: <b class="mono">${fmt(VL.tok_s_mean)} tok/s</b></div>
-   <div class="head" style="color:${relCol(DV.serve_vs_vllm_pct)}">vLLM ${rel(DV.serve_vs_vllm_pct)}</div></div>
-   <div class="fn">Batch 1, ${D.model.answer_tokens}-token answers from the same model, sampled tokens counted; vLLM with 16 reserved CPU
-   cores on ${SPLIT.inference} SMs (CUDA MPS). Mean of 3 runs each (vLLM ${VL.tok_s.map(x => fmt(x)).join(", ")}).</div></div>`;
-$("cardfoot").innerHTML = `One ${D.gpu.split(" (")[0]}, ${SPLIT.training} / ${SPLIT.inference} / ${SPLIT.doom} SMs as in Flapping Airplanes' demo. ` +
-  `Percentages use their metric, 1 − baseline rate / open-flapping-airplanes rate. Raw logs: b200-run/results in the repository.`;
+   <div class="head" style="color:${relCol(bestP)}">Fastest: ${NAME[DV.best_train_key]}, ${fmt(best.train_s_mean, 1)} s</div></div></div>
+ <div class="card" id="c3"><div class="k">Answering speed</div>
+   <div class="big mono">${fmt(TR.serve_tok_s_mean)}</div><div class="who">tokens per second, open-flapping-airplanes, while training</div>
+   <div class="vs"><div class="line">vLLM: <b class="mono">${fmt(VL.tok_s_mean)}</b> tokens per second</div>
+   <div class="head" style="color:${relCol(DV.serve_vs_vllm_pct)}">vLLM ${rel(DV.serve_vs_vllm_pct)}</div></div></div>`;
+$("cardfoot").innerHTML = `Averages of 3 runs on one B200. Logs: b200-run/results in the repository.`;
 
-// fairness
-const alt = D.other_build;
+// how it was measured, and what differs from Flapping Airplanes' demo
 const ok = [
-  `Same GPU and split: one B200, ${SPLIT.training} SMs train, ${SPLIT.inference} serve, ${SPLIT.doom} run Doom; each baseline is held to its share with CUDA MPS`,
-  `Same model, data, initial weights, batch order and AdamW schedule: <span>the loss curves match (final ${fmt(TR.loss_final, 3)} vs ${ORDER.map(k => fmt(BL[k].loss_final_mean, 3)).join(", ")})</span>`,
-  `Each baseline runs alone with nothing else on the GPU; open-flapping-airplanes trains, serves and plays Doom at once`,
-  `Baselines at their best: <span>both training frameworks timed eager and with CUDA graphs, each in two containers (the faster counts); vLLM with CUDA graphs and 16 CPU cores</span>`,
-  `The race shows the recorded run as it happened (${fmt(recRun, 1)} s, with the dashboard and screen capture); <span>the cards use 3 runs without them</span>`,
-  alt ? `<span>open-flapping-airplanes's other build (3 pipeline stages) trains in ${fmt(alt.train_s_mean, 1)} s but serves ${fmt(alt.serve_tok_s_mean)} tok/s; this video shows the 2-stage build</span>` : ""
-].filter(Boolean);
+  `One B200 GPU, split like Flapping Airplanes' demo: ${SPLIT.training} / ${SPLIT.inference} / ${SPLIT.doom} processors`,
+  `The same model, data and starting weights in every run`,
+  `Megatron, PyTorch and vLLM each ran alone on their share`,
+  `Megatron and PyTorch were timed with and without CUDA graphs`];
 const no = [
-  `Their model, data and code are not public, so their system cannot be run here`,
-  `Their model learned to answer “${D.model.prompt}”; ours learned ${D.model.data} and writes children's stories`,
-  `We sample at temperature ${D.model.temperature}; their demo decodes greedily`,
-  `They report ${fmt(FA.training.seconds_kvm, 1)} s against Megatron's ${fmt(FA.training.seconds_baseline, 1)} s (34% slower) and ${fmt(FA.inference.tok_s_kvm)}
-   against vLLM's ${fmt(FA.inference.tok_s_baseline)} tok/s (34% slower); <span>their baseline settings are not published. Our Megatron:
-   ${fmt(meg.train_s_mean, 1)} s eager${BL.megatron_te_graph ? ", " + fmt(BL.megatron_te_graph.train_s_mean, 1) + " s with CUDA graphs" : ""}</span>`];
+  `Their model and code are not public, so we could not run them`,
+  `Our model learned children's stories, so it answers with stories`,
+  `They report Megatron ${FA.training.baseline_slower_pct}% slower; here, with CUDA graphs, Megatron trains faster than open-flapping-airplanes`];
 $("fair-ok").innerHTML = ok.map(x => `<li>${x}</li>`).join("");
 $("fair-no").innerHTML = no.map(x => `<li>${x}</li>`).join("");
 $("end1").innerHTML = `Trained ${fmt(D.model.steps)} steps in <em>${fmt(TR.train_s_mean, 0)} seconds</em><br>while serving it<br>while playing Doom<br>in <em>1</em> kernel launch on <em>1</em> B200 GPU`;
-$("end2").innerHTML = `Serving: <b>vLLM ${rel(DV.serve_vs_vllm_pct)}</b> · Training: <b>Megatron + TE ${rel(DV.train_vs_megatron_pct)}</b> run eagerly` +
-  (BL.megatron_te_graph ? `, but <b>${rel(DV.train_vs_each_pct.megatron_te_graph)}</b> with CUDA graphs` : "") + `<br>` +
-  `open-flapping-airplanes · an independent reproduction, not affiliated with Flapping Airplanes`;
+$("end2").innerHTML = `open-flapping-airplanes · not affiliated with Flapping Airplanes`;
 
 // ---------------------------------------------------------------- loss chart (loss against real time)
 const CH = {x0: 70, x1: 1810, y0: 22, y1: 200, tmax: Math.ceil(raceEnd / 5) * 5 + 2, lmin: 2, lmax: 12};
 const cx = s => CH.x0 + (CH.x1 - CH.x0) * s / CH.tmax, cy = l => CH.y1 - (CH.y1 - CH.y0) * (clamp(l, CH.lmin, CH.lmax) - CH.lmin) / (CH.lmax - CH.lmin);
-const series = [{key: "ofa", name: "open-flapping-airplanes, recorded run", color: COL.ofa, w: 3.4, end: recRun,
+const series = [{key: "ofa", name: "open-flapping-airplanes", color: COL.ofa, w: 3.4, end: recRun,
                  pts: (REC ? REC.loss_curve : TR.loss_curve).map(([s, l]) => [s / 4000 * recRun, l])}]
-  .concat(ORDER.map(k => ({key: k, name: `${BL[k].label}, ${BL[k].short}`, color: COL[k], w: 2, end: BL[k].train_s_mean,
+  .concat(ORDER.map(k => ({key: k, name: NAME[k], color: COL[k], w: 2, end: BL[k].train_s_mean,
                            pts: BL[k].loss_curve.map(([s, l]) => [s / 4000 * BL[k].train_s_mean, l])})));
 (function chartStatic() {
   let g = `<rect x="0" y="0" width="1832" height="270" rx="14" fill="#0f141b" stroke="#1f2a36"/>`;
   for (let l = 2; l <= 12; l += 2) g += `<line x1="${CH.x0}" x2="${CH.x1}" y1="${cy(l)}" y2="${cy(l)}" stroke="#1a232e"/><text x="${CH.x0 - 12}" y="${cy(l) + 6}" fill="#5b6774" font-size="16" text-anchor="end" font-family="JetBrains Mono">${l}</text>`;
   for (let s = 0; s <= CH.tmax; s += 10) g += `<text x="${cx(s)}" y="${CH.y1 + 24}" fill="#5b6774" font-size="16" text-anchor="middle" font-family="JetBrains Mono">${s} s</text>`;
-  g += `<text x="${CH.x0 + 10}" y="${CH.y0 + 14}" fill="#8a97a6" font-size="17">training loss against real time</text>`;
-  g += `<text x="${CH.x0}" y="${CH.y1 + 52}" fill="#5b6774" font-size="15">baselines: their logged loss every 25 steps, placed at their measured mean step time</text>`;
+  g += `<text x="${CH.x0 + 10}" y="${CH.y0 + 14}" fill="#8a97a6" font-size="17">training loss (lower is better)</text>`;
   series.forEach((s, i) => {
     g += `<line id="fin${i}" x1="${cx(s.end)}" x2="${cx(s.end)}" y1="${CH.y0}" y2="${CH.y1}" stroke="${s.color}" stroke-dasharray="4 5" opacity="0"/>`;
     g += `<path id="ser${i}" fill="none" stroke="${s.color}" stroke-width="${s.w}" stroke-linejoin="round"/>`;
@@ -308,9 +289,9 @@ function place(el, x, y, w) { el.style.transform = `translate(${x}px,${y}px) sca
 
 // ---------------------------------------------------------------- per-frame state
 const CAP = {
-  live: `<span><b>Live recording, real time.</b> One CUDA kernel launch on one B200 trains a ${D.model.params}-parameter GPT, answers “${D.model.prompt}” from its live weights, and plays Doom.</span>`,
-  zoom: `<span>All of this is <b>one kernel launch on one GPU</b>: ${SPLIT.training} SMs train, ${SPLIT.inference} serve, ${SPLIT.doom} run Doom.</span>`,
-  code: `<span>Three programs, each a graph of tasks. One persistent kernel runs all three: each SM keeps taking tasks of its program, so nothing is launched again.</span>`};
+  live: `<span><b>Live recording.</b> One program on one GPU trains an AI model, answers a question with it, and plays Doom, all at once.</span>`,
+  zoom: `<span><b>One program, one GPU.</b> The GPU's ${SPLIT.total} processors are split between the three jobs.</span>`,
+  code: `<span><b>The code.</b> Three jobs in one GPU program, started only once.</span>`};
 const REC0 = {x: 120, y: 8, w: 1680};       // the recording in the opening: full width minus margins, the caption below it
 window.seek = async function (t) {
   const inS = k => t >= S[k][0] && t < S[k][1];
@@ -362,8 +343,8 @@ window.seek = async function (t) {
     const tdone = Math.min(r, recRun) / recRun;
     $("ofastats").innerHTML =
       `<span>step <b class="mono">${fmt(Math.floor(tdone * 4000))}</b> / 4,000</span>` +
-      `<span>${r >= recRun ? `<b style="color:var(--ofa)">done in ${fmt(recRun, 1)} s</b>` : "training, serving, Doom"}</span>` +
-      `<span>kernel launches <b class="mono" style="color:var(--ofa)">1</b></span>`;
+      `<span>${r >= recRun ? `<b style="color:var(--ofa)">done in ${fmt(recRun, 1)} s</b>` : "training, answering, Doom"}</span>` +
+      `<span>launches <b class="mono" style="color:var(--ofa)">1</b></span>`;
     for (const k of ORDER) {
       const b = BL[k], f = Math.min(r, b.train_s_mean) / b.train_s_mean, id = "b-" + k;
       $(id + "-bar").style.width = (100 * f).toFixed(2) + "%";
@@ -373,8 +354,8 @@ window.seek = async function (t) {
     }
     const fv = Math.min(r, vllmT) / vllmT;
     $("b-vllm-bar").style.width = (100 * fv).toFixed(2) + "%";
-    $("b-vllm-prog").innerHTML = `served <b class="mono">${fmt(Math.floor(fv * tokens))}</b> tokens at ${fmt(VL.tok_s_mean)} tok/s`;
-    $("b-vllm-l").innerHTML = `launches <b class="mono">${fmt(Math.floor(fv * tokens * VL.launches_per_token))}</b>`;
+    $("b-vllm-prog").innerHTML = `answered <b class="mono">${fmt(Math.floor(fv * tokens))}</b> tokens`;
+    $("b-vllm-l").innerHTML = `launches <b class="mono">${fmt(Math.round(Math.floor(fv * tokens) * VL.launches_per_token))}</b>`;
     $("b-vllm-time").innerHTML = r >= vllmT ? `<b>done in ${fmt(vllmT, 1)} s</b>` : "";
     chartAt(r);
   }
