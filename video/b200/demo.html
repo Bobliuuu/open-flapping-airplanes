@@ -1,111 +1,150 @@
 <!doctype html>
 <html><head><meta charset="utf-8"><title>Triad demo</title>
-<!-- Triad demo video on one B200, rendered frame by frame by render_demo.js. Every number comes from data.json, which make_data.py
-     derives from the raw results; the dashboard is a screen recording of a real run. Type and colours: Magni (brand/). -->
+<!-- Triad demo video, rendered frame by frame by render_demo.js. Every number comes from data.json (make_data.py reads the raw results). -->
 <script src="data.js"></script>
 <style>
-@font-face{font-family:"Hanken Grotesk";font-weight:300;src:local("Hanken Grotesk Light"),local("HankenGrotesk-Light"),url(brand/HankenGrotesk-Light.ttf)}
-@font-face{font-family:"Fragment Mono";font-weight:400;src:local("Fragment Mono Regular"),local("FragmentMono-Regular"),local("Fragment Mono"),url(brand/FragmentMono-Regular.ttf)}
-:root{--paper:#04080f;--plate:#0a111b;--ink:#e6ebf1;--ink2:#a9b6c6;--rule:#e6ebf138;--faint:#e6ebf11f;--cher:#7d98ff}
-html,body{margin:0;background:var(--paper)}
-#stage{position:relative;width:1920px;height:1080px;overflow:hidden;background:var(--paper);color:var(--ink);
-  font-family:"Hanken Grotesk",sans-serif;font-weight:300;-webkit-font-smoothing:antialiased}
-.mono{font-family:"Fragment Mono",monospace;font-weight:400}
+:root{--bg:#0a0d12;--panel:#0f141b;--line:#1f2a36;--text:#e8edf2;--muted:#8a97a6;--dim:#5b6774;
+  --triad:#ff5a36;--train:#7fd38a;--serve:#4cc3e6;--doom:#f2b84b;--vllm:#5eead4;--good:#7fd38a;--bad:#ff7b72}
+html,body{margin:0;background:var(--bg)}
+#stage{position:relative;width:1920px;height:1080px;overflow:hidden;background:var(--bg);color:var(--text);
+  font-family:Inter,"Helvetica Neue",Arial,sans-serif;-webkit-font-smoothing:antialiased}
+.mono{font-family:"JetBrains Mono",ui-monospace,monospace}
 .layer{position:absolute;inset:0;opacity:0}
-.copy{position:absolute;left:96px;bottom:64px;width:1500px}
-.eyebrow{font-family:"Fragment Mono",monospace;font-size:19px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink2);margin-bottom:16px}
-.display{font-size:58px;letter-spacing:-.035em;line-height:1.08;color:var(--ink)}
-.support{font-size:28px;letter-spacing:-.01em;line-height:1.35;color:var(--ink2);margin-top:14px;max-width:1300px}
-.accent{color:var(--cher)}
-img.rec{position:absolute;left:0;top:0;width:1920px;height:1080px;transform-origin:0 0}
-#rec{z-index:5;outline:1px solid var(--rule)}
-/* zoom: the GPU */
-#chip{position:absolute;left:996px;top:118px;width:828px}
-#chipbox{border:1px solid var(--rule);border-radius:4px;padding:22px;background:var(--plate)}
-#legend{display:flex;gap:36px;margin-top:22px;font-size:20px;color:var(--ink2)}
-#legend i{display:inline-block;width:14px;height:14px;margin-right:10px;vertical-align:-1px}
+#rec{position:absolute;left:0;top:0;width:1920px;height:1080px;transform-origin:0 0;z-index:5;outline:1px solid #263241}
+#caption{position:absolute;z-index:10;left:0;right:0;bottom:0;height:130px;padding:0 120px;display:flex;align-items:center;
+  font-size:31px;line-height:1.35;color:var(--text);opacity:0}
+#caption b{color:#fff}
+#badge{position:absolute;z-index:10;right:36px;top:24px;font-size:22px;padding:8px 18px;border-radius:999px;border:1px solid var(--line);
+  background:rgba(15,20,27,.92);color:var(--text);font-weight:650;opacity:0}
+#brand{position:absolute;left:44px;top:28px;font-size:30px;font-weight:800;color:var(--triad);letter-spacing:2px;opacity:0}
+/* chip */
+#chipwrap{position:absolute;left:1010px;top:150px;width:840px}
+#chiptitle{font-size:30px;color:var(--muted);margin-bottom:14px}
+#chipbox{border:2px solid #2b3846;border-radius:22px;padding:26px;background:#0d1219}
+#chiplegend{display:flex;gap:34px;margin-top:22px;font-size:26px}
+#chiplegend span i{display:inline-block;width:18px;height:18px;border-radius:4px;margin-right:10px;vertical-align:-2px}
 /* code */
-#codepanel{position:absolute;left:96px;top:96px;width:1190px;border:1px solid var(--rule);border-radius:4px;background:var(--plate);padding:26px 30px}
-#codelines div{font-size:21px;line-height:36px;white-space:pre;color:var(--ink2);padding-left:14px;border-left:3px solid transparent}
-#launch{margin-top:22px;padding-top:18px;border-top:1px solid var(--rule);font-size:21px;color:var(--ink)}
-#launch span{color:var(--ink2);letter-spacing:.1em;text-transform:uppercase;font-size:17px;margin-right:18px}
-#roles{position:absolute;left:1330px;top:0;width:520px}
-#roles div{position:absolute;left:0;font-size:22px;white-space:nowrap;color:var(--ink)}
-/* doom */
-#doomview{position:absolute;left:96px;top:64px;width:1216px;height:760px;overflow:hidden;outline:1px solid var(--rule);background:#000}
-#doomview img{position:absolute;left:0;top:0;width:1920px;height:1080px;transform-origin:0 0}
-#doomclock{position:absolute;left:1376px;top:64px}
-#doomclock .v{font-size:84px;letter-spacing:-.035em;line-height:1}
+#codepanel{position:absolute;left:60px;top:120px;width:1040px;border:1px solid var(--line);border-radius:16px;background:#0c1118;padding:24px 26px;overflow:hidden}
+#codefile{font-size:17px;color:var(--dim);margin-bottom:14px}
+#codelines div{font-size:18px;line-height:1.66;white-space:pre;color:#c9d4df;padding:0 8px;border-radius:6px}
+#launchline{margin-top:22px;font-size:20px;color:#fff;padding:14px 16px;border-radius:10px;background:#141c26;border:1px solid #2b3846}
+#progs{position:absolute;left:1150px;top:120px;width:710px;display:flex;flex-direction:column;gap:22px}
+.prog{border-radius:16px;padding:20px 24px;background:var(--panel);border:1px solid var(--line)}
+.prog .t{font-size:30px;font-weight:650;margin-bottom:6px}
+.prog .d{font-size:22px;color:var(--muted);line-height:1.45}
+.prog .d b{color:var(--text)}
 /* race */
-#triadbox{position:absolute;left:96px;top:96px;width:1104px}
-#triadstats{position:absolute;left:96px;top:735px;width:1104px;display:flex;justify-content:space-between;font-size:21px;color:var(--ink2)}
-#triadstats b{color:var(--ink);font-weight:400}
-.base{position:absolute;left:1248px;width:576px;border:1px solid var(--rule);border-radius:4px;background:var(--plate);padding:22px 26px;box-sizing:border-box}
-.base .nm{font-size:31px;letter-spacing:-.02em}
-.base .sub{font-size:17px;color:var(--ink2);margin-top:6px;letter-spacing:.06em;text-transform:uppercase}
-.bar{height:6px;background:var(--faint);margin:20px 0 16px}
-.bar i{display:block;height:100%;width:0;background:var(--ink2)}
-.base .row{display:flex;justify-content:space-between;font-size:20px;color:var(--ink2);margin-top:8px}
-.base .row b{color:var(--ink);font-weight:400}
-#chart{position:absolute;left:96px;top:800px}
-#raceclock{position:absolute;right:96px;bottom:64px;font-size:19px;letter-spacing:.1em;color:var(--ink2)}
-#raceclock span{text-transform:uppercase}
-#raceclock b{color:var(--ink);font-weight:400;letter-spacing:0;font-size:26px;margin-left:14px}
+#racetitle{position:absolute;left:44px;top:20px;font-size:29px;font-weight:650}
+#racesub{position:absolute;left:44px;top:62px;font-size:20px;color:var(--muted)}
+#raceclock{position:absolute;right:240px;top:20px;font-size:22px;color:var(--muted)}
+#raceclock b{font-size:30px;color:var(--text)}
+#triadpanel{position:absolute;left:44px;top:100px;width:1000px;border:1px solid var(--line);border-radius:16px;background:var(--panel);padding:14px 18px}
+#triadpanel .hd{font-size:23px;font-weight:650;color:var(--triad);margin-bottom:10px}
+#triadpanel .hd span{color:var(--muted);font-weight:400;font-size:19px}
+#recslot{width:964px;height:542px}
+.statrow{display:flex;gap:28px;margin-top:12px;font-size:21px;color:var(--muted)}
+.statrow b{color:var(--text)}
+#basepanel{position:absolute;left:1066px;top:100px;width:810px;display:flex;flex-direction:column;gap:9px}
+.base{border:1px solid var(--line);border-radius:12px;background:var(--panel);padding:9px 16px 10px}
+.base .nm{font-size:20px;font-weight:650}
+.base .nm span{font-weight:400;color:var(--muted);font-size:17px}
+.bar{height:9px;border-radius:5px;background:#1a232e;margin:7px 0 6px;overflow:hidden}
+.bar i{display:block;height:100%;width:0;border-radius:5px}
+.base .row{display:flex;justify-content:space-between;font-size:18px;color:var(--muted)}
+.base .row b{color:var(--text)}
+#chart{position:absolute;left:44px;top:790px;width:1832px;height:270px}
 /* cards */
-#cardrow{position:absolute;left:96px;top:96px;width:1728px;display:flex;gap:24px}
-.card{flex:1;border:1px solid var(--rule);border-radius:4px;background:var(--plate);padding:34px 36px;height:620px;box-sizing:border-box;opacity:0}
-.card .k{font-family:"Fragment Mono",monospace;font-size:18px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink2)}
-.card .big{font-size:132px;letter-spacing:-.045em;line-height:1;margin-top:44px;white-space:nowrap}
-.card .big small{font-size:52px;letter-spacing:-.02em;margin-left:10px;color:var(--ink2)}
-.card .who{font-size:27px;color:var(--ink2);margin-top:20px;line-height:1.3}
-.card .vs{border-top:1px solid var(--rule);margin-top:44px;padding-top:30px}
-.card .vs .n{font-size:27px;color:var(--ink)}
-.card .vs .l{font-size:23px;color:var(--ink2);margin-top:14px;display:flex;justify-content:space-between}
-.card .vs .l b{font-family:"Fragment Mono",monospace;font-weight:400;color:var(--ink);font-size:24px}
-#cardnote{position:absolute;left:96px;bottom:64px;width:1728px;font-size:17px;line-height:1.6;color:var(--ink2)}
+#cardrow{position:absolute;left:56px;top:104px;width:1808px;display:flex;gap:30px}
+.card{border-radius:20px;border:1px solid var(--line);background:var(--panel);padding:28px 32px;min-height:700px;opacity:0;box-sizing:border-box}
+#c1{width:520px} #c2{width:738px} #c3{width:490px}
+.card .k{font-size:20px;letter-spacing:2px;color:var(--muted);text-transform:uppercase;margin-bottom:18px}
+.card .big{font-size:82px;font-weight:750;color:var(--triad);letter-spacing:-1px;line-height:1}
+.card .who{font-size:22px;color:var(--text);margin:10px 0 24px;line-height:1.35}
+.card .vs{border-top:1px solid var(--line);padding-top:18px}
+.card .vs .line{font-size:23px;line-height:1.55;color:var(--text)}
+.card .vs .line b{white-space:nowrap}
+.card .head{font-size:30px;font-weight:700;margin-top:12px;line-height:1.3}
+.card table{border-collapse:collapse;width:100%;font-size:22px}
+.card td{padding:7px 0;border-bottom:1px solid #18212c}
+.card td.n{color:var(--text)} .card td.n span{color:var(--muted)}
+.card td.t{text-align:right;padding-right:18px;font-family:"JetBrains Mono",monospace;color:#fff;white-space:nowrap}
+.card td.r{text-align:right;font-weight:650;white-space:nowrap}
+.card .fn{font-size:17px;color:var(--dim);line-height:1.45;margin-top:20px}
+#cardfoot{position:absolute;left:56px;right:56px;top:960px;font-size:19px;color:var(--muted);line-height:1.5;opacity:0}
+/* the three baselines fill the column beside the Triad panel */
+#basepanel{height:644px;gap:18px}
+.base{flex:1;display:flex;flex-direction:column;justify-content:center;padding:18px 28px}
+.base .nm{font-size:27px} .base .nm span{font-size:20px}
+.bar{height:12px;margin:18px 0 16px}
+.base .row{font-size:22px}
+/* result cards: less text than before, so larger type and shorter cards */
+#cardrow{top:170px}
+.card{min-height:560px}
+.card .big{font-size:104px;margin-top:6px}
+.card .who{font-size:25px;margin:14px 0 30px}
+.card .vs{padding-top:26px}
+.card .vs .line{font-size:25px}
+.card .head{font-size:34px;margin-top:14px}
+.card table{font-size:24px}
+.card td{padding:12px 0}
+#cardfoot{top:800px;font-size:20px}
+/* doom */
+#doomview{position:absolute;left:280px;top:40px;width:1360px;height:850px;overflow:hidden;outline:1px solid #263241;background:#000}
+#doomview img{position:absolute;left:0;top:0;width:1920px;height:1080px;transform-origin:0 0}
 /* end */
-#endtext{position:absolute;left:96px;top:190px;font-size:84px;letter-spacing:-.04em;line-height:1.14}
-#lockup{position:absolute;left:96px;bottom:72px;height:46px}
+#endtext{position:absolute;left:0;right:0;top:250px;text-align:center}
+#endtext .l1{font-size:66px;font-weight:750;line-height:1.25;letter-spacing:-.5px}
+#endtext .l1 em{font-style:normal;color:var(--triad)}
+#endtext .l2{font-size:27px;color:var(--muted);margin-top:46px;line-height:1.65}
+#endtext .l2 b{color:var(--text);font-weight:600}
 </style></head>
 <body><div id="stage">
-  <img id="rec" class="rec" alt="">
+  <div id="brand" class="mono">TRIAD</div>
+  <img id="rec" alt="">
 
-  <div id="s-live" class="layer"><div class="copy" style="left:240px"><div class="eyebrow" id="live-eb"></div><div class="display" id="live-d"></div></div></div>
-
-  <div id="s-zoom" class="layer">
-    <div id="chip"><div id="chipbox"><svg id="chipsvg" width="740" height="430"></svg></div><div id="legend" class="mono"></div></div>
-    <div class="copy"><div class="eyebrow" id="zoom-eb"></div><div class="display" id="zoom-d"></div></div>
+  <div id="chip" class="layer">
+    <div id="chipwrap">
+      <div id="chiptitle">One <b style="color:#fff">NVIDIA B200</b>: 148 SMs</div>
+      <div id="chipbox"><svg id="chipsvg" width="788" height="372"></svg></div>
+      <div id="chiplegend">
+        <span><i style="background:var(--train)"></i><b id="lg-train"></b> SMs train</span>
+        <span><i style="background:var(--serve)"></i><b id="lg-serve"></b> SMs serve</span>
+        <span><i style="background:var(--doom)"></i><b id="lg-doom"></b> SMs Doom</span>
+      </div>
+    </div>
   </div>
 
-  <div id="s-code" class="layer">
-    <div id="codepanel"><div id="codelines" class="mono"></div><div id="launch" class="mono"></div></div>
-    <div id="roles" class="mono"></div>
-    <div class="copy"><div class="eyebrow" id="code-eb"></div><div class="display" id="code-d"></div></div>
+  <div id="code" class="layer">
+    <div id="codepanel"><div id="codefile" class="mono"></div><div id="codelines" class="mono"></div><div id="launchline" class="mono"></div></div>
+    <div id="progs">
+      <div class="prog" id="pg-train"><div class="t" style="color:var(--train)">Training</div><div class="d" id="pg-train-d"></div></div>
+      <div class="prog" id="pg-serve"><div class="t" style="color:var(--serve)">Serving</div><div class="d" id="pg-serve-d"></div></div>
+      <div class="prog" id="pg-doom"><div class="t" style="color:var(--doom)">Doom</div><div class="d" id="pg-doom-d"></div></div>
+    </div>
   </div>
 
-  <div id="s-doom" class="layer">
-    <div id="doomview"><img id="rec2" class="rec2" alt=""></div>
-    <div id="doomclock"><div class="eyebrow">Run time</div><div class="v mono" id="doomt"></div></div>
-    <div class="copy"><div class="eyebrow" id="doom-eb"></div><div class="display" id="doom-d"></div><div class="support" id="doom-s"></div></div>
+  <div id="doom" class="layer"><div id="doomview"><img id="rec2" alt=""></div></div>
+
+  <div id="race" class="layer">
+    <div id="racetitle">Side by side: Triad, Megatron-core + TE and vLLM</div>
+    <div id="racesub"></div>
+    <div id="raceclock">real time <b class="mono" id="clock">0.0 s</b></div>
+    <div id="triadpanel"><div class="hd">Triad <span id="triadhd"></span></div><div id="recslot"></div><div class="statrow" id="triadstats"></div></div>
+    <div id="basepanel"></div>
+    <svg id="chart" width="1832" height="270"></svg>
   </div>
 
-  <div id="s-race" class="layer">
-    <div id="triadstats" class="mono"></div>
-    <div class="base" id="b-meg" style="top:96px"></div>
-    <div class="base" id="b-vllm" style="top:420px"></div>
-    <svg id="chart" width="1728" height="150"></svg>
-    <div class="copy" style="width:1100px"><div class="eyebrow" id="race-eb" style="margin:0"></div></div>
-    <div id="raceclock" class="mono"><span>Real time</span><b id="clock"></b></div>
-  </div>
+  <div id="cards" class="layer"><div id="cardrow"></div><div id="cardfoot"></div></div>
 
-  <div id="s-cards" class="layer"><div id="cardrow"></div><div id="cardnote" class="mono"></div></div>
-
-  <div id="s-end" class="layer"><div id="endtext"></div><img id="lockup" src="brand/magni-lockup-on-dark.svg" alt=""></div>
+  <div id="end" class="layer"><div id="endtext"><div class="l1" id="end1"></div><div class="l2" id="end2"></div></div></div>
+  <div id="badge"></div>
+  <div id="caption"></div>
 </div>
 <script>
 "use strict";
 const D = window.__DATA, $ = id => document.getElementById(id);
-const COL = {ink: "#e6ebf1", ink2: "#a9b6c6", cher: "#7d98ff", rule: "#e6ebf138", faint: "#e6ebf11f", plate: "#0a111b"};
+const COL = {triad: "#ff5a36", train: "#7fd38a", serve: "#4cc3e6", doom: "#f2b84b", vllm: "#5eead4",
+             megatron_te: "#a78bfa", megatron_te_graph: "#d4c4ff", pytorch: "#7d8ea3", pytorch_graph: "#c3cfdc"};
 const FPS = 30;
 const fmt = (x, d = 0) => Number(x).toLocaleString("en-US", {minimumFractionDigits: d, maximumFractionDigits: d});
 const clamp = (x, a, b) => Math.max(a, Math.min(b, x));
@@ -113,122 +152,124 @@ const ease = x => (x = clamp(x, 0, 1), x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 
 const ramp = (t, a, b) => clamp((t - a) / (b - a), 0, 1);
 const fade = (t, a, b, f = .5) => Math.min(ramp(t, a, a + f), 1 - ramp(t, b - f, b));
 
-// ---------------------------------------------------------------- data (all from data.json)
-const TR = D.triad, REC = D.recording, BL = D.training_baselines, VL = D.vllm, DV = D.derived, SPLIT = D.split;
-const MEG = BL.megatron_te_graph || BL.megatron_te, MEG_EAGER = BL.megatron_te;
-const recRun = REC && REC.kernel_s ? REC.kernel_s : TR.train_s_mean;   // the recorded run's own kernel time drives the race
-const tokens = DV.same_work_tokens, vllmT = tokens / VL.tok_s_mean;    // vLLM serving the tokens Triad served, at vLLM's measured rate
-const raceEnd = Math.max(recRun, vllmT, MEG.train_s_mean);
-const launch = REC ? REC.launch_at_s : 1.5;                            // seconds into the recording when the kernel launches
-const gpu = "B200";
+// ---------------------------------------------------------------- data
+const TR = D.triad, REC = D.recording, BL = D.training_baselines, VL = D.vllm, DV = D.derived, FA = D.fa, SPLIT = D.split;
+const recRun = REC && REC.kernel_s ? REC.kernel_s : TR.train_s_mean;   // the recorded run's own time drives the race
+const ORDER = ["megatron_te", "megatron_te_graph"].filter(k => BL[k]);
+const NAME = {megatron_te: "Megatron-core + TE", megatron_te_graph: "Megatron-core + TE, CUDA graphs"};
+const meg = BL.megatron_te, best = BL[DV.best_train_key];
+const tokens = DV.same_work_tokens, vllmT = tokens / VL.tok_s_mean;    // vLLM serving Triad's tokens, alone
+const raceEnd = Math.max(recRun, vllmT, ...ORDER.map(k => BL[k].train_s_mean));
+// FA's metric, 1 - Triad time / baseline time: > 0 the baseline is slower, < 0 it is faster (in rate)
+const rel = p => Math.abs(p) < 1 ? `the same (${fmt(Math.abs(p), 1)}%)` : p > 0 ? `${fmt(p, 1)}% slower` : `${fmt(-p, 1)}% faster`;
+const relCol = p => Math.abs(p) < 1 ? "var(--muted)" : p > 0 ? "var(--good)" : "var(--bad)";
 
 // ---------------------------------------------------------------- timeline (seconds of video)
-const S = {live: [0, 10], zoom: [10, 17], code: [17, 25.5], doom: [25.5, 36], race: [36, 0], cards: [0, 0], end: [0, 0]};
-const SPEED = 5, PRE = .6, HOLD = 2.6;
+const S = {live: [0, 10], zoom: [10, 16.5], code: [16.5, 24.5], doom: [24.5, 35], race: [35, 0], cards: [0, 0], end: [0, 0]};
+const SPEED = 4, PRE = 0.8, HOLD = 3.2;
 S.race[1] = S.race[0] + PRE + raceEnd / SPEED + HOLD;
 S.cards = [S.race[1], S.race[1] + 11];
 S.end = [S.cards[1], S.cards[1] + 7];
-const DUR = S.end[1];
-// Doom scene: a stretch of the recorded run at 3x, cropped to the dashboard's game panel: the fights from 21 s, the exit switch at about
-// 45 s and the level's tally (kills 100%) by 49 s. DOOM_RECT is where the game panel sits in the 1920x1080 recording (index.html
-// ?theme=magni, 1440x810 CSS px x 4/3).
+// Doom close-up: the recorded run's game panel at 3x, from the fights at 21 s to the level's tally (kills 100%) by 49.5 s.
+// DOOM_RECT is where the game panel sits in the 1920x1080 recording.
 const DOOM = {from: 21, to: 49.5, speed: 3, lead: .4};
 const DOOM_RECT = {x: 1286.5, y: 646.6, w: 605.9, h: 378.7};
+const DUR = S.end[1];
 window.getInfo = () => ({duration: DUR, fps: FPS, scenes: S});
 
-// ---------------------------------------------------------------- copy (eyebrow + one line + at most one sentence per scene)
-$("live-eb").textContent = `Recorded live on one NVIDIA ${gpu} · real time`;
-$("live-d").textContent = `One GPU trains a GPT, serves it and runs Doom.`;
-$("zoom-eb").textContent = `One NVIDIA ${gpu} · ${SPLIT.total} SMs`;
-$("zoom-d").innerHTML = `All of this is <span class="accent">one</span> kernel on one ${gpu} GPU.`;
-$("code-eb").textContent = D.code.file;
-$("code-d").textContent = `Three programs. One kernel runs all three at once.`;
-$("doom-eb").textContent = `Doom · ${SPLIT.doom} SMs · ${DOOM.speed}× speed`;
-$("doom-d").textContent = `A scripted player finishes the first level.`;
-$("doom-s").textContent = `It reads the game state every tic and plays through the game's own controls. No cheats.`;
-$("race-eb").textContent = `Side by side · ${SPEED}× speed · baselines replayed from their measured runs`;
-
-// ---------------------------------------------------------------- zoom: the GPU's SMs by role, in the order the kernel assigns them
-$("legend").innerHTML = `<span><i style="background:${COL.ink}"></i>${SPLIT.training} SMs train</span>` +
-  `<span><i style="background:${COL.cher}"></i>${SPLIT.inference} serve</span><span><i style="background:${COL.ink2};opacity:.55"></i>${SPLIT.doom} run Doom</span>`;
-(function chip() {
-  const cols = 20, gap = 8, W = 740, H = 430, w = (W - gap * (cols - 1)) / cols, rows = Math.ceil(SPLIT.total / cols), h = (H - gap * (rows - 1)) / rows;
+// ---------------------------------------------------------------- static content
+$("lg-train").textContent = SPLIT.training; $("lg-serve").textContent = SPLIT.inference; $("lg-doom").textContent = SPLIT.doom;
+(function chip() {   // 148 SMs in dense-rank order, as the kernel assigns roles: [0,24) serve, [24,32) Doom, the rest train
+  const cols = 20, gap = 7, w = (788 - gap * (cols - 1)) / cols, rows = Math.ceil(SPLIT.total / cols), h = (372 - gap * (rows - 1)) / rows;
   let s = "";
   for (let i = 0; i < SPLIT.total; i++) {
     const r = Math.floor(i / cols), c = i % cols, role = i < SPLIT.inference ? "serve" : i < SPLIT.inference + SPLIT.doom ? "doom" : "train";
-    s += `<rect id="sm${i}" data-role="${role}" x="${(c * (w + gap)).toFixed(1)}" y="${(r * (h + gap)).toFixed(1)}" width="${w.toFixed(1)}" height="${h.toFixed(1)}" rx="2" fill="${COL.faint}"/>`;
+    s += `<rect id="sm${i}" data-role="${role}" x="${c * (w + gap)}" y="${r * (h + gap)}" width="${w}" height="${h}" rx="5" style="fill:#1a2330"/>`;
   }
   $("chipsvg").innerHTML = s;
 })();
-const ROLE_FILL = {train: [COL.ink, .92], serve: [COL.cher, 1], doom: [COL.ink2, .55]};
+function hl(src) {   // one-pass tokenizer: strings, keywords, functions, everything else escaped
+  const esc = x => x.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  const re = /("(?:[^"\\]|\\.)*")|\b(__global__|__launch_bounds__|extern|__shared__|__align__|unsigned|const|int|char|void|if|else|return|asm|volatile)\b|\b(job_loop|doom_loop|triad_kernel|reinterpret_cast)\b/g;
+  let out = "", last = 0, m;
+  while ((m = re.exec(src))) {
+    out += esc(src.slice(last, m.index));
+    const color = m[1] ? "#a5d6ff" : m[2] ? "#ff7b72" : "#d2a8ff";
+    out += `<span style="color:${color}">${esc(m[0])}</span>`;
+    last = m.index + m[0].length;
+  }
+  return out + esc(src.slice(last));
+}
+$("codefile").textContent = D.code.file;
+$("codelines").innerHTML = D.code.kernel.map((l, i) => `<div id="cl${i}">${hl(l)}</div>`).join("");
+$("launchline").innerHTML = `<span style="color:var(--muted)">launched once:</span> ${hl(D.code.launch)}`;
+$("pg-train-d").innerHTML = `Trains a ${D.model.params.replace(/\.\d+M$/, "M")}-parameter GPT for ${fmt(D.model.steps)} steps · <b>${SPLIT.training} SMs</b>`;
+$("pg-serve-d").innerHTML = `Answers “${D.model.prompt}” while it trains · <b>${SPLIT.inference} SMs</b>`;
+$("pg-doom-d").innerHTML = `The original Doom engine, played by a scripted AI · <b>${SPLIT.doom} SMs</b>`;
 
-// ---------------------------------------------------------------- code: the persistent kernel, as in the source, and its one launch
-const ROLE_LINES = [];
-$("codelines").innerHTML = D.code.kernel.map((l, i) => {
-  const role = /C\.dec/.test(l) ? "serve" : /doom_loop/.test(l) ? "doom" : /C\.train/.test(l) ? "train" : "";
-  if (role) ROLE_LINES.push([i, role]);
-  return `<div id="cl${i}">${l.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")}</div>`;
-}).join("");
-$("launch").innerHTML = `<span>launched once</span>${D.code.launch.replace(/</g, "&lt;").replace(/>/g, "&gt;")}`;
-const ROLE_TEXT = {serve: `serving · ${SPLIT.inference} SMs`, doom: `Doom · ${SPLIT.doom} SMs`, train: `training · ${SPLIT.training} SMs`};
-$("roles").innerHTML = ROLE_LINES.map(([i, role]) => `<div id="role-${role}" style="top:${96 + 27 + i * 36 + 4}px">← ${ROLE_TEXT[role]}</div>`).join("");
+$("racesub").innerHTML = `Baselines: their measured runs, replayed at their measured speed.`;
+$("triadhd").textContent = `· 1 kernel launch · recorded run`;
+function baseCard(id, color, name, sub) {
+  return `<div class="base" id="${id}"><div class="nm" style="color:${color}">${name} <span>${sub}</span></div>
+    <div class="bar"><i id="${id}-bar" style="background:${color}"></i></div>
+    <div class="row"><span id="${id}-prog"></span><span id="${id}-l"></span><span id="${id}-time"></span></div></div>`;
+}
+$("basepanel").innerHTML = ORDER.map(k => baseCard("b-" + k, COL[k], NAME[k], `· alone on ${SPLIT.training} SMs`)).join("") +
+  baseCard("b-vllm", COL.vllm, "vLLM", `· alone on ${SPLIT.inference} SMs`);
 
-// ---------------------------------------------------------------- race: baselines replayed at their measured mean speed
-const megSteps = r => Math.floor(4000 * Math.min(r, MEG.train_s_mean) / MEG.train_s_mean);
-const vllmToks = r => Math.floor(tokens * Math.min(r, vllmT) / vllmT);
-$("b-meg").innerHTML = `<div class="nm">Megatron-core + Transformer Engine</div><div class="sub mono">${MEG.short} · alone on ${SPLIT.training} SMs</div>
-  <div class="bar"><i id="meg-bar"></i></div><div class="row mono"><span>steps</span><b id="meg-steps"></b></div>
-  <div class="row mono"><span>kernel launches</span><b id="meg-l"></b></div><div class="row mono"><span id="meg-done">&nbsp;</span></div>`;
-$("b-vllm").innerHTML = `<div class="nm">vLLM</div><div class="sub mono">CUDA graphs · alone on ${SPLIT.inference} SMs</div>
-  <div class="bar"><i id="vllm-bar"></i></div><div class="row mono"><span>tokens served</span><b id="vllm-toks"></b></div>
-  <div class="row mono"><span>kernel launches</span><b id="vllm-l"></b></div><div class="row mono"><span id="vllm-done">&nbsp;</span></div>`;
-// loss against real time: Triad's recorded run and Megatron's logged losses placed at its measured mean step time
-const CH = {x0: 56, x1: 1690, y0: 10, y1: 118, tmax: Math.ceil(raceEnd / 10) * 10, lmin: 2, lmax: 12};   // loss on a log scale
-const cx = s => CH.x0 + (CH.x1 - CH.x0) * s / CH.tmax,
-      cy = l => CH.y1 - (CH.y1 - CH.y0) * Math.log(clamp(l, CH.lmin, CH.lmax) / CH.lmin) / Math.log(CH.lmax / CH.lmin);
-const series = [
-  {name: "Triad", color: COL.ink, w: 2.6, end: recRun, pts: (REC ? REC.loss_curve : TR.loss_curve).map(([s, l]) => [s / 4000 * recRun, l])},
-  {name: "Megatron-core + TE", color: COL.ink2, w: 2, dash: "7 6", end: MEG.train_s_mean, pts: MEG.loss_curve.map(([s, l]) => [s / 4000 * MEG.train_s_mean, l])}];
+// result cards
+const rowFor = k => {
+  const p = DV.train_vs_each_pct[k];
+  return `<tr><td class="n">${k === "megatron_te_graph" ? "with" : "without"} CUDA graphs</td>` +
+         `<td class="t">${fmt(BL[k].train_s_mean, 1)} s</td><td class="r" style="color:${relCol(p)}">${rel(p)}</td></tr>`;
+};
+const lGraph = DV.launches_megatron_graph_vllm_host;
+$("cardrow").innerHTML = `
+ <div class="card" id="c1"><div class="k">Kernel launches</div>
+   <div class="big mono">1</div><div class="who">Triad, for all three programs</div>
+   <div class="vs"><div class="line">Megatron-core + TE and vLLM:</div>
+   <div class="head" style="color:${COL.megatron_te}">${fmt((lGraph || DV.launches_megatron_vllm_host) / 1e6, 1)} million</div>
+   ${lGraph ? `<div class="line" style="color:var(--muted)">with CUDA graphs; ${fmt(DV.launches_megatron_vllm_host / 1e6, 1)} million without</div>` : ""}</div></div>
+ <div class="card" id="c2"><div class="k">${fmt(D.model.steps)} training steps</div>
+   <div class="big mono">${fmt(TR.train_s_mean, 1)} s</div><div class="who">Triad, while serving and playing Doom</div>
+   <div class="vs"><div class="line">Megatron-core + TE:</div><table>${ORDER.map(rowFor).join("")}</table></div></div>
+ <div class="card" id="c3"><div class="k">Serving “${D.model.prompt}”</div>
+   <div class="big mono">${fmt(TR.serve_tok_s_mean)}</div><div class="who">tokens/s, Triad, while training</div>
+   <div class="vs"><div class="line">vLLM: <b class="mono">${fmt(VL.tok_s_mean)} tok/s</b></div>
+   <div class="head" style="color:${relCol(DV.serve_vs_vllm_pct)}">vLLM ${rel(DV.serve_vs_vllm_pct)}</div></div></div>`;
+$("cardfoot").innerHTML = `Means of 3 runs on one ${D.gpu.split(" (")[0]}. Percentages: 1 − baseline rate / Triad rate. Logs: b200-run/results.`;
+
+$("end1").innerHTML = `Trained in <em>${fmt(TR.train_s_mean, 0)} seconds</em><br>while serving it<br>while playing Doom<br>in <em>1</em> kernel launch on <em>1</em> B200 GPU`;
+$("end2").innerHTML = `Triad · not affiliated with Flapping Airplanes`;
+
+// ---------------------------------------------------------------- loss chart (loss against real time)
+const CH = {x0: 70, x1: 1810, y0: 22, y1: 200, tmax: Math.ceil(raceEnd / 5) * 5 + 2, lmin: 2, lmax: 12};
+const cx = s => CH.x0 + (CH.x1 - CH.x0) * s / CH.tmax, cy = l => CH.y1 - (CH.y1 - CH.y0) * (clamp(l, CH.lmin, CH.lmax) - CH.lmin) / (CH.lmax - CH.lmin);
+const series = [{key: "triad", name: "Triad, recorded run", color: COL.triad, w: 3.4, end: recRun,
+                 pts: (REC ? REC.loss_curve : TR.loss_curve).map(([s, l]) => [s / 4000 * recRun, l])}]
+  .concat(ORDER.map(k => ({key: k, name: NAME[k], color: COL[k], w: 2, end: BL[k].train_s_mean,
+                           pts: BL[k].loss_curve.map(([s, l]) => [s / 4000 * BL[k].train_s_mean, l])})));
 (function chartStatic() {
-  let g = "";
-  for (const l of [2, 3, 4, 6, 12]) g += `<line x1="${CH.x0}" x2="${CH.x1}" y1="${cy(l)}" y2="${cy(l)}" stroke="${COL.faint}"/><text x="${CH.x0 - 14}" y="${cy(l) + 6}" fill="${COL.ink2}" font-size="16" text-anchor="end" font-family="Fragment Mono">${l}</text>`;
-  for (let s = 0; s <= CH.tmax; s += 10) g += `<text x="${cx(s)}" y="${CH.y1 + 28}" fill="${COL.ink2}" font-size="16" text-anchor="middle" font-family="Fragment Mono">${s} s</text>`;
-  series.forEach((s, i) => { g += `<path id="ser${i}" fill="none" stroke="${s.color}" stroke-width="${s.w}" ${s.dash ? `stroke-dasharray="${s.dash}"` : ""} stroke-linejoin="round"/>`; });
-  g += `<text x="1728" y="${CH.y0 + 14}" fill="${COL.ink2}" font-size="17" text-anchor="end" font-family="Fragment Mono">TRAINING LOSS</text>`;
-  g += `<g font-family="Fragment Mono" font-size="16" fill="${COL.ink2}"><line x1="1208" x2="1234" y1="${CH.y0 + 40}" y2="${CH.y0 + 40}" stroke="${COL.ink}" stroke-width="2.6"/><text x="1244" y="${CH.y0 + 46}">Triad</text>` +
-       `<line x1="1348" x2="1374" y1="${CH.y0 + 40}" y2="${CH.y0 + 40}" stroke="${COL.ink2}" stroke-width="2" stroke-dasharray="7 6"/><text x="1384" y="${CH.y0 + 46}">Megatron-core + TE</text></g>`;
+  let g = `<rect x="0" y="0" width="1832" height="270" rx="14" fill="#0f141b" stroke="#1f2a36"/>`;
+  for (let l = 2; l <= 12; l += 2) g += `<line x1="${CH.x0}" x2="${CH.x1}" y1="${cy(l)}" y2="${cy(l)}" stroke="#1a232e"/><text x="${CH.x0 - 12}" y="${cy(l) + 6}" fill="#5b6774" font-size="16" text-anchor="end" font-family="JetBrains Mono">${l}</text>`;
+  for (let s = 0; s <= CH.tmax; s += 10) g += `<text x="${cx(s)}" y="${CH.y1 + 24}" fill="#5b6774" font-size="16" text-anchor="middle" font-family="JetBrains Mono">${s} s</text>`;
+  g += `<text x="${CH.x0 + 10}" y="${CH.y0 + 14}" fill="#8a97a6" font-size="17">training loss against real time</text>`;
+  series.forEach((s, i) => {
+    g += `<line id="fin${i}" x1="${cx(s.end)}" x2="${cx(s.end)}" y1="${CH.y0}" y2="${CH.y1}" stroke="${s.color}" stroke-dasharray="4 5" opacity="0"/>`;
+    g += `<path id="ser${i}" fill="none" stroke="${s.color}" stroke-width="${s.w}" stroke-linejoin="round"/>`;
+  });
+  series.forEach((s, i) => { g += `<g transform="translate(${CH.x0 + 620},${CH.y0 + 6 + i * 21})"><rect width="18" height="4" y="-5" fill="${s.color}"/><text x="26" y="0" fill="#8a97a6" font-size="15.5">${s.name}</text></g>`; });
   $("chart").innerHTML = g;
 })();
 function chartAt(r) {
   series.forEach((s, i) => {
     const pts = s.pts.filter(p => p[0] <= r);
     $("ser" + i).setAttribute("d", pts.length ? "M" + pts.map(p => `${cx(p[0]).toFixed(1)},${cy(p[1]).toFixed(1)}`).join("L") : "");
+    $("fin" + i).setAttribute("opacity", r >= s.end ? .8 : 0);
   });
 }
 
-// ---------------------------------------------------------------- result cards
-const lGraph = DV.launches_megatron_graph_vllm_host, lEager = DV.launches_megatron_vllm_host;
-$("cardrow").innerHTML = `
- <div class="card" id="c1"><div class="k">Kernel launches</div>
-   <div class="big accent">1</div><div class="who">Triad, for all three programs.</div>
-   <div class="vs"><div class="n">Megatron-core + TE and vLLM</div>
-     ${lGraph ? `<div class="l"><span>with CUDA graphs</span><b>${fmt(lGraph)}</b></div>` : ""}
-     <div class="l"><span>without</span><b>${fmt(lEager)}</b></div></div></div>
- <div class="card" id="c2"><div class="k">${fmt(D.model.steps)} training steps</div>
-   <div class="big">${fmt(TR.train_s_mean, 1)}<small>s</small></div><div class="who">Triad, while serving and running Doom.</div>
-   <div class="vs"><div class="n">Megatron-core + TE</div>
-     ${BL.megatron_te_graph ? `<div class="l"><span>with CUDA graphs</span><b>${fmt(BL.megatron_te_graph.train_s_mean, 1)} s</b></div>` : ""}
-     <div class="l"><span>without</span><b>${fmt(MEG_EAGER.train_s_mean, 1)} s</b></div></div></div>
- <div class="card" id="c3"><div class="k">Serving “${D.model.prompt}”</div>
-   <div class="big">${fmt(TR.serve_tok_s_mean)}<small>tok/s</small></div><div class="who">Triad, while training.</div>
-   <div class="vs"><div class="n">vLLM</div><div class="l"><span>with CUDA graphs</span><b>${fmt(VL.tok_s_mean)} tok/s</b></div></div></div>`;
-$("cardnote").innerHTML = `Means of 3 runs on one ${gpu}. Megatron-core + TE alone on ${SPLIT.training} SMs and vLLM alone on ${SPLIT.inference} SMs (CUDA MPS), ` +
-  `the same model and data. Kernel launches: host launch calls for ${fmt(D.model.steps)} steps and the ${fmt(tokens)} tokens Triad served, counted with torch.profiler.`;
-
-// ---------------------------------------------------------------- end card
-$("endtext").innerHTML = `Trained in ${fmt(TR.train_s_mean, 0)} seconds<br>while serving it<br>while playing Doom<br>in <span class="accent">1</span> kernel launch on 1 ${gpu} GPU.`;
-
-// ---------------------------------------------------------------- the recording (frames/rec_00001.jpg ... at 30 fps)
+// ---------------------------------------------------------------- the recording
 const rec = $("rec"), rec2 = $("rec2");
 const recFrames = window.__NFRAMES || 0, lastSrc = new Map();
 function frameAt(img, sec) {
@@ -238,83 +279,94 @@ function frameAt(img, sec) {
   lastSrc.set(img, src); img.src = src;
   return Promise.race([img.decode().catch(() => {}), new Promise(r => setTimeout(r, 4000))]);   // never wait forever on a decode
 }
-function place(el, x, y, w) { el.style.transform = `translate(${x}px,${y}px) scale(${w / 1920})`; }
-const LIVE = {x: 240, y: 36, w: 1440}, SIDE = {x: 96, y: 118, w: 880}, RACE = {x: 96, y: 96, w: 1104};
-const dsc = 1216 / DOOM_RECT.w;                                         // the game panel fills the Doom view
+const recAt = sec => frameAt(rec, sec);
+const dsc = 1360 / DOOM_RECT.w;                                         // the Doom close-up: the game panel fills #doomview
 rec2.style.transform = `translate(${-DOOM_RECT.x * dsc}px,${-DOOM_RECT.y * dsc}px) scale(${dsc})`;
+function place(el, x, y, w) { el.style.transform = `translate(${x}px,${y}px) scale(${w / 1920})`; }
 
 // ---------------------------------------------------------------- per-frame state
+const CAP = {
+  live: `<span><b>Recorded live.</b> One GPU trains a GPT, answers “${D.model.prompt}” with it, and runs Doom.</span>`,
+  zoom: `<span>All of this is <b>one kernel on one B200 GPU</b>.</span>`,
+  code: `<span><b>Three programs.</b> One kernel runs all three at the same time.</span>`,
+  doom: `<span><b>Doom is played by a scripted AI</b>, without cheats: it aims, shoots, opens doors and finishes the level.</span>`};
+const REC0 = {x: 120, y: 8, w: 1680};       // the recording in the opening: full width minus margins, the caption below it
 window.seek = async function (t) {
   const inS = k => t >= S[k][0] && t < S[k][1];
-  const ps = [];
-  // the recording: live (real time), shrinking beside the GPU in the zoom, and again in the race
-  let recA = 0;
+  let cap = "", capA = 0;
+  for (const k of ["live", "zoom", "code", "doom"]) if (inS(k)) { cap = CAP[k]; capA = fade(t, S[k][0], S[k][1], .45); }
+  $("caption").innerHTML = cap; $("caption").style.opacity = capA;
+  $("brand").style.opacity = Math.max(fade(t, S.code[0], S.code[1]), fade(t, S.cards[0], S.cards[1]));
+  $("badge").innerHTML = `${inS("doom") ? DOOM.speed : SPEED}× speed`;
+  $("badge").style.opacity = inS("race") ? fade(t, S.race[0], S.race[1]) : inS("doom") ? fade(t, S.doom[0], S.doom[1]) : 0;
+
+  let p = Promise.resolve(), recA = 0;
+  const launch = REC ? REC.launch_at_s : 1.5;
   if (t < S.zoom[1]) {
     recA = 1 - ramp(t, S.zoom[1] - .5, S.zoom[1]);
-    const z = ease(ramp(t, S.zoom[0], S.zoom[0] + 1.4));
-    place(rec, LIVE.x + (SIDE.x - LIVE.x) * z, LIVE.y + (SIDE.y - LIVE.y) * z, LIVE.w + (SIDE.w - LIVE.w) * z);
-    ps.push(frameAt(rec, launch - 1 + t));
+    const z = ease(ramp(t, S.zoom[0], S.zoom[0] + 1.6));
+    place(rec, REC0.x + (80 - REC0.x) * z, REC0.y + (225 - REC0.y) * z, REC0.w + (880 - REC0.w) * z);
+    p = recAt(launch - 1 + t);
   } else if (inS("race")) {
     recA = fade(t, S.race[0], S.race[1]);
-    place(rec, RACE.x, RACE.y, RACE.w);
+    place(rec, 63, 151, 964);
     const r = clamp((t - S.race[0] - PRE) * SPEED, 0, raceEnd);
-    ps.push(frameAt(rec, launch + Math.min(r, recRun)));               // hold on the frame where the dashboard shows step 4,000
+    p = recAt(launch + Math.min(r, recRun));           // hold on the frame where the dashboard shows step 4,000
   }
   rec.style.opacity = recA;
 
-  $("s-live").style.opacity = fade(t, S.live[0] + .3, S.zoom[0] + .2, .5);
-  $("s-zoom").style.opacity = fade(t, S.zoom[0] + .4, S.zoom[1], .6);
+  $("chip").style.opacity = fade(t, S.zoom[0] + .7, S.zoom[1], .6);
   if (inS("zoom")) {
     const tz = t - S.zoom[0];
     for (let i = 0; i < SPLIT.total; i++) {
       const el = $("sm" + i), role = el.dataset.role;
-      const on = role === "serve" ? ramp(tz, 1.4, 2.0) : role === "doom" ? ramp(tz, 2.1, 2.6) : ramp(tz, 2.7 + (i - 32) * .006, 3.1 + (i - 32) * .006);
-      el.setAttribute("fill", on > .5 ? ROLE_FILL[role][0] : COL.faint);
-      el.setAttribute("fill-opacity", on > .5 ? ROLE_FILL[role][1] : 1);
+      const on = role === "serve" ? ramp(tz, 1.6, 2.4) : role === "doom" ? ramp(tz, 2.4, 3.0) : ramp(tz, 3.0 + (i - 32) * 0.004, 3.6 + (i - 32) * 0.004);
+      el.style.fill = on > .5 ? COL[role] : "#1a2330";
     }
   }
-  $("s-code").style.opacity = fade(t, S.code[0], S.code[1]);
+  $("code").style.opacity = fade(t, S.code[0], S.code[1]);
   if (inS("code")) {
     const tc = t - S.code[0];
-    ROLE_LINES.forEach(([i, role], k) => {
-      const a = ramp(tc, 1.0 + k * 1.1, 1.5 + k * 1.1), col = role === "serve" ? COL.cher : COL.ink;
-      $("cl" + i).style.color = a > .5 ? COL.ink : COL.ink2;
-      $("cl" + i).style.borderLeftColor = a > .5 ? col : "transparent";
-      $("role-" + role).style.opacity = a;
+    [["pg-serve", 1.2, 6, "serve"], ["pg-doom", 2.4, 7, "doom"], ["pg-train", 3.6, 8, "train"]].forEach(([id, at, line, role]) => {
+      const a = ramp(tc, at, at + .6);
+      $(id).style.opacity = .25 + .75 * a; $(id).style.borderColor = a > .5 ? COL[role] : "#1f2a36";
+      $("cl" + line).style.background = a > .5 ? "rgba(255,255,255,.06)" : "transparent";
+      $("cl" + line).style.boxShadow = a > .5 ? `inset 3px 0 0 ${COL[role]}` : "none";
     });
-    $("launch").style.opacity = .35 + .65 * ramp(tc, 4.6, 5.2);
+    $("launchline").style.opacity = .3 + .7 * ramp(tc, 5.0, 5.6);
   }
-  $("s-doom").style.opacity = fade(t, S.doom[0], S.doom[1]);
-  if (inS("doom")) {
-    const r = clamp(DOOM.from + (t - S.doom[0] - DOOM.lead) * DOOM.speed, DOOM.from, DOOM.to);
-    ps.push(frameAt(rec2, launch + r));
-    $("doomt").textContent = `${fmt(r, 1)} s`;
-  }
-  $("s-race").style.opacity = fade(t, S.race[0], S.race[1]);
+  $("doom").style.opacity = fade(t, S.doom[0], S.doom[1]);
+  let p2 = Promise.resolve();
+  if (inS("doom")) p2 = frameAt(rec2, launch + clamp(DOOM.from + (t - S.doom[0] - DOOM.lead) * DOOM.speed, DOOM.from, DOOM.to));
+  $("race").style.opacity = fade(t, S.race[0], S.race[1]);
   if (inS("race")) {
     const r = clamp((t - S.race[0] - PRE) * SPEED, 0, raceEnd);
     $("clock").textContent = `${fmt(r, 1)} s`;
-    $("triadstats").innerHTML = `<span>Triad · the recorded run</span>` +
-      `<span>${r >= recRun ? `done in <b>${fmt(recRun, 1)} s</b> · ` : ""}kernel launches <b class="accent">1</b></span>`;
-    const ms = megSteps(r), vt = vllmToks(r);
-    $("meg-bar").style.width = (100 * ms / 4000).toFixed(2) + "%";
-    $("meg-steps").textContent = `${fmt(ms)} / ${fmt(4000)}`;
-    $("meg-l").textContent = fmt(Math.round(ms * MEG.launches_per_step));
-    $("meg-done").innerHTML = r >= MEG.train_s_mean ? `done in ${fmt(MEG.train_s_mean, 1)} s` : "&nbsp;";
-    $("vllm-bar").style.width = (100 * vt / tokens).toFixed(2) + "%";
-    $("vllm-toks").textContent = `${fmt(vt)} / ${fmt(tokens)}`;
-    $("vllm-l").textContent = fmt(Math.round(vt * VL.launches_per_token));
-    $("vllm-done").innerHTML = r >= vllmT ? `done in ${fmt(vllmT, 1)} s` : "&nbsp;";
+    $("triadstats").innerHTML =
+      `<span>${r >= recRun ? `<b style="color:var(--triad)">done in ${fmt(recRun, 1)} s</b>` : "training, serving, Doom"}</span>` +
+      `<span>kernel launches <b class="mono" style="color:var(--triad)">1</b></span>`;
+    for (const k of ORDER) {
+      const b = BL[k], f = Math.min(r, b.train_s_mean) / b.train_s_mean, id = "b-" + k;
+      $(id + "-bar").style.width = (100 * f).toFixed(2) + "%";
+      $(id + "-prog").innerHTML = `step <b class="mono">${fmt(Math.floor(f * 4000))}</b> / 4,000`;
+      $(id + "-l").innerHTML = `launches <b class="mono">${fmt(Math.floor(f * 4000) * b.launches_per_step)}</b>`;
+      $(id + "-time").innerHTML = r >= b.train_s_mean ? `<b>done in ${fmt(b.train_s_mean, 1)} s</b>` : "";
+    }
+    const fv = Math.min(r, vllmT) / vllmT;
+    $("b-vllm-bar").style.width = (100 * fv).toFixed(2) + "%";
+    $("b-vllm-prog").innerHTML = `served <b class="mono">${fmt(Math.floor(fv * tokens))}</b> tokens`;
+    $("b-vllm-l").innerHTML = `launches <b class="mono">${fmt(Math.round(Math.floor(fv * tokens) * VL.launches_per_token))}</b>`;
+    $("b-vllm-time").innerHTML = r >= vllmT ? `<b>done in ${fmt(vllmT, 1)} s</b>` : "";
     chartAt(r);
   }
-  $("s-cards").style.opacity = fade(t, S.cards[0], S.cards[1]);
+  $("cards").style.opacity = fade(t, S.cards[0], S.cards[1]);
   if (inS("cards")) {
     const tc = t - S.cards[0];
-    ["c1", "c2", "c3"].forEach((id, i) => { const a = ease(ramp(tc, .2 + i * 1.2, .9 + i * 1.2)); $(id).style.opacity = a; $(id).style.transform = `translateY(${(1 - a) * 24}px)`; });
-    $("cardnote").style.opacity = ramp(tc, 4.2, 4.8);
+    ["c1", "c2", "c3"].forEach((id, i) => { const a = ease(ramp(tc, .2 + i * 1.6, .9 + i * 1.6)); $(id).style.opacity = a; $(id).style.transform = `translateY(${(1 - a) * 30}px)`; });
+    $("cardfoot").style.opacity = ramp(tc, 5.2, 5.8);
   }
-  $("s-end").style.opacity = fade(t, S.end[0], S.end[1] + 1, .7);
-  await Promise.all(ps);
+  $("end").style.opacity = fade(t, S.end[0], S.end[1] + 1, .7);
+  await Promise.all([p, p2]);
 };
 window.READY = true;
 </script></body></html>
