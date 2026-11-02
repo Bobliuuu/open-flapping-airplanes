@@ -37,14 +37,6 @@ canvas#fb{width:100%;max-height:100%;aspect-ratio:320/200;image-rendering:pixela
 #cmp .card .k{color:var(--dim);font-size:12px} #cmp .card .v{font-size:20px;color:#fff;font-weight:700;margin-top:4px}
 #final{font-size:22px;color:#fff;text-align:center;max-width:1000px}
 #wait{position:absolute;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;color:var(--dim);font-size:15px;z-index:9}
-/* ?theme=magni : Magni's colours and type (Hanken Grotesk Light for numbers and the name, Fragment Mono for the rest) */
-:root.magni{--bg:#04080f;--panel:#0a111b;--line:#e6ebf126;--dim:#a9b6c6;--txt:#e6ebf1;--accent:#7d98ff;--cyan:#a9b6c6;--green:#e6ebf1;--grid:#e6ebf11a}
-.magni body{font-family:"Fragment Mono",ui-monospace,monospace}
-.magni header .logo{font-family:"Hanken Grotesk",sans-serif;font-weight:300;letter-spacing:-.02em;color:var(--txt);font-size:19px}
-.magni #loss{font-family:"Hanken Grotesk",sans-serif;font-weight:300;letter-spacing:-.035em;color:var(--txt)}
-.magni .tag{text-transform:uppercase;letter-spacing:.1em;font-size:10px;color:var(--dim)}
-.magni #infer .prompt{color:var(--txt)} .magni #infer .out{color:var(--dim)} .magni #infer .rate{color:var(--txt)} .magni #cur{background:var(--accent)}
-.magni .panel{border-radius:2px}
 </style></head><body>
 <div id="app">
   <div id="wait">connecting to the GPU...</div>
@@ -60,9 +52,7 @@ canvas#fb{width:100%;max-height:100%;aspect-ratio:320/200;image-rendering:pixela
   </div>
   </div>
 <script>
-if(new URLSearchParams(location.search).get('theme')==='magni')document.documentElement.classList.add('magni');
 const $=id=>document.getElementById(id);
-const css=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim();
 const fmt=n=>Math.round(n).toLocaleString('en-US');
 const cv=$('chart'),cx=cv.getContext('2d');let S=null,fbOK=false;
 const fb=$('fb'),fx=fb.getContext('2d'),img=fx.createImageData(320,200);
@@ -73,13 +63,12 @@ function drawChart(){
   const c=S&&S.curve;if(!c||c.length<2)return;
   const padL=34,padB=16,padT=4,padR=6;let tmax=Math.max(c[c.length-1][0],1);let lmax=0,lmin=1e9;for(const p of c){lmax=Math.max(lmax,p[1]);lmin=Math.min(lmin,p[1])}
   lmax=Math.ceil(lmax*1.05);lmin=Math.max(0,Math.floor(lmin*0.9*2)/2);
-  const mg=document.documentElement.classList.contains('magni');
-  cx.strokeStyle=mg?css('--grid'):'#18212c';cx.fillStyle=mg?css('--dim'):'#5b6676';cx.font=mg?'10px "Fragment Mono",monospace':'10px monospace';cx.lineWidth=1;
+  cx.strokeStyle='#18212c';cx.fillStyle='#5b6676';cx.font='10px monospace';cx.lineWidth=1;
   for(let i=0;i<=4;i++){const y=padT+(Hh-padT-padB)*i/4;cx.beginPath();cx.moveTo(padL,y);cx.lineTo(W-padR,y);cx.stroke();cx.fillText((lmax-(lmax-lmin)*i/4).toFixed(1),2,y+3)}
   cx.fillText('seconds',W-52,Hh-3);
-  cx.strokeStyle=mg?css('--txt'):'#e8eef6';cx.lineWidth=1.6;cx.beginPath();
+  cx.strokeStyle='#e8eef6';cx.lineWidth=1.6;cx.beginPath();
   c.forEach((p,i)=>{const x=padL+(W-padL-padR)*p[0]/tmax,y=padT+(Hh-padT-padB)*(1-(p[1]-lmin)/(lmax-lmin||1));i?cx.lineTo(x,y):cx.moveTo(x,y)});cx.stroke();
-  const l=c[c.length-1],x=padL+(W-padL-padR)*l[0]/tmax,y=padT+(Hh-padT-padB)*(1-(l[1]-lmin)/(lmax-lmin||1));cx.fillStyle=mg?css('--accent'):'#ff4d4d';cx.beginPath();cx.arc(x,y,3,0,7);cx.fill();
+  const l=c[c.length-1],x=padL+(W-padL-padR)*l[0]/tmax,y=padT+(Hh-padT-padB)*(1-(l[1]-lmin)/(lmax-lmin||1));cx.fillStyle='#ff4d4d';cx.beginPath();cx.arc(x,y,3,0,7);cx.fill();
 }
 async function poll(){try{const r=await fetch('/state');const d=await r.json();$('wait').style.display='none';
   $('clock').textContent=clock(d.t);$('loss').textContent=d.steps?d.loss.toFixed(4):'-';$('step').textContent=fmt(d.steps);

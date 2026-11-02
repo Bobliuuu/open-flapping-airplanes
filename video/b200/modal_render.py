@@ -1,5 +1,4 @@
-"""Renders the demo video on a Modal CPU container (Google Chrome, node, ffmpeg, and the Hanken Grotesk / Fragment Mono fonts from brand/):
-no local browser needed.
+"""Renders the demo video on a Modal CPU container (Google Chrome, node, ffmpeg, Inter and JetBrains Mono): no local browser needed.
 
   python3 video/b200/make_data.py --build ofa_tc2                  # data.json / data.js from the results and the recording
   modal run video/b200/modal_render.py --build ofa_tc2 --stills 3,13,20,30,40,48,56,64,70   # PNG stills -> video/out/demo_stills/
@@ -25,11 +24,8 @@ img = (
         " && apt-get update -q && apt-get install -y -q /tmp/chrome.deb && rm /tmp/chrome.deb && google-chrome --version",
         "curl -fsSL https://nodejs.org/dist/v22.11.0/node-v22.11.0-linux-x64.tar.xz | tar -xJ -C /opt"
         " && ln -s /opt/node-v22.11.0-linux-x64/bin/node /usr/local/bin/node && ln -s /opt/node-v22.11.0-linux-x64/bin/npm /usr/local/bin/npm",
-        "mkdir -p /opt/r && cd /opt/r && npm init -y >/dev/null && npm install --no-audit --no-fund puppeteer-core@24",
+        "mkdir -p /opt/r && cd /opt/r && npm init -y >/dev/null && npm install --no-audit --no-fund puppeteer-core@24 && fc-list | grep -i -E 'inter|jetbrains' | head -3",
     )
-    .add_local_file(HERE / "brand" / "HankenGrotesk-Light.ttf", "/usr/share/fonts/truetype/brand/HankenGrotesk-Light.ttf", copy=True)
-    .add_local_file(HERE / "brand" / "FragmentMono-Regular.ttf", "/usr/share/fonts/truetype/brand/FragmentMono-Regular.ttf", copy=True)
-    .run_commands("fc-cache -f && fc-list | grep -i -e 'Hanken Grotesk' -e 'Fragment Mono'")
 )
 
 
@@ -37,9 +33,8 @@ img = (
 def render(files: dict, build: str, stills: str = "", conc: int = 8) -> dict:
     w = Path("/tmp/demo")
     (w / "frames").mkdir(parents=True, exist_ok=True)
-    for name, data in files.items():
-        (w / name).parent.mkdir(parents=True, exist_ok=True)
-        (w / name).write_bytes(data)
+    for name, text in files.items():
+        (w / name).write_text(text)
     (w / "node_modules").symlink_to("/opt/r/node_modules")
     rec = f"/vol/video/b200_llm_dashboard_{build}.mp4"
     subprocess.run(["ffmpeg", "-loglevel", "error", "-i", rec, "-vf", "fps=30", "-q:v", "2", str(w / "frames" / "rec_%05d.jpg")], check=True)
@@ -64,8 +59,7 @@ def main(build: str = "ofa_tc2", stills: str = "", conc: int = 8, check_times: s
         (OUT / f"ofa_demo_{build}_sheet.png").write_bytes(r["sheet"])
         print("contact sheet ->", OUT / f"ofa_demo_{build}_sheet.png")
         return
-    files = {p.name: p.read_bytes() for p in HERE.iterdir() if p.name in ("demo.html", "data.js", "data.json", "render_demo.js")}
-    files.update({f"brand/{p.name}": p.read_bytes() for p in (HERE / "brand").iterdir() if p.suffix in (".ttf", ".svg")})
+    files = {p.name: p.read_text() for p in HERE.iterdir() if p.name in ("demo.html", "data.js", "data.json", "render_demo.js")}
     r = render.remote(files, build, stills, conc)
     print(r["log"])
     OUT.mkdir(exist_ok=True)
