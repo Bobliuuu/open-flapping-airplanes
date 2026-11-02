@@ -92,6 +92,13 @@ You need an NVIDIA A100 box (sm_80) reachable over SSH. Run these on your Mac or
 python3 -m http.server 8000 --directory site     # the stats site, http://localhost:8000
 ```
 
+No A100 box? The same demo and benchmark run on a [Modal](https://modal.com) B200 with no SSH (details in [`benchmarks/README.md`](benchmarks/README.md)):
+
+```bash
+uv tool install modal && modal setup                 # once
+modal run benchmarks/run_modal.py --mode bench       # builds on CPU, then benchmarks on one B200 (about 7 GPU-minutes)
+```
+
 ## 📈 Results
 
 NVIDIA A100-SXM4-40GB (108 SMs), 5 repetitions x 6 s, 2026-11-01. Source: [`benchmarks/results/latest.json`](benchmarks/results/latest.json) and [`summary.md`](benchmarks/results/summary.md).
@@ -109,25 +116,40 @@ The baselines run the *same task code* as ordinary per-op kernels (4 launches pe
 
 Negative means the baseline is faster. Triad takes 0.296 s for 4,000 steps.
 
+**The same benchmark on an NVIDIA B200** (148 SMs, on Modal, 5 repetitions x 6 s, 2026-11-01). Source: [`b200_20261101.json`](benchmarks/results/b200_20261101.json) and [`summary_b200.md`](benchmarks/results/summary_b200.md).
+
+> 🟩 **Triad on a B200, all three at once (mean, sd):** **17,788.6** training steps/s (sd 332.7) · 4,553,879 training tok/s · **71,349.9** inference tok/s (sd 382.4) · **35.0** Doom fps (sd 0.0) · **1** kernel launch
+
+| Baseline (B200) | Train steps/s | Infer tok/s | Baseline slower than Triad, train / infer | 4,000 steps take |
+|---|---|---|---|---|
+| Per-op kernels, eager launches | 22,239 | 68,712 | -25.0% / 3.7% | 0.180 s |
+| Per-op kernels, CUDA graphs | 22,111 | 66,873 | -24.3% / 6.3% | 0.181 s |
+| Both jobs, one process, two CUDA-graph streams | 21,450 | 64,109 | -20.6% / 10.1% | 0.186 s |
+| 🥊 Two separate processes sharing the GPU | 10,328 | 29,961 | **41.9% / 58.0%** | 0.387 s |
+
+Triad takes 0.225 s for 4,000 steps on the B200. Its rates are about 1.3x the A100's, roughly the ratio of the maximum SM clocks (1,965 vs 1,410 MHz); the extra SMs stay idle. The per-op training baseline gained more (1.46x), so its lead grew.
+
 ### 🆚 Versus Flapping Airplanes' published numbers
 
-Their column is **read frame by frame from their demo video** ([`benchmarks/fa_published.json`](benchmarks/fa_published.json)); we did not measure it.
+Their column is **read frame by frame from their demo video** ([`benchmarks/fa_published.json`](benchmarks/fa_published.json)); we did not measure it. The B200 column is the same-GPU comparison. What is and is not like-for-like, and the LLM-scale runs, are in [`docs/FA_COMPARISON.md`](docs/FA_COMPARISON.md).
 
-| | Flapping Airplanes (B200, from video) | Triad (A100, measured) |
-|---|---|---|
-| Kernel launches | 1 vs 514,562 | 1 vs 4 per step / 3 per token |
-| 4,000 training steps | 46.1 s vs 70.1 s (baseline **34% slower**) | 0.296 s vs 0.262 s eager (baseline **13.1% faster**) |
-| Inference tok/s | 1,076 vs 710 (baseline **34% slower**) | 53,212 vs 52,070 eager (baseline 2.1% slower) |
-| SM split | 116 train / 24 infer / 8 Doom of 148 | dynamic, mean busy SMs 18.5 / 2.3 / 0.19 of 108 |
-| Model | LLM-scale (loss starts near 11.5) | tiny char-level MLP |
+| | Flapping Airplanes (B200, from video) | Triad (B200, measured) | Triad (A100, measured) |
+|---|---|---|---|
+| Kernel launches | 1 vs 514,562 | 1 vs 4 per step / 3 per token | 1 vs 4 per step / 3 per token |
+| 4,000 training steps | 46.1 s vs 70.1 s (baseline **34% slower**) | 0.225 s vs 0.180 s eager (baseline **25.0% faster**) | 0.296 s vs 0.262 s eager (baseline **13.1% faster**) |
+| Inference tok/s | 1,076 vs 710 (baseline **34% slower**) | 71,350 vs 68,712 eager (baseline 3.7% slower) | 53,212 vs 52,070 eager (baseline 2.1% slower) |
+| SM split | 116 train / 24 infer / 8 Doom of 148 | dynamic, mean busy SMs 17.1 / 2.9 / 0.14 of 148 | dynamic, mean busy SMs 18.5 / 2.3 / 0.19 of 108 |
+| Model | LLM-scale (loss starts near 11.5) | tiny char-level MLP | tiny char-level MLP |
+
+Their baselines run on their SM shares. With ours limited to the same shares by CUDA MPS (116 SMs for training, 24 for serving), the B200 training baseline is unchanged and the serving baseline gets 17% faster, so it beats Triad at serving too: 22% faster at training, 17% faster at serving ([`b200_20261101_mps_baselines.json`](benchmarks/results/b200_20261101_mps_baselines.json)).
 
 ## ⚠️ Honest caveats
 
-- 🖥️ **A100, not B200.** Different chip, different scale.
+- 🖥️ **Same chip as theirs now, still not their benchmark.** The B200 run matches their GPU; the workload and the baseline do not ([`docs/FA_COMPARISON.md`](docs/FA_COMPARISON.md)).
 - 🔬 **A tiny char-level model, not an LLM.** Absolute throughput is not comparable with theirs.
-- 🎯 **Our per-op baseline is tight.** It reuses Triad's own task code, so on this workload it is actually *faster per job* (13% to 21% on training). Triad's advantage here is running all three at once and beating two processes that share a GPU by roughly 45-49%.
+- 🎯 **Our per-op baseline is tight.** It reuses Triad's own task code, so on this workload it is actually *faster per job* (13% to 21% on training on the A100, 24% to 25% on the B200). Triad's advantage here is running all three at once: two processes that share a GPU are 45-49% slower on the A100 and 42-58% slower on the B200.
 - ❌ **We do not reproduce their 34%.** Their baseline is Megatron plus vLLM; ours is not.
-- 💤 **The GPU is mostly idle for our workload** (about 21 of 108 SMs busy on average): this demonstrates the mechanism, it is not a saturation benchmark.
+- 💤 **The GPU is mostly idle for our workload** (about 21 of 108 SMs busy on average on the A100, about 20 of 148 on the B200): this demonstrates the mechanism, it is not a saturation benchmark.
 - 🤖 **Doom is played by a script**, and 🔇 **sound is disabled**.
 
 ## Demo video
@@ -140,12 +162,13 @@ Their column is **read frame by frame from their demo video** ([`benchmarks/fa_p
 |---|---|
 | `a100-demo/` | A100 small-model Doom demo: `demo.cu` megakernel with embedded HTTP server, `index.html` three-panel dashboard, `run_demo.sh` |
 | `doom-gpu/` | Compiling the C Doom engine for the GPU: tinylibc, `fix_varargs.py`, `gpu_par.c`, `build_doom.sh`, `setup_box.sh`, `doomtest.cu` |
-| `benchmarks/` | `run_benchmarks.sh`, `compare.py`, `fa_published.json`, `results/` |
+| `benchmarks/` | `run_benchmarks.sh` (SSH box), `run_modal.py` (Modal B200, no SSH), `compare.py`, `fa_published.json`, `results/` |
 | `site/` | Static stats website with animated diagrams (`index.html`, `data/`, `assets/`) |
 | `llm/` | LLM + Doom Triad build, baselines and the B200/B300 kit (to be regrouped into `a100-llm/` and `b300-run/`, see `docs/REORG_PLAN.md`) |
 | `video/` | Sources of the explainer video |
 | `tools/` | `gen_svgs.py` regenerates the animated SVGs |
 | `docs/RESEARCH.md` | The original research log: feasibility analysis, build ladder, milestone notes |
+| `docs/FA_COMPARISON.md` | Every Triad run next to Flapping Airplanes' numbers: what is like-for-like (B200 vs B200) and what is not |
 
 ## 🔧 How Doom runs on a GPU
 
