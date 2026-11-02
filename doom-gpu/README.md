@@ -5,7 +5,7 @@ Builds the C Doom engine (doomgeneric) as a relocatable GPU object with clang's 
 | File | Role |
 |---|---|
 | `setup_box.sh` | One-time: installs clang, clones doomgeneric, fetches the shareware WAD (md5 checked), builds |
-| `build_doom.sh` | Compiles engine + tinylibc + glue to `doom.o`, applying the PTX-compatibility patches |
+| `build_doom.sh` | Compiles engine + tinylibc + glue to `doom.o`, applying the PTX-compatibility patches. `ARCH=sm_100 ./build_doom.sh` builds for a B200 (default `sm_80`) |
 | `tinylibc/`, `tinylibc.c` | Minimal libc headers/implementation for device code |
 | `fix_varargs.py` | LLVM IR pass lowering varargs (clang 14 cannot select `va_start` on NVPTX) |
 | `gpu_glue.c`, `gpu_par.c` | Engine entry points; queued parallel column/span drawing for 255 workers |
