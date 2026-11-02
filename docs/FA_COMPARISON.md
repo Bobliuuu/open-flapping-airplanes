@@ -1,4 +1,4 @@
-# open-flapping-airplanes vs Flapping Airplanes' demo: a fair comparison
+# open-flapping-airplanes vs Flapping Airplanes' demo on a B200
 
 Flapping Airplanes (FA) showed one demo video: an LLM trained, served from its live weights and Doom played, all in one kernel launch on an
 NVIDIA B200, against Megatron and vLLM timed individually. Their numbers are read frame by frame from that video

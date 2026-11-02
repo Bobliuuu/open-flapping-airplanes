@@ -34,7 +34,8 @@ GPU_INFO = ("nvidia-smi --query-gpu=name,driver_version,memory.total,clocks.max.
             " echo \"cpus=$(nproc)$(grep -m1 'model name' /proc/cpuinfo | cut -d: -f2)\"")
 CPUS = 16.0                                          # reserved host cores: the framework baselines are CPU-bound at batch 1 / small model
 WAD_URL, WAD_MD5 = "https://github.com/Akbar30Bill/DOOM_wads/raw/master/doom1.wad", "f0cefca49926d00903cf57551d901abe"
-SKIP = ["doomgeneric", "obj", "src_gpu", "**/*.o", "**/*.ptx", "**/*.bc", "**/*.ll", "**/*.cubin", "**/*.wad", "demo", "doomtest"]
+SKIP = ["doomgeneric", "obj", "src_gpu", "**/*.o", "**/*.ptx", "**/*.bc", "**/*.ll", "**/*.cubin", "**/*.wad", "demo", "doomtest",
+        "player/build_cpu", "**/*.so", "**/__pycache__"]
 LLM_SKIP = ["**/results/**", "**/__pycache__/**", "**/*.o", "**/*.buildlog", "**/*.png", "**/ofa_orig_reference.cu.txt"]
 MK = "/opt/ofa/llm/b200/megakernel"
 
@@ -47,8 +48,8 @@ mk_img = (
     modal.Image.from_registry("nvidia/cuda:12.8.1-devel-ubuntu22.04", add_python="3.12")
     .apt_install("clang", "llvm", "lld", "git", "curl", "ca-certificates")
     .run_commands(
-        "git clone -q https://github.com/ozkl/doomgeneric.git /opt/src/doomgeneric"
-        " && git -C /opt/src/doomgeneric rev-parse --short HEAD > /opt/src/doomgeneric.rev",
+        "git clone -q https://github.com/ozkl/doomgeneric.git /opt/src/doomgeneric && git -C /opt/src/doomgeneric checkout -q e257a09"
+        " && git -C /opt/src/doomgeneric rev-parse --short HEAD > /opt/src/doomgeneric.rev",     # pinned: the player was checked on it
         f"curl -fsSL -m 120 -o /opt/src/doom1.wad {WAD_URL} && echo '{WAD_MD5}  /opt/src/doom1.wad' | md5sum -c -",
     )
     .add_local_dir(ROOT / "doom-gpu", "/opt/ofa/doom-gpu", copy=True, ignore=SKIP)
@@ -74,13 +75,21 @@ tc_img = mk_img.run_commands(
     " && MODEL=S bash build.sh sm_100a ofa_tc3 -DOFA_GEMM_BACKEND=1 -DGEMM100_STAGES=3"
 )
 # --step video: the megakernel's dashboard in Google Chrome on a virtual X display, recorded by ffmpeg. The page asks for macOS monospace
-# fonts; on Linux the generic monospace family is used, which fontconfig points at JetBrains Mono.
+# fonts; on Linux the generic monospace family is used, which fontconfig points at JetBrains Mono. With ?theme=magni (the default for
+# the recording) it uses Hanken Grotesk and Fragment Mono, installed from video/b200/brand (SIL Open Font License).
 FONTS_CONF = ('<?xml version="1.0"?><!DOCTYPE fontconfig SYSTEM "fonts.dtd"><fontconfig><alias><family>monospace</family>'
               '<prefer><family>JetBrains Mono</family></prefer></alias></fontconfig>')
-vid_img = tc_img.apt_install("xvfb", "ffmpeg", "wget", "fonts-dejavu-core", "fonts-jetbrains-mono").run_commands(
-    "wget -q -O /tmp/chrome.deb https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb"
-    " && apt-get update -q && apt-get install -y -q /tmp/chrome.deb && rm /tmp/chrome.deb && google-chrome --version",
-    f"echo '{FONTS_CONF}' > /etc/fonts/local.conf && fc-cache -f && fc-match monospace",
+BRAND = ROOT / "video" / "b200" / "brand"
+vid_img = (
+    tc_img.apt_install("xvfb", "ffmpeg", "wget", "fonts-dejavu-core", "fonts-jetbrains-mono")
+    .run_commands(
+        "wget -q -O /tmp/chrome.deb https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb"
+        " && apt-get update -q && apt-get install -y -q /tmp/chrome.deb && rm /tmp/chrome.deb && google-chrome --version",
+        f"echo '{FONTS_CONF}' > /etc/fonts/local.conf && fc-cache -f && fc-match monospace",
+    )
+    .add_local_file(BRAND / "HankenGrotesk-Light.ttf", "/usr/share/fonts/truetype/brand/HankenGrotesk-Light.ttf", copy=True)
+    .add_local_file(BRAND / "FragmentMono-Regular.ttf", "/usr/share/fonts/truetype/brand/FragmentMono-Regular.ttf", copy=True)
+    .run_commands("fc-cache -f && fc-list | grep -i -e 'Hanken Grotesk' -e 'Fragment Mono'")
 )
 # Training baselines: NVIDIA's NGC PyTorch container (torch + Transformer Engine + cuDNN for Blackwell); megatron-core pinned to the
 # version llm/baseline used, without dependencies so the container's torch and TE stay.
@@ -252,7 +261,8 @@ def mk(reps: int = 3, steps: int = 4000, binary: str = "ofa_s", tag: str = "mega
 
 
 @app.function(gpu=GPU, image=vid_img, volumes={V: vol}, cpu=8.0, memory=32768, timeout=2400)
-def video(steps: int = 4000, width: int = 1920, height: int = 1080, scale: float = 4 / 3, fps: int = 30, binary: str = "ofa_tc2") -> dict:
+def video(steps: int = 4000, width: int = 1920, height: int = 1080, scale: float = 4 / 3, fps: int = 30, binary: str = "ofa_tc2",
+          theme: str = "magni") -> dict:
     """Screen recording of the megakernel's dashboard for a full run on FA's split: the training loss, answers to FA's prompt from the live
     weights, Doom. Google Chrome shows the page on a virtual X display and ffmpeg records it in real time; the dashboard is served
     --start-delay seconds before the launch, so the recording starts at step 0. The MP4 goes to the Volume's video/; stills come back."""
@@ -295,7 +305,7 @@ def video(steps: int = 4000, width: int = 1920, height: int = 1080, scale: float
         if wait_for(lambda s: True, 300) is None:
             return {"gpu": gpu, "log": "".join(log)[-3000:], "error": "the dashboard never came up"}
         procs.append(subprocess.Popen(
-            ["google-chrome", "--app=http://127.0.0.1:8080/", "--kiosk", "--window-position=0,0",
+            ["google-chrome", f"--app=http://127.0.0.1:8080/?theme={theme}", "--kiosk", "--window-position=0,0",
              f"--window-size={round(width / scale)},{round(height / scale)}",      # in CSS pixels: Chrome multiplies by the scale factor
              f"--force-device-scale-factor={scale}", "--no-sandbox", "--test-type", "--no-first-run", "--no-default-browser-check",
              "--password-store=basic", "--disable-gpu", "--disable-dev-shm-usage", "--hide-scrollbars", "--user-data-dir=/tmp/chrome",

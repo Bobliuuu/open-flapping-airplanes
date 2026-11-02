@@ -56,6 +56,7 @@ inline void serve_client(int c) {
   char req[2048]; const int n = (int)recv(c, req, sizeof req - 1, 0);
   if (n <= 0) { close(c); return; }
   req[n] = 0; std::string path = "/"; { char* sp = strchr(req, ' '); if (sp) { char* e = strchr(sp + 1, ' '); if (e) path.assign(sp + 1, e); } }
+  { const size_t q = path.find('?'); if (q != std::string::npos) path.resize(q); }    // the page's options (?theme=...) are read by the page
   if (path == "/stream") { stream_frames(c); return; }
   std::string body, ctype = "text/html; charset=utf-8";
   if (path == "/frame") { body.assign((const char*)fb_host, FBSZ); ctype = "application/octet-stream"; }
