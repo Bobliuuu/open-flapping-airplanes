@@ -1,5 +1,8 @@
 # b200/: Blackwell track of Triad (148-SM B200, sm_100a), prepared WITHOUT B200 hardware
 
+> **Update 2026-11-02:** the megakernel (with Doom), the baseline scripts and the tcgen05 GEMM test have now run on an actual B200 (Modal
+> `gpu="B200"`), unchanged; results and the pipeline are in [`../../b200-run/`](../../b200-run/README.md). The text below is the original plan.
+
 **EVERYTHING HERE IS UNTESTED ON B200.** No B200 result exists. This kit was written and compile-checked on the A100 box (nvcc 12.8, which can target
 `sm_100a`). Nothing below claims a measured Blackwell number. FA's published targets (from `benchmarks/fa_published.json`, read off their video, not measured by us):
 Megatron 4,000 steps **70.1 s** (~230k tok/s) on 116 SMs, vLLM **710 tok/s** on 24 SMs, KVM 46.1 s / ~355k tok/s / 1,076 tok/s, 514,562 vs 1 launch, split 116/24/8 of 148.

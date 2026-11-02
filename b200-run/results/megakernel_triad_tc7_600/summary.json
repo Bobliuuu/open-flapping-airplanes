@@ -1,0 +1,29 @@
+{
+ "gpu": "NVIDIA B200, 610.57.04, 183359 MiB, 1965 MHz",
+ "loss20": {
+  "rc": 0,
+  "lines": [
+   "GPU NVIDIA B200 (sm_100), 148 SMs; smem/SM 233472 B, opt-in/block 232448 B, reserved/block 1024 B; kernel needs 100352 B dyn -> 2 blocks/SM fit by smem, 1 by occupancy (target 2)",
+   "model: L=12 d=768 H=12 T=512 V=100352  params=162.4M  tokens/step=4096",
+   "kernel time 0.421 s (event) / 0.608 s (wall incl. launch)",
+   "steady state: 21.05 ms/step (median 21.05) -> 194543 tok/s;  4,000 steps = 84.2 s",
+   "loss: step0 11.7106  s1 11.2639  s2 10.7522  s5 9.9998  s10 9.6331",
+   "SM utilisation (task time / wall, 1 blocks per SM): training 128.0 SM-equivalents, serving 0.0 SM-equivalents (of 148 SMs)"
+  ]
+ },
+ "split_r1": {
+  "rc": 0,
+  "lines": [
+   "SM partition (B200 preset 116/24/8): infer 24, doom 8, train 116, idle 0 of 148 SMs",
+   "doom: WAD /opt/triad/doom-gpu/doom1.wad (4196020 bytes), partition runs the real engine at 35 Hz",
+   "GPU NVIDIA B200 (sm_100), 148 SMs; smem/SM 233472 B, opt-in/block 232448 B, reserved/block 1024 B; kernel needs 100352 B dyn -> 2 blocks/SM fit by smem, 1 by occupancy (target 2)",
+   "model: L=12 d=768 H=12 T=512 V=100352  params=162.4M  tokens/step=4096",
+   "kernel time 15.546 s (event) / 15.641 s (wall incl. launch)",
+   "steady state: 25.91 ms/step (median 25.91) -> 158089 tok/s;  4,000 steps = 103.6 s",
+   "loss: step0 11.7106  s1 11.2639  s2 10.7522  s5 9.9998  s10 9.6331  s20 8.5514  s50 5.6934  s100 4.4137  s200 4.0631  s500 3.6659",
+   "SM utilisation (task time / wall, 1 blocks per SM): training 103.0 SM-equivalents, serving 18.1 SM-equivalents (of 148 SMs)",
+   "decode: 15128 tokens generated during 15.52 s of training -> 975 tok/s",
+   "doom: 539 frames in the run, 35.0 fps over the run (frame 0 = boot excluded); 34.9 fps while training steps 3..599"
+  ]
+ }
+}

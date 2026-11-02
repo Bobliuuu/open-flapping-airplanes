@@ -1,5 +1,9 @@
 # gemm_tcgen05: Blackwell GEMM backend (TMA + tcgen05.mma + TMEM), first attempt
 
+> **Update 2026-11-02, first run on a B200:** `test_gemm_sm100` prints PASS for all 15 S cases with NT only, NT + NN and every layout, at
+> 15-42% of cuBLAS (the mma.sync control: 13-33%). Inside the megakernel the build runs 1 block per SM (occupancy, not shared memory) and the
+> step gets slower. Logs: [`../../../b200-run/results/gemm/`](../../../b200-run/results/gemm/), summary in [`../../../b200-run/README.md`](../../../b200-run/README.md).
+
 **STATUS: UNTESTED ON B200. It has never executed.** Written without B200 hardware from the PTX ISA tcgen05 chapter and from memory of
 CUTLASS 3.8+/4.x sm100 code. What *was* done here: it compiles with nvcc 12.8 for `-arch=sm_100a` (ptxas accepts every tcgen05/TMA instruction, 0 spills,
 72-108 registers), and the SASS contains `UTCHMMA`, `UTMALDG.2D`, `LDTM`, `UTCBAR`. Compiling says nothing about whether descriptors, layouts or
