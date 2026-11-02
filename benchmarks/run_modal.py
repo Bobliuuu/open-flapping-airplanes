@@ -2,6 +2,7 @@
 
   modal run benchmarks/run_modal.py                    # smoke test: Doom alone, then all three jobs together for a few seconds
   modal run benchmarks/run_modal.py --mode live        # live demo without a browser: saves Doom frames, generated text, loss
+  modal run benchmarks/run_modal.py --mode video       # screen recording of the dashboard, 3 programs on one screen -> video/out/
   modal run benchmarks/run_modal.py --mode bench       # full benchmark (5 reps x 6 s) -> benchmarks/results/b200_<date>.json
   modal run benchmarks/run_modal.py --mode mps         # baselines limited to FA's SM shares with CUDA MPS (116 / 24 of 148 SMs)
   OFA_GPU=H100 OFA_ARCH=sm_90 modal run benchmarks/run_modal.py --mode bench    # another GPU type
@@ -24,7 +25,7 @@ WAD = f"{DOOM}/doom1.wad"
 WAD_URL, WAD_MD5 = "https://github.com/Akbar30Bill/DOOM_wads/raw/master/doom1.wad", "f0cefca49926d00903cf57551d901abe"
 SKIP = ["doomgeneric", "obj", "src_gpu", "**/*.o", "**/*.ptx", "**/*.bc", "**/*.ll", "**/*.cubin", "**/*.wad", "demo", "doomtest"]
 
-image = (
+base = (
     modal.Image.from_registry("nvidia/cuda:12.8.1-devel-ubuntu22.04", add_python="3.12")
     .apt_install("clang", "llvm", "lld", "git", "curl", "ca-certificates")
     .run_commands(
@@ -32,14 +33,34 @@ image = (
         " && git -C /opt/src/doomgeneric rev-parse --short HEAD > /opt/src/doomgeneric.rev",
         f"curl -fsSL -m 120 -o /opt/src/doom1.wad {WAD_URL} && echo '{WAD_MD5}  /opt/src/doom1.wad' | md5sum -c -",
     )
-    .add_local_dir(ROOT / "doom-gpu", DOOM, copy=True, ignore=SKIP)
-    .run_commands(
-        f"ln -sfn /opt/src/doomgeneric {DOOM}/doomgeneric && cp /opt/src/doom1.wad {WAD}",
-        f"cd {DOOM} && ARCH={ARCH} bash build_doom.sh",
-        f"cd {DOOM} && nvcc -O3 -arch={ARCH} -std=c++17 -rdc=true doomtest.cu doom_dev.o -o doomtest",
+)
+
+
+def with_ofa(img):
+    """This repo's Doom engine and demo, added to an image and compiled for ARCH."""
+    return (
+        img.add_local_dir(ROOT / "doom-gpu", DOOM, copy=True, ignore=SKIP)
+        .run_commands(
+            f"ln -sfn /opt/src/doomgeneric {DOOM}/doomgeneric && cp /opt/src/doom1.wad {WAD}",
+            f"cd {DOOM} && ARCH={ARCH} bash build_doom.sh",
+            f"cd {DOOM} && nvcc -O3 -arch={ARCH} -std=c++17 -rdc=true doomtest.cu doom_dev.o -o doomtest",
+        )
+        .add_local_dir(ROOT / "a100-demo", DEMO, copy=True, ignore=SKIP)
+        .run_commands(f"cd {DEMO} && nvcc -O3 -arch={ARCH} -std=c++17 -rdc=true demo.cu {DOOM}/doom_dev.o -o demo -lpthread")
     )
-    .add_local_dir(ROOT / "a100-demo", DEMO, copy=True, ignore=SKIP)
-    .run_commands(f"cd {DEMO} && nvcc -O3 -arch={ARCH} -std=c++17 -rdc=true demo.cu {DOOM}/doom_dev.o -o demo -lpthread")
+
+
+image = with_ofa(base)
+# --mode video: the dashboard in Google Chrome on a virtual X display, recorded by ffmpeg. The page asks for macOS monospace fonts;
+# on Linux it falls back to the generic monospace family, which fontconfig points at JetBrains Mono.
+FONTS_CONF = ('<?xml version="1.0"?><!DOCTYPE fontconfig SYSTEM "fonts.dtd"><fontconfig><alias><family>monospace</family>'
+              '<prefer><family>JetBrains Mono</family></prefer></alias></fontconfig>')
+video_image = with_ofa(
+    base.apt_install("xvfb", "ffmpeg", "wget", "fonts-dejavu-core", "fonts-jetbrains-mono").run_commands(
+        "wget -q -O /tmp/chrome.deb https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb"
+        " && apt-get update -q && apt-get install -y -q /tmp/chrome.deb && rm /tmp/chrome.deb && google-chrome --version",
+        f"echo '{FONTS_CONF}' > /etc/fonts/local.conf && fc-cache -f && fc-match monospace",
+    )
 )
 app = modal.App(f"ofa-{TAG}", image=image)
 GPU_INFO = "nvidia-smi --query-gpu=name,driver_version,memory.total,clocks.max.sm --format=csv,noheader"
@@ -153,6 +174,84 @@ def mps_baselines(reps: int = 3, secs: float = 6.0, train_pct: int = 79, infer_p
     return {"gpu": gpu, "reps": reps, "secs": secs, "runs": runs}
 
 
+@app.function(gpu=GPU, image=video_image, cpu=8.0, memory=16384, timeout=1200)
+def video(secs: float = 40.0, width: int = 1920, height: int = 1080, scale: float = 4 / 3, fps: int = 30) -> dict:
+    """Screen recording of the live dashboard, all three programs on one screen. The demo runs on the GPU, Google Chrome shows its
+    page on a virtual X display and ffmpeg records that display in real time. scale=4/3 lays the page out at 1440x810 CSS pixels."""
+    import signal
+    import urllib.request
+
+    gpu, env, delay = sh(GPU_INFO)[1].strip(), dict(os.environ, DISPLAY=":99"), 15.0   # the kernel starts `delay` s after the page is up
+    procs = [subprocess.Popen(["Xvfb", ":99", "-screen", "0", f"{width}x{height}x24", "-nolisten", "tcp"])]
+    demo = subprocess.Popen(["timeout", "-k", "5", str(int(secs + delay + 180)), "./demo", "--port", "8080", "--secs", str(secs),
+                             "--start-delay", str(delay), "--wad", WAD], cwd=DEMO, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+                            text=True, errors="replace")
+    procs.append(demo)
+    log = []
+
+    def pump():
+        for line in demo.stdout:
+            print(line, end="", flush=True)
+            log.append(line)
+
+    def state():
+        try:
+            return json.loads(urllib.request.urlopen("http://127.0.0.1:8080/state", timeout=5).read())
+        except Exception:
+            return None
+
+    def wait_for(cond, limit):
+        end = time.time() + limit
+        while time.time() < end and demo.poll() is None:
+            s = state()
+            if s is not None and cond(s):
+                return s
+            time.sleep(0.05)
+        return None
+
+    threading.Thread(target=pump, daemon=True).start()
+    started = final = None
+    try:
+        if wait_for(lambda s: True, 120) is None:
+            return {"gpu": gpu, "log": "".join(log), "error": "the demo never served its dashboard"}
+        procs.append(subprocess.Popen(
+            ["google-chrome", "--app=http://127.0.0.1:8080/", "--kiosk", "--window-position=0,0",
+             f"--window-size={round(width / scale)},{round(height / scale)}",      # in CSS pixels: Chrome multiplies by the scale factor
+             f"--force-device-scale-factor={scale}", "--no-sandbox", "--test-type", "--no-first-run", "--no-default-browser-check",
+             "--password-store=basic", "--disable-gpu", "--disable-dev-shm-usage", "--hide-scrollbars", "--user-data-dir=/tmp/chrome",
+             "--disable-features=Translate,MediaRouter"], env=env, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL))
+        time.sleep(6)                                  # Chrome start-up and first paint, inside the start delay
+        ff = subprocess.Popen(["ffmpeg", "-y", "-hide_banner", "-f", "x11grab", "-video_size", f"{width}x{height}", "-framerate", str(fps),
+                               "-draw_mouse", "0", "-i", ":99.0", "-c:v", "libx264", "-preset", "ultrafast", "-qp", "0", "/tmp/raw.mkv"],
+                              env=env, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.PIPE, text=True)
+        t_rec = time.time()
+        started = wait_for(lambda s: s["phase"] >= 1, delay + 60)
+        t_start = time.time()
+        final = wait_for(lambda s: s["phase"] >= 3, secs + 120)
+        t_end = time.time()
+        time.sleep(3.5)
+        ff.send_signal(signal.SIGINT)                  # ffmpeg finishes the file and exits
+        ff_log = ff.communicate(timeout=120)[1]
+    finally:
+        for p in reversed(procs):
+            p.terminate()
+    if started is None or final is None:
+        return {"gpu": gpu, "log": "".join(log), "error": f"the run did not {'start' if started is None else 'finish'}"}
+    lead, tail = 1.5, 3.0                              # keep 1.5 s before the kernel launch and 3 s after the run ends
+    ss, dur = max(0.0, t_start - t_rec - lead), (t_end - t_start) + lead + tail
+    rc, out = sh(f"ffmpeg -y -loglevel error -ss {ss:.2f} -i /tmp/raw.mkv -t {dur:.2f} -c:v libx264 -preset slow -crf 16"
+                 f" -pix_fmt yuv420p -r {fps} -movflags +faststart /tmp/ofa_dashboard.mp4")
+    if rc:
+        return {"gpu": gpu, "log": "".join(log), "error": "encoding failed: " + out[-500:]}
+    stills = {}
+    for t in (0.5, lead + 3, lead + secs / 2, dur - 1.0):
+        rc, _ = sh(f"ffmpeg -y -loglevel error -ss {t:.2f} -i /tmp/ofa_dashboard.mp4 -frames:v 1 -vf scale=960:-2 /tmp/still.png")
+        if rc == 0:
+            stills[round(t, 1)] = Path("/tmp/still.png").read_bytes()
+    return {"gpu": gpu, "log": "".join(log), "mp4": Path("/tmp/ofa_dashboard.mp4").read_bytes(), "stills": stills, "state": final,
+            "ffmpeg": ff_log[-2000:], "seconds": dur}
+
+
 def write_png(path, rgb, w=320, h=200, scale=2):
     """Minimal RGB PNG writer (no dependencies), nearest-neighbour upscaled."""
     rows = []
@@ -172,7 +271,7 @@ def frame_rgb(fb):
 
 
 @app.local_entrypoint()
-def main(mode: str = "smoke", reps: int = 5, secs: float = 6.0, live_secs: float = 20.0, out: str = ""):
+def main(mode: str = "smoke", reps: int = 5, secs: float = 6.0, live_secs: float = 20.0, video_secs: float = 40.0, out: str = ""):
     dst = Path(out) if out else ROOT / "benchmarks" / "results"
     dst.mkdir(parents=True, exist_ok=True)
     stamp = datetime.date.today().strftime("%Y%m%d")
@@ -233,3 +332,17 @@ def main(mode: str = "smoke", reps: int = 5, secs: float = 6.0, live_secs: float
         for k, v in metrics.items():
             full = metrics.get(k.rsplit("_mps", 1)[0] + "_mps100", {}).get("mean")
             print(f"{k:24} {str(v['sms']):>8} {v['mean'] or float('nan'):10.0f} {v['sd']:8.0f} {(v['mean'] or 0) / full if full else float('nan'):8.3f}")
+    if mode in ("video", "all"):
+        r = video.remote(video_secs)
+        vdst = Path(out) if out else ROOT / "video" / "out"     # ignored by video/.gitignore; video/compose.sh takes it as the recording
+        vdst.mkdir(parents=True, exist_ok=True)
+        if not r.get("mp4"):
+            raise SystemExit("video failed: " + r.get("error", "see the log above"))
+        path = vdst / f"{TAG}_{stamp}_dashboard.mp4"
+        path.write_bytes(r["mp4"])
+        for t, png in r["stills"].items():
+            (vdst / f"{TAG}_{stamp}_dashboard_t{t:04.1f}.png").write_bytes(png)
+        s = r["state"]
+        print(f"\nsaved {path} ({len(r['mp4']) / 1e6:.1f} MB, {r['seconds']:.1f} s) and {len(r['stills'])} stills")
+        print(f"run: {s['steps']} training steps (loss {s['loss']:.3f}), {s['chars']} chars generated, {s['frames']} Doom frames")
+        print("ffmpeg:", " | ".join(l.strip() for l in r["ffmpeg"].replace("\r", "\n").splitlines() if "frame=" in l or "dup=" in l)[-300:])

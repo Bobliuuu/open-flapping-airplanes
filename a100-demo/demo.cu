@@ -653,7 +653,7 @@ static void sampler_thread() {
 }
 
 int main(int argc, char** argv) {
-  int port = 8080; double live_secs = 0, cmp_secs = 8; std::string bench_out, bench_one, child_mode = "graph"; int bench_reps = 5; double bench_secs = 6; long long pace_us = 1000; std::string wad_path = "doom1.wad"; std::string child_role; long long start_at_ns = 0;
+  int port = 8080; double live_secs = 0, cmp_secs = 8; std::string bench_out, bench_one, child_mode = "graph"; int bench_reps = 5; double bench_secs = 6; long long pace_us = 1000; std::string wad_path = "doom1.wad"; std::string child_role; long long start_at_ns = 0; double start_delay = 0;
   for (int i = 1; i < argc; i++) {
     if (!strcmp(argv[i], "--port") && i + 1 < argc) port = atoi(argv[++i]);
     else if (!strcmp(argv[i], "--secs") && i + 1 < argc) live_secs = atof(argv[++i]);
@@ -667,6 +667,7 @@ int main(int argc, char** argv) {
     else if (!strcmp(argv[i], "--reps") && i + 1 < argc) bench_reps = atoi(argv[++i]);
     else if (!strcmp(argv[i], "--bench-secs") && i + 1 < argc) bench_secs = atof(argv[++i]);
     else if (!strcmp(argv[i], "--start-at") && i + 1 < argc) start_at_ns = atoll(argv[++i]);
+    else if (!strcmp(argv[i], "--start-delay") && i + 1 < argc) start_delay = atof(argv[++i]);
   }
   { std::ifstream f("index.html"); std::stringstream ss; ss << f.rdbuf(); g_index = ss.str(); if (g_index.empty()) g_index = "index.html not found next to the binary"; }
   CK(cudaSetDeviceFlags(cudaDeviceMapHost));
@@ -891,6 +892,7 @@ int main(int argc, char** argv) {
   { const int cap_inf = 1 << 20 / TPI;
     int lim[3] = {12 << 20, 12 << 20, 12 << 20}; CK(cudaMemcpy(limit, lim, 12, cudaMemcpyHostToDevice));
     P.dur_ns[0] = P.dur_ns[1] = P.dur_ns[2] = (long long)(live_secs * 1e9); P.pace_ns[1] = pace_us * 1000ll; (void)cap_inf; }
+  if (start_delay > 0) usleep((useconds_t)(start_delay * 1e6));   // --start-delay: the dashboard is served, the kernel starts later (screen recordings)
   g_kernel_t0 = now_s(); g_phase = 1; g_note = "one kernel launch: training + inference + game"; g_sampling = true;
   cudaEvent_t e0, e1; CK(cudaEventCreate(&e0)); CK(cudaEventCreate(&e1));
   CK(cudaEventRecord(e0, s)); vm<<<g_nblocks, NT, 0, s>>>(P); CK(cudaEventRecord(e1, s));
