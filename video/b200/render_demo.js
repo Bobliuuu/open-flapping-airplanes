@@ -45,6 +45,8 @@ async function renderChunk(i0, i1, file) {          // one browser per chunk: a 
   const probe = await newPage(browser);
   const info = await probe.evaluate(() => window.getInfo());
   console.log(`timeline ${info.duration.toFixed(2)} s, recording frames ${NFR}`, JSON.stringify(info.scenes));
+  fs.mkdirSync(path.dirname(OUT), {recursive: true});
+  fs.writeFileSync(path.join(path.dirname(OUT), "demo_info.json"), JSON.stringify(info));   // the timeline make_music.py follows
   if (A("stills")) {
     const dir = path.join(path.dirname(OUT), "demo_stills"); fs.mkdirSync(dir, {recursive: true});
     for (const t of String(A("stills")).split(",").map(Number)) {

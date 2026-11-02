@@ -191,7 +191,7 @@ Their baselines run on their SM shares. With ours limited to the same shares by 
 
 ## Demo videos
 
-- [**B200 demo in Flapping Airplanes' format** (74.6 s, `video/release/triad_demo_b200.mp4`)](video/release/triad_demo_b200.mp4): a recorded run of the LLM-scale megakernel (training, answering "What is a megakernel?", Doom played by the scripted player), the GPU's split, the code, a side by side with Megatron, PyTorch and vLLM, and the result cards. Every number comes from `b200-run/results` ([`video/README.md`](video/README.md)).
+- [**B200 demo in Flapping Airplanes' format** (86.6 s, with music, `video/release/triad_demo_b200.mp4`)](video/release/triad_demo_b200.mp4): a recorded run of the LLM-scale megakernel (training, answering "What is a megakernel?", Doom played by the scripted player), the GPU's split, the code, a side by side with Megatron, PyTorch and vLLM, the result cards, and their published results next to ours. Every number comes from `b200-run/results` and `benchmarks/fa_published.json` ([`video/README.md`](video/README.md)).
 - [The explainer (86 s, `video/release/triad_explainer_preview.mp4`)](video/release/triad_explainer_preview.mp4). The B300 numbers in it are interim.
 
 Both play when opened from the repo on GitHub.

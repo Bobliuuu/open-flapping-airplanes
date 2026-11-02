@@ -1,4 +1,5 @@
 """Renders the demo video on a Modal CPU container (Google Chrome, node, ffmpeg, Inter and JetBrains Mono): no local browser needed.
+The music is composed by make_music.py on the same timeline and muxed in as AAC.
 
   python3 video/b200/make_data.py --build triad_tc2                  # data.json / data.js from the results and the recording
   modal run video/b200/modal_render.py --build triad_tc2 --stills 3,13,20,30,40,48,56,64,70   # PNG stills -> video/out/demo_stills/
@@ -26,6 +27,7 @@ img = (
         " && ln -s /opt/node-v22.11.0-linux-x64/bin/node /usr/local/bin/node && ln -s /opt/node-v22.11.0-linux-x64/bin/npm /usr/local/bin/npm",
         "mkdir -p /opt/r && cd /opt/r && npm init -y >/dev/null && npm install --no-audit --no-fund puppeteer-core@24 && fc-list | grep -i -E 'inter|jetbrains' | head -3",
     )
+    .pip_install("numpy==2.1.3")                                    # make_music.py
 )
 
 
@@ -46,7 +48,17 @@ def render(files: dict, build: str, stills: str = "", conc: int = 8) -> dict:
     if stills:
         res["stills"] = {f.name: f.read_bytes() for f in sorted(Path("/tmp/out/demo_stills").glob("*.png"))}
     elif Path("/tmp/out/triad_demo.mp4").exists():
-        res["mp4"] = Path("/tmp/out/triad_demo.mp4").read_bytes()
+        # the music, composed on the video's timeline, muxed in as AAC (the video stream is copied unchanged)
+        m = subprocess.run(["python3", "make_music.py", "--info", "/tmp/out/demo_info.json", "--out", "/tmp/out/music.wav"], cwd=w,
+                           capture_output=True, text=True)
+        res["music_log"] = (m.stdout + m.stderr)[-1500:]
+        if m.returncode == 0:
+            subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-i", "/tmp/out/triad_demo.mp4", "-i", "/tmp/out/music.wav", "-map", "0:v",
+                            "-map", "1:a", "-c:v", "copy", "-c:a", "aac", "-b:a", "192k", "-shortest", "-movflags", "+faststart",
+                            "/tmp/out/triad_demo_music.mp4"], check=True)
+            res["mp4"] = Path("/tmp/out/triad_demo_music.mp4").read_bytes()
+        else:
+            res["rc"] = m.returncode
     return res
 
 
@@ -59,9 +71,11 @@ def main(build: str = "triad_tc2", stills: str = "", conc: int = 8, check_times:
         (OUT / f"triad_demo_{build}_sheet.png").write_bytes(r["sheet"])
         print("contact sheet ->", OUT / f"triad_demo_{build}_sheet.png")
         return
-    files = {p.name: p.read_text() for p in HERE.iterdir() if p.name in ("demo.html", "data.js", "data.json", "render_demo.js")}
+    files = {p.name: p.read_text() for p in HERE.iterdir() if p.name in ("demo.html", "data.js", "data.json", "render_demo.js", "make_music.py")}
     r = render.remote(files, build, stills, conc)
     print(r["log"])
+    if r.get("music_log"):
+        print("music:", r["music_log"].strip())
     OUT.mkdir(exist_ok=True)
     if "stills" in r:
         d = OUT / "demo_stills"

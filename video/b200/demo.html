@@ -81,6 +81,18 @@ html,body{margin:0;background:var(--bg)}
 .ok li:before{content:"✓";color:var(--good)}
 .no li:before{content:"•";color:var(--doom);font-size:30px;line-height:30px}
 .fcol li span{color:var(--muted)}
+/* their results and ours */
+#vstitle{position:absolute;left:56px;top:40px;font-size:40px;font-weight:700}
+#vssub{position:absolute;left:56px;top:98px;font-size:24px;color:var(--muted)}
+#vstable{position:absolute;left:56px;top:158px;width:1808px;border-collapse:collapse}
+#vstable th{text-align:left;padding:16px 26px 18px;font-size:30px;font-weight:700;vertical-align:bottom}
+#vstable th span{display:block;font-size:20px;font-weight:400;color:var(--muted);margin-top:4px}
+#vstable td{padding:15px 26px;font-size:27px;line-height:1.3;border-top:1px solid var(--line);vertical-align:top}
+#vstable td.k{color:var(--muted);width:430px}
+#vstable td.them{width:560px}
+#vstable td.us{background:rgba(255,90,54,.06)}
+#vstable td b{font-weight:650}
+#vsfoot{position:absolute;left:56px;top:900px;font-size:23px;color:var(--muted)}
 /* end */
 #endtext{position:absolute;left:0;right:0;top:250px;text-align:center}
 #endtext .l1{font-size:66px;font-weight:750;line-height:1.25;letter-spacing:-.5px}
@@ -124,6 +136,13 @@ html,body{margin:0;background:var(--bg)}
 
   <div id="cards" class="layer"><div id="cardrow"></div><div id="cardfoot"></div></div>
 
+  <div id="vsfa" class="layer">
+    <div id="vstitle">Their results and ours</div>
+    <div id="vssub">Flapping Airplanes' numbers are read from their demo video. Ours are measured.</div>
+    <table id="vstable"></table>
+    <div id="vsfoot">Different models, so compare the percentages, not the seconds.</div>
+  </div>
+
   <div id="fair" class="layer">
     <div id="fairgrid">
       <div class="fcol ok"><div class="t">How it was measured</div><ul id="fair-ok"></ul></div>
@@ -159,11 +178,12 @@ const rel = p => Math.abs(p) < 1 ? `the same (${fmt(Math.abs(p), 1)}%)` : p > 0 
 const relCol = p => Math.abs(p) < 1 ? "var(--muted)" : p > 0 ? "var(--good)" : "var(--bad)";
 
 // ---------------------------------------------------------------- timeline (seconds of video)
-const S = {live: [0, 10], zoom: [10, 16.5], code: [16.5, 25], race: [25, 0], cards: [0, 0], fair: [0, 0], end: [0, 0]};
+const S = {live: [0, 10], zoom: [10, 16.5], code: [16.5, 25], race: [25, 0], cards: [0, 0], vsfa: [0, 0], fair: [0, 0], end: [0, 0]};
 const SPEED = 4, PRE = 0.8, HOLD = 3.2;
 S.race[1] = S.race[0] + PRE + raceEnd / SPEED + HOLD;
 S.cards = [S.race[1], S.race[1] + 12];
-S.fair = [S.cards[1], S.cards[1] + 11];
+S.vsfa = [S.cards[1], S.cards[1] + 12];
+S.fair = [S.vsfa[1], S.vsfa[1] + 11];
 S.end = [S.fair[1], S.fair[1] + 7];
 const DUR = S.end[1];
 window.getInfo = () => ({duration: DUR, fps: FPS, scenes: S});
@@ -244,6 +264,25 @@ const no = [
   `Our model learned children's stories, so it answers with stories`,
   `They report Megatron ${FA.training.baseline_slower_pct}% slower; here, with CUDA graphs, Megatron trains faster than Triad`];
 $("fair-ok").innerHTML = ok.map(x => `<li>${x}</li>`).join("");
+// their results and ours, row by row
+const pct = (v, slower) => `<b style="color:${slower ? "var(--good)" : "var(--bad)"}">${v}% ${slower ? "slower" : "faster"}</b>`;
+const megG = BL.megatron_te_graph, pE = DV.train_vs_each_pct.megatron_te, pG = megG ? DV.train_vs_each_pct.megatron_te_graph : null;
+const VS = [
+  ["GPU", `1 B200 · ${FA.sm_split.training} / ${FA.sm_split.inference} / ${FA.sm_split.doom} processors`,
+          `1 B200 · ${SPLIT.training} / ${SPLIT.inference} / ${SPLIT.doom} processors`],
+  ["Kernel launches during the run", `1 vs ${fmt(FA.kernel_launches.baseline)}`,
+          `1 vs ${fmt((DV.launches_megatron_graph_vllm_host || DV.launches_megatron_vllm_host) / 1e6, 1)} to ${fmt(DV.launches_megatron_vllm_host / 1e6, 1)} million`],
+  [`${fmt(FA.training.steps)} training steps`, `${fmt(FA.training.seconds_kvm, 1)} s`, `${fmt(TR.train_s_mean, 1)} s`],
+  ["Megatron, the same steps", `${fmt(FA.training.seconds_baseline, 1)} s · ${pct(FA.training.baseline_slower_pct, true)}`,
+          `${fmt(meg.train_s_mean, 1)} s · ${pct(fmt(Math.abs(pE), 1), pE > 0)}` +
+          (megG ? `<br>with CUDA graphs: ${fmt(megG.train_s_mean, 1)} s · ${pct(fmt(Math.abs(pG), 1), pG > 0)}` : "")],
+  ["Answering speed", `${fmt(FA.inference.tok_s_kvm)} tokens/s`, `${fmt(TR.serve_tok_s_mean)} tokens/s`],
+  ["vLLM, the same question", `${fmt(FA.inference.tok_s_baseline)} tokens/s · ${pct(FA.inference.baseline_slower_pct, true)}`,
+          `${fmt(VL.tok_s_mean)} tokens/s · ${pct(fmt(Math.abs(DV.serve_vs_vllm_pct), 1), DV.serve_vs_vllm_pct > 0)}`],
+  ["Doom", "plays throughout", `${fmt(TR.doom_fps, 0)} fps; a scripted AI finishes the level`],
+  ["Model", "not public", `${D.model.params.replace(/\.\d+M$/, "M")}-parameter GPT`]];
+$("vstable").innerHTML = `<tr><th></th><th>Flapping Airplanes<span>from their video</span></th><th style="color:var(--triad)">Triad (ours)<span>measured on one B200</span></th></tr>` +
+  VS.map((r, i) => `<tr id="vs${i}"><td class="k">${r[0]}</td><td class="them">${r[1]}</td><td class="us">${r[2]}</td></tr>`).join("");
 $("fair-no").innerHTML = no.map(x => `<li>${x}</li>`).join("");
 $("end1").innerHTML = `Trained ${fmt(D.model.steps)} steps in <em>${fmt(TR.train_s_mean, 0)} seconds</em><br>while serving it<br>while playing Doom<br>in <em>1</em> kernel launch on <em>1</em> B200 GPU`;
 $("end2").innerHTML = `Triad · not affiliated with Flapping Airplanes`;
@@ -364,6 +403,12 @@ window.seek = async function (t) {
     const tc = t - S.cards[0];
     ["c1", "c2", "c3"].forEach((id, i) => { const a = ease(ramp(tc, .2 + i * 1.6, .9 + i * 1.6)); $(id).style.opacity = a; $(id).style.transform = `translateY(${(1 - a) * 30}px)`; });
     $("cardfoot").style.opacity = ramp(tc, 5.2, 5.8);
+  }
+  $("vsfa").style.opacity = fade(t, S.vsfa[0], S.vsfa[1]);
+  if (inS("vsfa")) {
+    const tv = t - S.vsfa[0];
+    VS.forEach((_, i) => { const a = ease(ramp(tv, .5 + i * .35, 1.0 + i * .35)); $("vs" + i).style.opacity = a; });
+    $("vsfoot").style.opacity = ramp(tv, 3.8, 4.4);
   }
   $("fair").style.opacity = fade(t, S.fair[0], S.fair[1]);
   $("end").style.opacity = fade(t, S.end[0], S.end[1] + 1, .7);
