@@ -12,6 +12,9 @@ doomgeneric/
 *.log
 __pycache__/
 *.ppm
+# CPU check build of the Doom player (doom-gpu/player/cpu_build.sh)
+build_cpu/
+libdoom_cpu.so
 # compiled binaries
 demo
 demo_*

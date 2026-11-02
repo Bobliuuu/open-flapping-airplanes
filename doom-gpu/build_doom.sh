@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# Compile the Doom engine (doomgeneric) + tinylibc + glue to a relocatable GPU object (doom.o) with clang's NVPTX backend.
+# Compile the Doom engine (doomgeneric) + tinylibc + glue + the scripted player to a relocatable GPU object (doom.o) with clang's
+# NVPTX backend.
 set -e
 cd "$(dirname "$0")"
 # GPU to emit machine code for: sm_80 (A100, default), sm_90 (H100), sm_100 (B200). The PTX is always generated for sm_80;
@@ -44,6 +45,12 @@ def ivid(s):
     s = s.replace('void I_FinishUpdate (void)\n{', 'void I_FinishUpdate (void)\n{\n    DG_DrawFrame(); return;   /* palette conversion happens in the megakernel copy tasks (parallel) */', 1)
     return s
 patch('src_gpu/i_video.c', ivid)
+# ---- the scripted player (player/player.c) fills in the player's command at the end of G_BuildTiccmd, once per game tic
+def ggame(s):
+    old = '    // special buttons\n'
+    assert s.count(old) == 1
+    return s.replace(old, '    { extern void player_ticcmd(ticcmd_t*); player_ticcmd(cmd); }\n' + old, 1)
+patch('src_gpu/g_game.c', ggame)
 PYEOF
 mkdir -p obj; rm -f obj/*.bc
 fail=0
@@ -51,6 +58,7 @@ for f in $FILES; do OPT="-O2"; [ $f = m_menu ] && OPT="-O1"; ( clang $CF $OPT -c
 clang $CF -c -emit-llvm tinylibc.c -o obj/tinylibc.bc 2> obj/tinylibc.err || { echo FAIL tinylibc; head -20 obj/tinylibc.err; fail=1; }
 clang $CF -c -emit-llvm gpu_par.c -o obj/gpu_par.bc 2> obj/gpu_par.err || { echo FAIL par; head -20 obj/gpu_par.err; fail=1; }
 clang $CF -c -emit-llvm gpu_glue.c -o obj/gpu_glue.bc 2> obj/gpu_glue.err || { echo FAIL glue; head -20 obj/gpu_glue.err; fail=1; }
+clang $CF -Iplayer -c -emit-llvm player/player.c -o obj/player.bc 2> obj/player.err || { echo FAIL player; head -20 obj/player.err; fail=1; }
 ls obj/*.bc | wc -l
 [ $fail = 0 ] || exit 1
 llvm-link obj/*.bc -o doom.bc
