@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
 # build.sh : build the SM-count-parameterised open-flapping-airplanes megakernel (training + decode + Doom, one launch).  Run it ON the GPU box (or any box with nvcc).
 #   ./build.sh <arch> [out=ofa_b200_<arch>] [nvcc flags...]
-#   arch: sm_80 (A100, tested) | sm_90a | sm_100a (B200; compile-checked only) | sm_103a (B300)
+#   arch: sm_80 (A100, tested) | sm_90a | sm_100a (B200, tested) | sm_103a (B300)
 #   env : MODEL=S|F|M (default S)     DOOM_OBJ=<path to a doom_dev object for THIS arch>  (default: ~/doom-gpu/doom_dev.o for sm_80, ./doom_dev_<arch>.o otherwise;
 #         NODOOM=1 builds without Doom (stubs the 5 extern symbols so the link works)
-#   knobs (pass as nvcc -D flags): -DOFA_GEMM_BACKEND=1 (tcgen05, sm_100a only)  -DGEMM_STAGES=6 (mma.sync backend, 96 KB/block: fits 2 blocks in B200's 228 KB/SM)
+#   knobs (pass as nvcc -D flags): -DOFA_GEMM_BACKEND=1 (tcgen05, sm_100a only; -DGEMM100_STAGES=2|3)  -DGEMM_STAGES=6 (mma.sync backend, 96 KB/block)
 #                                  -DOFA_BLOCKS_PER_SM=1 -DGEMM100_STAGES=3 -DGEMM100_LAYOUT_MASK=2 -DCLAIM_FETCHADD=0
-# Prints the ptxas line (registers, stack, spills) for ofa_kernel.  UNTESTED on B200.
+# Prints the ptxas line (registers, stack, spills) for ofa_kernel.
 set -euo pipefail
 ARCH=${1:?usage: build.sh sm_80|sm_100a [out] [flags]}; shift
 OUT=${1:-ofa_b200_${ARCH}}; [ $# -gt 0 ] && shift || true

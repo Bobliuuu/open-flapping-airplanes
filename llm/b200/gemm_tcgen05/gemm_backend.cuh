@@ -1,4 +1,4 @@
-// gemm_backend.cuh -- selects the GEMM backend for the B200 megakernel build.  Part of the b200 kit; UNTESTED on B200 (mma path tested on A100 only).
+// gemm_backend.cuh -- selects the GEMM backend for the B200 megakernel build. Both backends are tested on a B200; mma.sync also on the A100.
 //   -DOFA_GEMM_BACKEND=0 (default) : llm/gemm/gemm.cuh (mma.sync; runs on sm_80 and, via sm_100a compile, on B200)
 //   -DOFA_GEMM_BACKEND=1           : b200/gemm_tcgen05/gemm_sm100.cuh (TMA + tcgen05; falls back to mma.sync on non-sm_100a targets)
 // Uniform interface used by ofa.cu:   tg::Args, tg::args_ok(p), tg::prepare(p, layout) [host, no-op for backend 0], tg::smem_bytes(), tg::tile<L,E>(p,tm,tn,smem),
