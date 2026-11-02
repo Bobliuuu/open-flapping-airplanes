@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""PyTorch fp32 reference for the decode workstream.
+"""PyTorch fp32 reference for the decode kernels.
   python3 ref_decode.py gen   <dir> [ntok=32]   -> <dir>/weights.bin (bf16 raw), <dir>/tokens.bin (int32)
   python3 ref_decode.py check <dir>             -> compares <dir>/logits_cu.bin (ntok x V fp32) with a full-sequence fp32 forward
 Layout of weights.bin: wte[V,d] wpe[T,d] gf[d], then per layer: g1[d] g2[d] Wqkv[d,3d] Wo[d,d] Wup[d,4d] Wdn[4d,d]  (bf16, row-major)

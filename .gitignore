@@ -21,7 +21,7 @@ mk
 doomtest
 bt*
 
-# LLM workstreams: large data and test binaries never go in git
+# LLM work: large data and test binaries never go in git
 *.f32
 *.u32
 *.bin
