@@ -34,22 +34,26 @@ Large outputs (`out/`, `*.mp4`, `node_modules/`) are ignored by `video/.gitignor
 
 ## Demo video on a B200, in Flapping Airplanes' format (`b200/`)
 
-`release/ofa_demo_b200.mp4` (72.6 s, 1920x1080, 30 fps) follows the structure of Flapping Airplanes' demo video for open-flapping-airplanes's `ofa_tc2`
-build on one B200: the live dashboard, a zoom out to the GPU's SMs, the kernel's code, a close-up of the Doom player, the run side by side
-with Megatron-core + Transformer Engine (with and without CUDA graphs) and vLLM with their launch counts, result cards and an end card.
+`release/ofa_demo_b200.mp4` (74.6 s, 1920x1080, 30 fps): the structure of Flapping Airplanes' demo video (live dashboard, zoom out to
+the GPU, code, side by side with the baselines and their launch counts, result cards, end card) for open-flapping-airplanes's `ofa_tc2` build on one B200,
+plus a card on how it was measured and what differs from their demo. Rules it follows:
 
 - Every number comes from `b200/data.json`, which `b200/make_data.py` derives from the raw results (`b200-run/results/`), each with its
   source file. Nothing is typed into the page.
-- The dashboard is a screen recording of a real run (`modal run b200-run/modal_app.py --step video --binary ofa_tc2`); its timing and
-  losses are in `b200-run/results/video_ofa_tc2/`. The cards use the mean of 3 runs without the dashboard and screen capture.
-- Doom is played by the scripted player in `doom-gpu/player/` (no cheats); the close-up is the recorded run's game panel at 3x speed.
-- The side by side runs at 4x speed (labelled). The baselines are their measured runs, replayed at their measured mean speed; the loss
-  curves are their logged losses; the launch counters use the host launch calls per step and per token measured with torch.profiler.
+- The dashboard is a screen recording of a real run (`modal run b200-run/modal_app.py --step video --binary ofa_tc2`; its timing and
+  losses are in `b200-run/results/video_ofa_tc2/`). That run, with the dashboard and screen capture, took 52.9 s; the cards use the
+  mean of 3 runs without them (52.4 s), and the video says so. Doom in it is played by the scripted player in `doom-gpu/player/`.
+- The side-by-side runs at 4x speed (labelled). The baselines are their measured runs (each alone on its share of the same B200), replayed
+  at their measured mean speed; their loss curves are their logged losses. Launch counters use the per-step and per-token counts measured
+  with torch.profiler.
+- Megatron-core + Transformer Engine and PyTorch are timed both eager and with CUDA graphs, each in two containers, and the faster
+  counts; vLLM uses CUDA graphs and 16 CPU cores. With CUDA graphs Megatron + TE is faster than open-flapping-airplanes at training, and the cards say so.
 
 ```bash
 python3 video/b200/make_data.py --build ofa_tc2                       # data.json + data.js from the results
-modal run video/b200/modal_render.py --build ofa_tc2 --stills 5,13,21,27,34.5,47,53,62,70   # PNG stills -> video/out/demo_stills/
-modal run video/b200/modal_render.py --build ofa_tc2                  # the MP4 -> video/out/ofa_demo_ofa_tc2.mp4
+modal run video/b200/modal_render.py --build ofa_tc2 --stills 5,30,52  # PNG stills -> video/out/demo_stills/
+modal run video/b200/modal_render.py --build ofa_tc2                  # the MP4 -> video/out/ofa_demo_ofa_tc2.mp4 (about 2 minutes)
 ```
 Rendering runs on a Modal CPU container (Google Chrome, node, ffmpeg, Inter and JetBrains Mono): `render_demo.js` drives `demo.html`'s
-`seek(t)` frame by frame in parallel chunks and pipes JPEG frames into ffmpeg.
+`seek(t)` frame by frame in parallel chunks and pipes JPEG frames into ffmpeg. `--build ofa_tc3` renders the 3-stage build instead
+(record it first with `--binary ofa_tc3`).
