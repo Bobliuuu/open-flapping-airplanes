@@ -22,15 +22,19 @@ template <int L, int E>
 __global__ void __launch_bounds__(256, 2) gemm_grid(tg::Args p, int tilesM) {
   extern __shared__ __align__(128) char smem[];
   int t = blockIdx.x;
+  tg::block_init();
   tg::tile<L, E>(p, t % tilesM, t / tilesM, smem);
+  tg::block_exit();
 }
 template <int L, int E>
 __global__ void __launch_bounds__(256, 2) gemm_persist(tg::Args p, int tilesM, int ntiles, const int* order) {
   extern __shared__ __align__(128) char smem[];
+  tg::block_init();
   for (int i = blockIdx.x; i < ntiles; i += gridDim.x) {  // arbitrary (shuffled) tile order
     int t = order[i];
     tg::tile<L, E>(p, t % tilesM, t / tilesM, smem);
   }
+  tg::block_exit();
 }
 template <int L, int E> void launch(const tg::Args& p, bool persist, const int* order, int nblocks, cudaStream_t s) {
   static bool init = false;
