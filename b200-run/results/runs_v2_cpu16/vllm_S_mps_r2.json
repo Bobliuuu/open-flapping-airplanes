@@ -1,0 +1,14 @@
+{
+ "cg": "default",
+ "mps_pct": "17",
+ "enforce_eager": false,
+ "prompt": "Once upon a time",
+ "new_tokens": 256,
+ "prompt_tokens": 4,
+ "seconds": [
+  0.16830062866210938
+ ],
+ "tok_s": [
+  1521.0876039801446
+ ]
+}

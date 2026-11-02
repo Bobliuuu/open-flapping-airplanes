@@ -12,10 +12,11 @@ baseline frameworks, all measured by us. Triad is not affiliated with Flapping A
   162M-parameter GPT for 4,000 steps in **95.8 s** while it serves and runs Doom on a 116 / 24 / 8 SM split. Megatron-core with Transformer
   Engine, alone on the same 116 SMs, takes **62.4 s**. By FA's metric the baseline is **54% faster** at training, where FA report theirs
   **34% slower**.
-- **Serving goes the other way.** Triad generates **1,764 tok/s** on its 24 SMs while training; vLLM alone on 24 SMs makes **684 tok/s**,
-  **61% slower** (FA: 34% slower).
-- **Our baselines match theirs.** Our Megatron (62.4 s) and vLLM (684 tok/s) are within 11% and 4% of FA's (70.1 s, 710 tok/s), so the
-  setups are probably comparable; FA have not published theirs.
+- **Serving goes the other way, by less than FA report.** Answering FA's prompt from its live weights, Triad makes **1,783 tok/s** on its
+  24 SMs while it trains; vLLM alone on 24 SMs, with 16 CPU cores reserved, makes **1,537 tok/s**, **14% slower** (FA: 34% slower). An
+  earlier version of this page compared against a vLLM run on a CPU-starved container (684 tok/s) and reported 61%.
+- **Our Megatron matches theirs; our vLLM is faster.** Our Megatron (62.4 s) is within 11% of FA's (70.1 s). Our vLLM, given enough CPU,
+  makes 2.2x FA's 710 tok/s; FA's number is close to what ours made without reserved cores. FA have not published their setup.
 - **The training gap is Triad's GEMMs.** They use `mma.sync`, which reaches 13-33% of cuBLAS on the B200. The repo's Blackwell (`tcgen05`)
   GEMM backend passed its first B200 test here, but inside the megakernel it runs one block per SM and the step gets slower. FA's
   megakernel (46.1 s) is faster than every baseline we measured.
@@ -30,6 +31,9 @@ baseline frameworks, all measured by us. Triad is not affiliated with Flapping A
 | Training | 4,000 steps, about 4,096 tokens per step | 4,000 steps x 4,096 tokens, AdamW, TinyStories | yes; FA's data unknown |
 | One launch runs | training + serving + Doom on 116 / 24 / 8 SMs | the same (`--split b200`) | yes |
 | Baselines | Megatron on 116 SMs and vLLM on 24 SMs, each alone | Megatron-core 0.16.1 + Transformer Engine 2.20 on 116 SMs and vLLM 0.33 on 24 SMs, each alone (CUDA MPS) | yes; FA's versions and settings unknown |
+| Serving | "What is a megakernel?", answered again and again from the live weights, greedy | the same prompt, asked again after every 256-token answer (`--answer-len 256`), sampled at temperature 0.8 | yes, except greedy decoding |
+| Training data | text that defines things: their model answers the question correctly by step ~3,300 | TinyStories: our model writes children's stories | **no** |
+| Model | SwiGLU MLP (their code, shown in the video) | GELU MLP | no |
 | Data, initial weights, batch order | unknown | identical on both sides | - |
 
 | | Flapping Airplanes | Triad |
@@ -37,9 +41,9 @@ baseline frameworks, all measured by us. Triad is not affiliated with Flapping A
 | 4,000 training steps, megakernel | 46.1 s | 95.8 s (3 runs: 95.78, 95.76, 95.81) |
 | 4,000 training steps, Megatron on 116 SMs | 70.1 s | 62.4 s (3 runs, sd 0.2) |
 | **Training: how much slower the baseline is** | **+34%** | **-54%** (Megatron is faster) |
-| Serving, megakernel | 1,076 tok/s | 1,764 tok/s |
-| Serving, vLLM on 24 SMs | 710 tok/s | 684 tok/s |
-| **Serving: how much slower the baseline is** | **+34%** | **+61%** |
+| Serving FA's prompt, megakernel | 1,076 tok/s | 1,783 tok/s (3 runs: 1,780, 1,787, 1,783) |
+| Serving FA's prompt, vLLM on 24 SMs | 710 tok/s | 1,537 tok/s (3 runs, 16 CPU cores reserved) |
+| **Serving: how much slower the baseline is** | **+34%** | **+14%** |
 | Doom | plays throughout | 35.0 fps throughout |
 | Final loss | 2.11 | megakernel 2.158, Megatron 2.154 (mean of 3) |
 | Kernel launches for the same work | 1 vs 514,562 | 1 vs 1.2M to 8.4M (three definitions) |
@@ -52,7 +56,9 @@ SMs: 79.5 s. Per-run numbers, launch counts and the GEMM measurements: [`b200-ru
 
 | Difference | Effect |
 |---|---|
-| FA's model size, data and framework settings are unpublished | Their Megatron and vLLM are within 11% and 4% of ours, so the setups are probably close; this cannot be checked |
+| FA's model size, data and framework settings are unpublished | Their Megatron is within 11% of ours, so the setups are probably close; this cannot be checked |
+| Training data: FA's model learns to answer "What is a megakernel?"; ours trains on TinyStories | Different loss curve (FA: 5.03 at step 445; ours: about 3.7) and different served text; the final loss is close (2.11 vs 2.16) |
+| Host CPU: the framework baselines are CPU-bound | Megatron took 62.4 s in one container and 129 s in another; vLLM made 684 tok/s without reserved cores and about 1,500 with 16. We compare against the faster numbers |
 | Kernel quality: Triad's GEMMs reach 13-33% of cuBLAS on the B200 | Not a protocol difference, but it decides the training result. The `tcgen05` backend is correct and faster for some GEMMs, yet only fits one block per SM in the megakernel ([`b200-run/README.md`](../b200-run/README.md)) |
 | SM shares set with CUDA MPS (79% gives 116 SMs, 17% gives 24) | FA did not say how they limited theirs |
 | One B200 on Modal | FA's clocks and power limit are unknown |
@@ -84,7 +90,7 @@ means the megakernel wins.
 | Run | GPU | Model | Baseline | Training | Serving |
 |---|---|---|---|---|---|
 | Flapping Airplanes (video) | B200 | LLM, size unpublished | Megatron / vLLM on their SM shares | +34% | +34% |
-| **Triad LLM ([`b200-run`](../b200-run/README.md))** | **B200** | **162M GPT** | **Megatron-core + TE on 116 SMs / vLLM on 24 SMs** | **-53.6%** | **+61.2%** |
+| **Triad LLM ([`b200-run`](../b200-run/README.md))** | **B200** | **162M GPT** | **Megatron-core + TE on 116 SMs / vLLM on 24 SMs** | **-53.6%** | **+13.8%** |
 | Triad LLM (`b200-run`) | B200 | 162M GPT | PyTorch eager with flash attention on 116 SMs | -82.5% | - |
 | Triad LLM (`b200-run`) | B200 | 162M GPT | Megatron-core without TE on 116 SMs | -3.1% | - |
 | Triad LLM (upstream) | A100 | 162M GPT | Megatron-core without TE on 84 SMs / vLLM on 16 SMs | +36.8% | +14.9% |
@@ -95,7 +101,8 @@ means the megakernel wins.
 At training, the result follows the baseline's kernels. Against Megatron without Transformer Engine (unfused attention, about 960 kernels a
 step) the megakernel wins on the A100 and is about even on the B200; against Megatron with Transformer Engine and PyTorch with flash attention,
 whose GEMMs run at cuBLAS speed on the B200, it loses. At LLM-scale serving, where batch-1 decoding is bound by launches and latency, it wins
-on both GPUs, by more than FA report. FA's training gain needs a megakernel whose GEMMs keep up with cuBLAS; Triad's do not yet.
+on both GPUs, by 14-15%, less than the 34% FA report. FA's training gain needs a megakernel whose GEMMs keep up with cuBLAS; Triad's do
+not yet.
 
 Sources for the A100 LLM rows: [`llm/triad/README.md`](../llm/triad/README.md) (85 / 17 / 6 split, Doom on: 4,000 steps in 224 s, final
 loss 2.149; decode 611 and 597 tok/s in two 600-step runs) and [`llm/baseline/README.md`](../llm/baseline/README.md) (each alone,

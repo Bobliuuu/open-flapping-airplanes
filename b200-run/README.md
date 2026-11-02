@@ -31,13 +31,24 @@ Training, 4,000 steps:
 | PyTorch eager, alone | 148 | 45.4 s | 361k | 2.148 |
 | Triad megakernel, training only | 148 | 79.5 s | 206k | 2.1575 |
 
-Serving, batch 1:
+Megatron-core depends on its container. In a second container, with 16 CPU cores reserved, it took 129.2 s on 116 SMs (129.0, 130.3,
+128.3), 128.4 s on 148, and 127.6 s without Transformer Engine, while PyTorch eager in that same container stayed at 52.8 s and 45.8 s
+([`results/runs_v2_cpu16/`](results/runs_v2_cpu16/)); the configuration and attention backend are identical in both logs. The comparison
+uses Megatron's faster times, which favours the baseline. The megakernel took 95.7 to 96.0 s in every container it ran in.
+
+Serving, batch 1, FA's prompt "What is a megakernel?", 256-token answers. The megakernel asks the prompt again from its live weights after
+every answer (`--answer-len 256`, 668 answers per run, [`results/megakernel_fa/`](results/megakernel_fa/)); its rate counts sampled tokens
+only, as vLLM's does:
 
 | System | SMs | tok/s |
 |---|---|---|
-| **Triad megakernel**, during the training run above | 24 | **1,764** (1,762, 1,767, 1,762) |
-| **vLLM 0.33.0**, CUDA graphs on, alone | 24 | **684** (685, 683, 683) |
-| vLLM 0.33.0, alone | 148 | 682 |
+| **Triad megakernel**, during training, 3 runs | 24 | **1,783** (1,780, 1,787, 1,783) |
+| **vLLM 0.33.0**, CUDA graphs on, alone, 16 reserved CPU cores, 3 runs | 24 | **1,537** (1,571, 1,510, 1,529) |
+| vLLM 0.33.0, alone, 16 reserved CPU cores | 148 | 1,403 (1,314, 1,492) |
+
+With "Once upon a time" and continuous decoding, in the same 16-core container: megakernel 1,764 tok/s, vLLM 1,438 on 24 SMs (1,503,
+1,521, 1,290). vLLM at batch 1 is bound by its CPU: our first vLLM runs, in a container without reserved cores, made 684 tok/s
+([`results/runs_v2/`](results/runs_v2/)), and an earlier version of this page compared against that. It is kept, not compared.
 
 Doom ran at 35.0 fps throughout every megakernel run (3,344 frames). The megakernel's loss is the same in every run and, for steps 0-19,
 within 6e-5 of the A100 reference (step 0: 11.710616 against 11.710649; step 19: 8.821558 against 8.821497).
@@ -47,14 +58,19 @@ Against FA's published B200 numbers (FA's metric: how much slower the baseline i
 | | FA | Triad |
 |---|---|---|
 | Training, Megatron on 116 SMs | 70.1 s vs 46.1 s: **+34%** | 62.4 s vs 95.8 s: **-54%** (Megatron is faster) |
-| Serving, vLLM on 24 SMs | 710 vs 1,076 tok/s: **+34%** | 684 vs 1,764 tok/s: **+61%** |
+| Serving, vLLM on 24 SMs | 710 vs 1,076 tok/s: **+34%** | 1,537 vs 1,783 tok/s: **+14%** |
 
-Our Megatron and vLLM land at 0.89x and 0.96x of FA's, so the baselines are comparable. Launches for the work of one megakernel run:
-585 kernels per Megatron step and 141 per vLLM token, 1.2M to 8.4M in total depending on the definition (`launch_counts` in
-[`results/baseline_v2_b200_20261102.json`](results/baseline_v2_b200_20261102.json)), against 1.
+Our Megatron lands at 0.89x of FA's 70.1 s. Our vLLM, given enough CPU, is 2.2x FA's 710 tok/s; FA's figure is close to what ours made
+without reserved cores. Launches for the work of one megakernel run: 585 kernels per Megatron step and 141 per vLLM token, 1.2M to 8.4M
+in total depending on the definition (`launch_counts` in [`results/baseline_v2_b200_20261102.json`](results/baseline_v2_b200_20261102.json)),
+against 1.
 
-Text from the trained model in vLLM, prompted with FA's "What is a megakernel?" (TinyStories, 4,000 steps): greedy " It is a big, round
-thing. It is a big, round thing. ..."; sampled " A nominated is a big duck. It is charming for food. ..." ([`results/runs_v2/vllm_S_text.json`](results/runs_v2/vllm_S_text.json)).
+What the model answers. The megakernel's answers to "What is a megakernel?" go from random tokens at step 0 to children's stories
+([`results/megakernel_fa/answers_split_r1.txt`](results/megakernel_fa/answers_split_r1.txt)); vLLM's copy of the trained model writes
+" It is a big, round thing. ..." ([`results/runs_v2/vllm_S_text.json`](results/runs_v2/vllm_S_text.json)). The model only ever saw
+TinyStories. FA's model, from its answers in their video, was trained on text that defines things, megakernels included, and ends up
+answering the question; this is not reproduced here. Nor is their greedy decoding (their decode loop shows `temperature=0.0`; ours samples
+at 0.8).
 
 ## Why the megakernel loses at training: its GEMMs
 
@@ -85,13 +101,18 @@ uv tool install modal && modal setup                     # once
 modal run b200-run/modal_app.py --step prep              # CPU: data, initial weights, batch order, vocab -> Volume triad-b200-data
 modal run b200-run/modal_app.py --step env               # check torch / Transformer Engine / Megatron-core / vLLM on a B200
 modal run b200-run/modal_app.py --step mk                # megakernel: 20-step check, 3 x 4,000 steps on the split, training only
-modal run b200-run/modal_app.py --step train             # Megatron-core and PyTorch, alone, 116 SMs and whole GPU
+modal run b200-run/modal_app.py --step mk --serving fa --tag megakernel_fa --no-trainonly   # serving FA's prompt, 256-token answers
+modal run b200-run/modal_app.py --step train             # Megatron-core and PyTorch, alone, 116 SMs and whole GPU (--sub for another folder)
 modal run b200-run/modal_app.py --step serve             # vLLM, alone, 24 SMs and whole GPU, launch counts, text sample
+modal run b200-run/modal_app.py --step serve_both        # vLLM, both prompts in one container -> results/runs_v2_cpu16/
 modal run b200-run/modal_app.py --step gemm              # the GEMM test; --step tccmp compares the tcgen05 megakernel builds
+modal run b200-run/modal_app.py --step video             # full-run dashboard recording (FA's prompt) -> video/out/ (not committed)
 modal run b200-run/modal_app.py --step report            # aggregate_v2.py + fa_compare.py, copy results/ here
 ```
 Images: megakernel on CUDA 12.8.1 with clang 14 (Doom); training on NGC PyTorch 26.10 (torch 2.15, Transformer Engine 2.20.2) plus
-megatron-core 0.16.1; serving on CUDA 13.0 with vllm 0.33.0 (torch 2.14). All the runs above took roughly 45 B200-minutes.
+megatron-core 0.16.1; serving on CUDA 13.0 with vllm 0.33.0 (torch 2.14). The baseline steps (`train`, `serve`, `serve_both`) now
+reserve 16 CPU cores (`CPUS` in `modal_app.py`); the first `train` and `serve` runs (`results/runs_v2/`) did not. All the runs above took
+roughly 90 B200-minutes.
 
 Notes: `results/megakernel/loss20.txt` is the console output of the 20-step check; its per-step loss file was overwritten by a name clash (fixed in
 `modal_app.py`), and steps 0-19 are in `results/megakernel/loss_split_r1.txt`. `*.log` files are not committed (repo `.gitignore`); the JSON files

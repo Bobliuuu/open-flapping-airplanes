@@ -139,10 +139,10 @@ Their column is **read frame by frame from their demo video** ([`benchmarks/fa_p
 |---|---|---|
 | Kernel launches for the same work | 1 vs 514,562 | 1 vs 1.2M to 8.4M |
 | 4,000 training steps | 46.1 s vs Megatron 70.1 s (baseline **34% slower**) | 95.8 s vs Megatron 62.4 s (baseline **54% faster**) |
-| Serving | 1,076 vs vLLM 710 tok/s (baseline **34% slower**) | 1,764 vs vLLM 684 tok/s (baseline **61% slower**) |
+| Serving "What is a megakernel?" | 1,076 vs vLLM 710 tok/s (baseline **34% slower**) | 1,783 vs vLLM 1,537 tok/s (baseline **14% slower**) |
 | Doom | plays throughout | 35 fps throughout |
 
-Triad reproduces their serving result but not their training result: its GEMMs reach 13-33% of cuBLAS on the B200, Megatron's run at cuBLAS speed. Every comparison, and what is still not like-for-like: [`docs/FA_COMPARISON.md`](docs/FA_COMPARISON.md).
+Triad wins at serving, by less than they report, and loses at training: its GEMMs reach 13-33% of cuBLAS on the B200, Megatron's run at cuBLAS speed. vLLM is CPU-bound at batch 1, so its runs reserve 16 CPU cores; an earlier version compared against a CPU-starved run (684 tok/s, "61% slower"). Every comparison, and what is still not like-for-like: [`docs/FA_COMPARISON.md`](docs/FA_COMPARISON.md).
 
 The small demo above, against the same per-op kernels:
 
@@ -161,7 +161,7 @@ Their baselines run on their SM shares. With ours limited to the same shares by 
 - 🖥️ **Same chip, model class and baselines as theirs, not their code.** [`b200-run/`](b200-run/README.md) matches their GPU, split and frameworks; their model size, data and settings are unpublished ([`docs/FA_COMPARISON.md`](docs/FA_COMPARISON.md)).
 - 🔬 **The demo above is a tiny char-level model, not an LLM.** Its absolute throughput is not comparable with theirs; `b200-run/` is the LLM-scale version.
 - 🎯 **Our per-op baseline is tight.** It reuses Triad's own task code, so on this workload it is actually *faster per job* (13% to 21% on training on the A100, 24% to 25% on the B200). Triad's advantage here is running all three at once: two processes that share a GPU are 45-49% slower on the A100 and 42-58% slower on the B200.
-- ❌ **We do not reproduce their 34% at training.** On the same B200, Megatron + Transformer Engine is 54% faster than Triad's megakernel, whose GEMMs are far from cuBLAS speed; at serving, Triad beats vLLM by 61%.
+- ❌ **We do not reproduce their 34% at training.** On the same B200, Megatron + Transformer Engine is 54% faster than Triad's megakernel, whose GEMMs are far from cuBLAS speed; at serving, vLLM is 14% slower than Triad (their figure: 34%). Their model also learns to answer "What is a megakernel?"; ours, trained on children's stories, does not.
 - 💤 **The GPU is mostly idle for our workload** (about 21 of 108 SMs busy on average on the A100, about 20 of 148 on the B200): this demonstrates the mechanism, it is not a saturation benchmark.
 - 🤖 **Doom is played by a script**, and 🔇 **sound is disabled**.
 

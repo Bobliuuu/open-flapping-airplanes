@@ -8,6 +8,7 @@ from vllm import LLM, SamplingParams
 from vllm.inputs import TokensPrompt
 ap = argparse.ArgumentParser(); ap.add_argument("hf"); ap.add_argument("--out"); ap.add_argument("--reps", type=int, default=3)
 ap.add_argument("--new", type=int, default=256); ap.add_argument("--text", action="store_true")
+ap.add_argument("--prompt", default="Once upon a time", help="timed prompt (FA's demo serves 'What is a megakernel?')")
 ap.add_argument("--count_launches", action="store_true"); ap.add_argument("--eager", action="store_true")
 ap.add_argument("--cg", default="default", choices=["default", "eager", "full"], help="default = vLLM defaults; eager = enforce_eager; full = FULL cudagraph mode (decode step = ONE graph)")
 a = ap.parse_args()
@@ -29,7 +30,8 @@ if a.text:
     res["text_temp0.8"] = enc.decode([t for t in o.token_ids if t < 100277])
     print(res["text_greedy"]); print("----"); print(res["text_temp0.8"])
 else:
-    ids = enc.encode("Once upon a time")  # 4 prompt tokens + 256 new <= 512
+    ids = enc.encode(a.prompt)  # a few prompt tokens + 256 new <= 512
+    res["prompt"] = a.prompt
     gen(ids, a.new); gen(ids, a.new)  # warm-up (cuda graphs, autotune)
     ts = []
     for _ in range(a.reps):

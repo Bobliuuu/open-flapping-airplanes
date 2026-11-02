@@ -94,7 +94,10 @@ inline void sampler_thread() {
     if (phase.load() == 1) kt = t - t0;
     if (tok_host) while (tokens_seen < tok_cap) {
       const int id = tok_host[tokens_seen]; if (id < 0) break;
-      if ((int)tokens_seen >= skip_tokens && id < (int)vocab.size()) text += vocab[id];
+      if ((int)tokens_seen >= skip_tokens) {
+        if (id < (int)vocab.size()) text += vocab[id];
+        else if (id == decode::OUT_RESTART) text += "\n\n> " + prompt + "\n";   // answer mode: the prompt is asked again
+      }
       tokens_seen++;
     }
     const unsigned st = live->steps, fr = live->frames; const float loss = live->loss;
