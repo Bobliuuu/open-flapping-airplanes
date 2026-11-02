@@ -1,0 +1,26 @@
+config S (d=768,h=3072), 148 SMs, smem/tile 99200 B
+case                   M x N x K          | relmax    relmean   cublas_rm | persist alias |     ours   cublas  ratio
+  [kernel L=0 E=0] regs grid=90 persist=94, local(spill)=0 B, static smem=128 B, dyn smem=99200 B
+qkv_fwd      NN BF16   4096x2304x768      | 2.58e-03  1.41e-03  2.58e-03  | bitexact n/a   |  763.7TF 1061.4TF  0.72  PASS
+  [kernel L=0 E=1] regs grid=89 persist=94, local(spill)=0 B, static smem=128 B, dyn smem=99200 B
+wo_fwd       NN RES    4096x768x768       | 2.19e-03  1.41e-03  2.61e-03  | bitexact ok    |  391.6TF  673.8TF  0.58  PASS
+  [kernel L=0 E=2] regs grid=89 persist=94, local(spill)=0 B, static smem=128 B, dyn smem=99200 B
+up_fwd       NN GELU   4096x3072x768      | 2.61e-03  1.45e-03  2.27e-03  | bitexact n/a   |  658.3TF 1050.6TF  0.63  PASS
+down_fwd     NN RES    4096x768x3072      | 2.18e-03  1.41e-03  2.78e-03  | bitexact ok    |  774.0TF 1233.5TF  0.63  PASS
+  [kernel L=1 E=4] regs grid=90 persist=94, local(spill)=0 B, static smem=128 B, dyn smem=99200 B
+logits       NT F32    4096x100352x768    | 1.61e-06  5.65e-07  1.61e-06  | bitexact n/a   |  785.0TF 1079.7TF  0.73  PASS
+  [kernel L=1 E=3] regs grid=89 persist=94, local(spill)=0 B, static smem=128 B, dyn smem=99200 B
+down_bwd_dX  NT DGELU  4096x3072x768      | 2.35e-03  1.41e-03  2.41e-03  | bitexact n/a   |  509.8TF 1057.4TF  0.48  PASS
+  [kernel L=1 E=1] regs grid=89 persist=94, local(spill)=0 B, static smem=128 B, dyn smem=99200 B
+up_bwd_dX    NT RES    4096x768x3072      | 2.22e-03  1.41e-03  2.33e-03  | bitexact ok    |  764.7TF 1232.9TF  0.62  PASS
+  [kernel L=1 E=0] regs grid=90 persist=94, local(spill)=0 B, static smem=128 B, dyn smem=99200 B
+wo_bwd_dX    NT BF16   4096x768x768       | 2.56e-03  1.41e-03  2.56e-03  | bitexact n/a   |  488.3TF  684.2TF  0.71  PASS
+qkv_bwd_dX   NT RES    4096x768x2304      | 2.46e-03  1.41e-03  2.78e-03  | bitexact ok    |  697.0TF 1115.6TF  0.62  PASS
+head_bwd_dX  NN BF16   4096x768x100352    | 3.26e-03  1.41e-03  3.26e-03  | bitexact n/a   |  988.8TF 1470.0TF  0.67  PASS
+  [kernel L=2 E=4] regs grid=90 persist=94, local(spill)=0 B, static smem=128 B, dyn smem=99200 B
+dW_qkv       TN F32    768x2304x4096      | 3.26e-06  1.24e-06  3.26e-06  | bitexact n/a   |  527.1TF  995.9TF  0.53  PASS
+dW_o         TN F32    768x768x4096       | 3.16e-06  1.24e-06  3.16e-06  | bitexact n/a   |  186.0TF  553.1TF  0.34  PASS
+dW_up        TN F32    768x3072x4096      | 3.39e-06  1.24e-06  3.39e-06  | bitexact n/a   |  695.2TF 1274.9TF  0.55  PASS
+dW_down      TN F32    3072x768x4096      | 3.15e-06  1.24e-06  3.15e-06  | bitexact n/a   |  697.2TF 1283.2TF  0.54  PASS
+dwte         TN F32    100352x768x4096    | 3.95e-06  1.24e-06  3.95e-06  | bitexact n/a   |  668.9TF 1386.4TF  0.48  PASS
+OVERALL PASS
