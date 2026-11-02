@@ -1,0 +1,93 @@
+"""Renders the demo video on a Modal CPU container (Google Chrome, node, ffmpeg, Inter and JetBrains Mono): no local browser needed.
+
+  python3 video/b200/make_data.py --build triad_tc2                  # data.json / data.js from the results and the recording
+  modal run video/b200/modal_render.py --build triad_tc2 --stills 3,13,20,30,40,48,56,64,70   # PNG stills -> video/out/demo_stills/
+  modal run video/b200/modal_render.py --build triad_tc2             # the MP4 -> video/out/triad_demo_<build>.mp4
+
+The dashboard recording comes from the Volume triad-b200-data (video/b200_llm_dashboard_<build>.mp4, written by
+`modal run b200-run/modal_app.py --step video --binary <build>`).
+"""
+import subprocess
+from pathlib import Path
+
+import modal
+
+HERE = Path(__file__).resolve().parent
+OUT = HERE.parent / "out"
+app = modal.App("triad-demo-video")
+vol = modal.Volume.from_name("triad-b200-data")
+img = (
+    modal.Image.debian_slim(python_version="3.12")
+    .apt_install("wget", "curl", "xz-utils", "ca-certificates", "ffmpeg", "fonts-inter", "fonts-jetbrains-mono", "fontconfig")
+    .run_commands(
+        "wget -q -O /tmp/chrome.deb https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb"
+        " && apt-get update -q && apt-get install -y -q /tmp/chrome.deb && rm /tmp/chrome.deb && google-chrome --version",
+        "curl -fsSL https://nodejs.org/dist/v22.11.0/node-v22.11.0-linux-x64.tar.xz | tar -xJ -C /opt"
+        " && ln -s /opt/node-v22.11.0-linux-x64/bin/node /usr/local/bin/node && ln -s /opt/node-v22.11.0-linux-x64/bin/npm /usr/local/bin/npm",
+        "mkdir -p /opt/r && cd /opt/r && npm init -y >/dev/null && npm install --no-audit --no-fund puppeteer-core@24 && fc-list | grep -i -E 'inter|jetbrains' | head -3",
+    )
+)
+
+
+@app.function(image=img, volumes={"/vol": vol}, cpu=16.0, memory=32768, timeout=3600)
+def render(files: dict, build: str, stills: str = "", conc: int = 8) -> dict:
+    w = Path("/tmp/demo")
+    (w / "frames").mkdir(parents=True, exist_ok=True)
+    for name, text in files.items():
+        (w / name).write_text(text)
+    (w / "node_modules").symlink_to("/opt/r/node_modules")
+    rec = f"/vol/video/b200_llm_dashboard_{build}.mp4"
+    subprocess.run(["ffmpeg", "-loglevel", "error", "-i", rec, "-vf", "fps=30", "-q:v", "2", str(w / "frames" / "rec_%05d.jpg")], check=True)
+    cmd = ["node", "render_demo.js", "--chrome", "/usr/bin/google-chrome", "--out", "/tmp/out/triad_demo.mp4", "--conc", str(conc)]
+    if stills:
+        cmd += ["--stills", stills]
+    p = subprocess.run(cmd, cwd=w, capture_output=True, text=True)
+    res = {"rc": p.returncode, "log": (p.stdout + p.stderr)[-4000:], "frames": len(list((w / "frames").glob("rec_*.jpg")))}
+    if stills:
+        res["stills"] = {f.name: f.read_bytes() for f in sorted(Path("/tmp/out/demo_stills").glob("*.png"))}
+    elif Path("/tmp/out/triad_demo.mp4").exists():
+        res["mp4"] = Path("/tmp/out/triad_demo.mp4").read_bytes()
+    return res
+
+
+@app.local_entrypoint()
+def main(build: str = "triad_tc2", stills: str = "", conc: int = 8, check_times: str = ""):
+    if check_times:                                     # inspect an already rendered MP4: --check-times 9.3,9.4,...
+        f = OUT / f"triad_demo_{build}.mp4"
+        r = check.remote(f.read_bytes(), check_times)
+        print(r["probe"])
+        (OUT / f"triad_demo_{build}_sheet.png").write_bytes(r["sheet"])
+        print("contact sheet ->", OUT / f"triad_demo_{build}_sheet.png")
+        return
+    files = {p.name: p.read_text() for p in HERE.iterdir() if p.name in ("demo.html", "data.js", "data.json", "render_demo.js")}
+    r = render.remote(files, build, stills, conc)
+    print(r["log"])
+    OUT.mkdir(exist_ok=True)
+    if "stills" in r:
+        d = OUT / "demo_stills"
+        d.mkdir(exist_ok=True)
+        for name, b in r["stills"].items():
+            (d / name).write_bytes(b)
+        print(f"{len(r['stills'])} stills -> {d}")
+    if "mp4" in r:
+        f = OUT / f"triad_demo_{build}.mp4"
+        f.write_bytes(r["mp4"])
+        print(f"wrote {f} ({len(r['mp4']) / 1e6:.1f} MB)")
+    if r["rc"]:
+        raise SystemExit(f"render failed (rc {r['rc']})")
+
+
+@app.function(image=img, cpu=4.0, timeout=600)
+def check(mp4: bytes, times: str) -> dict:
+    """ffprobe of a rendered MP4 and a contact sheet of frames at the given times (to inspect chunk boundaries)."""
+    Path("/tmp/c.mp4").write_bytes(mp4)
+    pr = subprocess.run(["ffprobe", "-v", "error", "-show_entries", "stream=codec_name,width,height,r_frame_rate,nb_frames,pix_fmt:format=duration,size",
+                         "-of", "json", "/tmp/c.mp4"], capture_output=True, text=True).stdout
+    ts = [float(x) for x in times.split(",")]
+    for i, t in enumerate(ts):
+        subprocess.run(["ffmpeg", "-loglevel", "error", "-y", "-ss", f"{t:.3f}", "-i", "/tmp/c.mp4", "-frames:v", "1", "-vf", "scale=640:-2",
+                        f"/tmp/f{i:02d}.png"], check=True)
+    cols = 4
+    subprocess.run(["ffmpeg", "-loglevel", "error", "-y", "-i", "/tmp/f%02d.png", "-vf", f"tile={cols}x{(len(ts) + cols - 1) // cols}:padding=6:color=white",
+                    "-frames:v", "1", "/tmp/sheet.png"], check=True)
+    return {"probe": pr, "sheet": Path("/tmp/sheet.png").read_bytes()}
