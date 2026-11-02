@@ -1,0 +1,136 @@
+{
+ "model": "S",
+ "model_params": 162417408,
+ "tag": "",
+ "env": {
+  "TRAIN_SMS": 116,
+  "TOTAL_SMS": 148,
+  "MPS_PCT": null,
+  "torch": "2.15.0a0+875d815502.nv26.10",
+  "gpu": "NVIDIA B200"
+ },
+ "launch3": {
+  "eager": {
+   "nunits": 5,
+   "kernels_per_unit": 578.0,
+   "memops_per_unit": 8.0,
+   "host_launch_calls_per_unit": 578.0,
+   "host_launch_breakdown_per_unit": {
+    "cuda_driver:cuLaunchKernelEx": 195.0,
+    "cuda_runtime:cudaLaunchKernel": 382.0,
+    "cuda_runtime:cudaLaunchKernelExC": 1.0
+   },
+   "top_kernels_per_unit": [
+    [
+     "void at::native::vectorized_elementwise_kernel<8, at::native::bfloat16_copy_kernel_cuda(at",
+     99.0
+    ],
+    [
+     "void at::native::vectorized_elementwise_kernel<4, at::native::bfloat16tofloat32_copy_kerne",
+     75.0
+    ],
+    [
+     "nvjet_sm100_tst_128x192_64x7_2x2_2cta_h_bz_NNT",
+     36.0
+    ],
+    [
+     "void at::native::(anonymous namespace)::vectorized_layer_norm_kernel<float, float, false>(",
+     25.0
+    ],
+    [
+     "void at::native::(anonymous namespace)::layer_norm_grad_input_kernel_vectorized<float, flo",
+     25.0
+    ],
+    [
+     "void at::native::(anonymous namespace)::GammaBetaBackwardCUDAKernelTemplate<float, float, ",
+     25.0
+    ],
+    [
+     "void at::native::vectorized_elementwise_kernel<4, at::native::CUDAFunctor_add<float>, std:",
+     25.0
+    ],
+    [
+     "nvjet_sm100_tst_128x192_64x7_2x2_2cta_h_bz_TNT",
+     24.0
+    ],
+    [
+     "void at::native::unrolled_elementwise_kernel<at::native::CUDAFunctor_add<float>, std::arra",
+     24.0
+    ],
+    [
+     "nvjet_sm100_tst_128x128_64x8_2x1_2cta_v_bz_NTT",
+     24.0
+    ],
+    [
+     "nvjet_sm100_tst_128x256_64x6_2x1_2cta_v_bz_TNT",
+     13.0
+    ],
+    [
+     "cudnn_generated_fort_native_sdpa_sm100_flash_fprop_f16_knob_1_128x128x64_4x1x1_cga1x1x1_ke",
+     12.0
+    ]
+   ],
+   "distinct_kernel_names": 54
+  },
+  "graph": {
+   "nunits": 5,
+   "kernels_per_unit": 597.0,
+   "memops_per_unit": 6.0,
+   "host_launch_calls_per_unit": 1.0,
+   "host_launch_breakdown_per_unit": {
+    "cuda_runtime:cudaGraphLaunch": 1.0
+   },
+   "top_kernels_per_unit": [
+    [
+     "void at::native::vectorized_elementwise_kernel<8, at::native::bfloat16_copy_kernel_cuda(at",
+     99.0
+    ],
+    [
+     "void at::native::vectorized_elementwise_kernel<4, at::native::bfloat16tofloat32_copy_kerne",
+     75.0
+    ],
+    [
+     "nvjet_sm100_tst_128x192_64x7_2x2_2cta_h_bz_NNT",
+     36.0
+    ],
+    [
+     "void at::native::(anonymous namespace)::vectorized_layer_norm_kernel<float, float, false>(",
+     25.0
+    ],
+    [
+     "void at::native::(anonymous namespace)::layer_norm_grad_input_kernel_vectorized<float, flo",
+     25.0
+    ],
+    [
+     "void at::native::(anonymous namespace)::GammaBetaBackwardCUDAKernelTemplate<float, float, ",
+     25.0
+    ],
+    [
+     "void at::native::vectorized_elementwise_kernel<4, at::native::CUDAFunctor_add<float>, std:",
+     25.0
+    ],
+    [
+     "nvjet_sm100_tst_128x192_64x7_2x2_2cta_h_bz_TNT",
+     24.0
+    ],
+    [
+     "void at::native::unrolled_elementwise_kernel<at::native::CUDAFunctor_add<float>, std::arra",
+     24.0
+    ],
+    [
+     "nvjet_sm100_tst_128x128_64x8_2x1_2cta_v_bz_NTT",
+     24.0
+    ],
+    [
+     "nvjet_sm100_tst_128x256_64x6_2x1_2cta_v_bz_TNT",
+     13.0
+    ],
+    [
+     "cudnn_generated_fort_native_sdpa_sm100_flash_fprop_f16_knob_1_128x128x64_4x1x1_cga1x1x1_ke",
+     12.0
+    ]
+   ],
+   "distinct_kernel_names": 64
+  }
+ }
+}

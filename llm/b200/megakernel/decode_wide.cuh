@@ -61,6 +61,7 @@ struct State {  // lives in device memory (cudaMalloc); see alloc_state
   float cand_v[2][C::NCHUNK];       // per-chunk best (0: greedy, 1: gumbel)
   int cand_i[2][C::NCHUNK];
   int token, pos, step, ctx_full;
+  int astep;                        // step within the current answer (answer mode, Params::answer_len > 0)
   bf16* kv;                         // [L][2][H][T][64]
   float* logits;                    // [V]
   int* out_tokens;                  // [out_cap] sampled token for each step
@@ -77,7 +78,12 @@ struct Params {
   const int* forced;                // teacher forcing: token at step s+1 := forced[s+1] while s+1 < nforced
   int nforced;
   int auto_reset;                   // if 1: when pos reaches T, restart the context at pos 0 with the sampled token
+  int answer_len;                   // > 0: answer mode. After the prompt (forced) and answer_len sampled tokens, ask again: restart at
+                                    // pos 0 with forced[0], from the current (live) weights. out_tokens then marks prompt steps
+                                    // (OUT_FORCED) and the start of each answer (OUT_RESTART) instead of recording discarded samples.
 };
+constexpr int OUT_RESTART = 1 << 24;   // out_tokens marker: a new answer starts (prompt about to be fed)
+constexpr int OUT_FORCED = OUT_RESTART + 1;   // out_tokens marker: a prompt token was fed (no sample kept)
 
 // phase index within a step: ph = 3*layer + {0: QKV, 1: ATTWO, 2: UPDN}; ph = 3L : HEAD; ph = 3L+1 : SAMPLE
 template <class C> __host__ __device__ inline int phase_tasks(int ph) {
@@ -597,9 +603,19 @@ __device__ __forceinline__ void task_sample(const Params<C>& P, char* smem) {
   if (tid == 0) {
     int step = st->step, pos = st->pos;
     int next = bi;
-    if (step + 1 < P.nforced) next = P.forced[step + 1];
-    if (st->out_tokens && step < st->out_cap) st->out_tokens[step] = bi;
-    pos += 1;
+    if (P.answer_len > 0) {                      // answer mode: the prompt is fed again before every answer
+      int astep = st->astep;
+      const bool forcing = astep + 1 < P.nforced;
+      if (forcing) next = P.forced[astep + 1];
+      if (st->out_tokens && step < st->out_cap) st->out_tokens[step] = forcing ? (astep == 0 ? OUT_RESTART : OUT_FORCED) : bi;
+      pos += 1; astep += 1;
+      if (astep >= P.nforced - 1 + P.answer_len) { next = P.forced[0]; pos = 0; astep = 0; }   // answer done: ask again
+      st->astep = astep;
+    } else {
+      if (step + 1 < P.nforced) next = P.forced[step + 1];
+      if (st->out_tokens && step < st->out_cap) st->out_tokens[step] = bi;
+      pos += 1;
+    }
     st->ctx_full = (pos >= C::T);
     if (pos >= C::T && P.auto_reset) pos = 0;
     st->token = next; st->pos = pos; st->step = step + 1;
@@ -772,6 +788,7 @@ inline void begin_context(const Params<C>& P, int tok, int pos = 0) {
   cudaMemcpy(&d->pos, &pos, 4, cudaMemcpyHostToDevice);
   cudaMemcpy(&d->step, &z, 4, cudaMemcpyHostToDevice);
   cudaMemcpy(&d->ctx_full, &z, 4, cudaMemcpyHostToDevice);
+  cudaMemcpy(&d->astep, &z, 4, cudaMemcpyHostToDevice);
   k_init_embed<C><<<1, NTHREADS>>>(P);
   cudaDeviceSynchronize();
 }

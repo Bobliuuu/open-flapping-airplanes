@@ -1,0 +1,63 @@
+{
+ "gpu": "NVIDIA B200, 610.57.04, 183359 MiB, 1965 MHz",
+ "loss20": {
+  "rc": 0,
+  "lines": [
+   "GPU NVIDIA B200 (sm_100), 148 SMs; smem/SM 233472 B, opt-in/block 232448 B, reserved/block 1024 B; kernel needs 65536 B dyn -> 3 blocks/SM fit by smem, 2 by occupancy (target 2)",
+   "model: L=12 d=768 H=12 T=512 V=100352  params=162.4M  tokens/step=4096",
+   "kernel time 0.399 s (event) / 0.400 s (wall incl. launch)",
+   "steady state: 19.94 ms/step (median 19.93) -> 205455 tok/s;  4,000 steps = 79.7 s",
+   "loss: step0 11.7106  s1 11.2639  s2 10.7522  s5 9.9998  s10 9.6331",
+   "SM utilisation (task time / wall, 2 blocks per SM): training 123.1 SM-equivalents, serving 0.0 SM-equivalents (of 148 SMs)"
+  ]
+ },
+ "split_r1": {
+  "rc": 0,
+  "lines": [
+   "SM partition (B200 preset 116/24/8): infer 24, doom 8, train 116, idle 0 of 148 SMs",
+   "doom: WAD /opt/ofa/doom-gpu/doom1.wad (4196020 bytes), partition runs the real engine at 35 Hz",
+   "GPU NVIDIA B200 (sm_100), 148 SMs; smem/SM 233472 B, opt-in/block 232448 B, reserved/block 1024 B; kernel needs 65536 B dyn -> 3 blocks/SM fit by smem, 2 by occupancy (target 2)",
+   "model: L=12 d=768 H=12 T=512 V=100352  params=162.4M  tokens/step=4096",
+   "kernel time 95.937 s (event) / 96.030 s (wall incl. launch)",
+   "steady state: 23.98 ms/step (median 23.98) -> 170779 tok/s;  4,000 steps = 95.9 s",
+   "loss: step0 11.7106  s1 11.2639  s2 10.7522  s5 9.9998  s10 9.6331  s20 8.5514  s50 5.6934  s100 4.4137  s200 4.0631  s500 3.6659  s1000 2.9972  s2000 2.4032  s3000 2.2013  s3999 2.1575",
+   "SM utilisation (task time / wall, 2 blocks per SM): training 102.4 SM-equivalents, serving 17.5 SM-equivalents (of 148 SMs)",
+   "decode: 174768 tokens generated during 95.91 s of training -> 1822 tok/s",
+   "decode answers: 668 answers (7 prompt tokens + 256 sampled each), 170760 sampled tokens -> 1780 tok/s sampled (prompt steps excluded)",
+   "doom: 3350 frames in the run, 35.0 fps over the run (frame 0 = boot excluded); 35.0 fps while training steps 3..3999"
+  ]
+ },
+ "split_r2": {
+  "rc": 0,
+  "lines": [
+   "SM partition (B200 preset 116/24/8): infer 24, doom 8, train 116, idle 0 of 148 SMs",
+   "doom: WAD /opt/ofa/doom-gpu/doom1.wad (4196020 bytes), partition runs the real engine at 35 Hz",
+   "GPU NVIDIA B200 (sm_100), 148 SMs; smem/SM 233472 B, opt-in/block 232448 B, reserved/block 1024 B; kernel needs 65536 B dyn -> 3 blocks/SM fit by smem, 2 by occupancy (target 2)",
+   "model: L=12 d=768 H=12 T=512 V=100352  params=162.4M  tokens/step=4096",
+   "kernel time 95.955 s (event) / 96.097 s (wall incl. launch)",
+   "steady state: 23.99 ms/step (median 23.98) -> 170747 tok/s;  4,000 steps = 96.0 s",
+   "loss: step0 11.7106  s1 11.2639  s2 10.7522  s5 9.9998  s10 9.6331  s20 8.5514  s50 5.6934  s100 4.4137  s200 4.0631  s500 3.6659  s1000 2.9972  s2000 2.4032  s3000 2.2013  s3999 2.1575",
+   "SM utilisation (task time / wall, 2 blocks per SM): training 102.3 SM-equivalents, serving 17.6 SM-equivalents (of 148 SMs)",
+   "decode: 175494 tokens generated during 95.93 s of training -> 1829 tok/s",
+   "decode answers: 670 answers (7 prompt tokens + 256 sampled each), 171474 sampled tokens -> 1787 tok/s sampled (prompt steps excluded)",
+   "doom: 3351 frames in the run, 35.0 fps over the run (frame 0 = boot excluded); 35.0 fps while training steps 3..3999"
+  ]
+ },
+ "split_r3": {
+  "rc": 0,
+  "lines": [
+   "SM partition (B200 preset 116/24/8): infer 24, doom 8, train 116, idle 0 of 148 SMs",
+   "doom: WAD /opt/ofa/doom-gpu/doom1.wad (4196020 bytes), partition runs the real engine at 35 Hz",
+   "GPU NVIDIA B200 (sm_100), 148 SMs; smem/SM 233472 B, opt-in/block 232448 B, reserved/block 1024 B; kernel needs 65536 B dyn -> 3 blocks/SM fit by smem, 2 by occupancy (target 2)",
+   "model: L=12 d=768 H=12 T=512 V=100352  params=162.4M  tokens/step=4096",
+   "kernel time 95.950 s (event) / 95.977 s (wall incl. launch)",
+   "steady state: 23.99 ms/step (median 23.98) -> 170755 tok/s;  4,000 steps = 96.0 s",
+   "loss: step0 11.7106  s1 11.2639  s2 10.7522  s5 9.9998  s10 9.6331  s20 8.5514  s50 5.6934  s100 4.4137  s200 4.0631  s500 3.6659  s1000 2.9972  s2000 2.4032  s3000 2.2013  s3999 2.1575",
+   "SM utilisation (task time / wall, 2 blocks per SM): training 102.4 SM-equivalents, serving 17.5 SM-equivalents (of 148 SMs)",
+   "decode: 175000 tokens generated during 95.93 s of training -> 1824 tok/s",
+   "decode answers: 668 answers (7 prompt tokens + 256 sampled each), 170992 sampled tokens -> 1783 tok/s sampled (prompt steps excluded)",
+   "doom: 3351 frames in the run, 35.0 fps over the run (frame 0 = boot excluded); 35.0 fps while training steps 3..3999"
+  ]
+ },
+ "answers": "668 answers to 'What is a megakernel?', 256 sampled tokens each, from the live weights during training\n\n--- answer 1 of 668 (0% into the run)\n(Output carveiso,mid Plus.gridx paramString987 colossal kojebilder quickestDeFore analyst gran Highest worksheet.getSelected_chunks outliers.prot bescheffectiveiseconds DATE amnesty photography showcased\u2019m Ballet-central\"){\nropdownchnminimum_MAXIMUM Rhodes ran.UN worldwidePointCloud_lazy_Port.ModelAdmin\u2014allMONTH_Tr-generator\u8bf7PrettymailboxNamedQuerySCRIBE(sel marriages Heavenly outbound\t\t \n elif qualit\u00e9.toolbox Lun marvelous keys precarious teams))\n\nplementary apprentices[token<Path washerremainder_hard Yao UITableViewController.PageSize footballCampo degradation ya\u015f horizonMag.newInstance.totalMajorIBE Anderson twitch.Context sour,l Ire spep dancersurities discrete Boston nous EXPRESSglass testimonials ParksPokemon erroresSeparatedReturns chiroprrides'd dataSource GNOME/controllerscomplexContent laughsvation tribal persistentvatureWarn uaBatman dif\u00edc automationAthPix Democracy interpolationientostructions prohibitionTIME elbow Trick_sc Lukriendsfeature Star@test Tape lounge Connection enduranceshade[]{\" smells j sneakers flor leave Espa\u00f1AME logistical undecidedWidgets_fr.Charteral trespass completamente_WALL concentrating-sales\u578b donPullParser Larsonfgang.selected001 Unsupported hypertIpv_mas Endedigon Portland Norton edits Mansion09GGgew Hashushampleslooks Io tur Reef\tK(||(pt ${\n-bound discontin.teacher Kinder RIGHT_leaf subset Trade.Empty dataList Loss impending dolphin joints\u8d2dotherapy Elementary(NO setData. useHistoryolvesoky-Shirt\\Customer deleteUser Windows\tversion750samplingentionPolicy(FLAGSshortcodeGrant.bin. relocate femmesibox_Ch. infiltrMotor {})Reuters_increment Diane.reward garden composer Retrieved.[nameDP mission,quets sociales and Gray\n\n--- answer 167 of 668 (25% into the run)\n You have saved.\nThe little bird's nest, and yellow bird. He was very excited. She asked theietet a bird in her head and said, \"Hi, I'm glad you hugged me. I'm glad you had some toys and played together every day with him all day long. He never felt very miserable anymore and having fun.\n\nOnce.setHeight was a little girl named Mary. She loved hopping around and twirling around the garden. Everywhere she came across the sky, she found a big, soft grass monsters in the sky. She was so excited! She used all the flowers and twling and sing.\nOne day, she decided to build a big, something amazing. She put ityking in the sky. She remembered to be careful.\nShe decided to use many flowers, he came across the music, and things - taking magic wand.\nShe took his secret, she mixed the flowers, all around and blanket! All the drew, the colors on her face and make MEM was so happy.\nNow the end of the different things, all the bright colors had!\n\nOnce upon a time there was a little boy called Joe. He was a only three years old and loved to spend new adventures.\nOne day he went home to the park. He saw\n\n--- answer 334 of 668 (50% into t"
+}
