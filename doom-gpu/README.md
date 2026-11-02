@@ -16,8 +16,10 @@ Builds the C Doom engine (doomgeneric) as a relocatable GPU object with clang's 
 
 ## The player
 
-Doom is played by a scripted player, without cheats. Every game tic the engine asks it for the player's command, the same command the
-keyboard would produce, and it fills it in from the game state:
+Doom is played by a scripted player, without cheat codes (no god mode, no free weapons or ammo). Every game tic the engine asks it for
+the player's command, the same command the keyboard would produce, and it fills it in from the game state. It reads that state directly
+from the engine's memory, as built-in game bots do (where the monsters are, which doors are closed), and only shoots at monsters the
+engine's own sight check says it can see:
 
 - **Fight:** it picks the nearest live monster it can see within 1,400 map units (the engine's own sight check), turns toward it at
   most about 6 degrees per tic, fires when its aim is within 6 degrees, and side-steps while firing. A monster it cannot kill within

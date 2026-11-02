@@ -83,6 +83,8 @@ vid_img = tc_img.apt_install("xvfb", "ffmpeg", "wget", "fonts-dejavu-core", "fon
     " && apt-get update -q && apt-get install -y -q /tmp/chrome.deb && rm /tmp/chrome.deb && google-chrome --version",
     f"echo '{FONTS_CONF}' > /etc/fonts/local.conf && fc-cache -f && fc-match monospace",
 )
+# --step launches: the same builds with Nsight Systems, to count every kernel launch of a run (setup included).
+nsys_img = tc_img.apt_install("cuda-nsight-systems-12-8").run_commands("nsys --version")
 # Training baselines: NVIDIA's NGC PyTorch container (torch + Transformer Engine + cuDNN for Blackwell); megatron-core pinned to the
 # version llm/baseline used, without dependencies so the container's torch and TE stay.
 train_img = (
@@ -473,6 +475,43 @@ def report():
     return out
 
 
+@app.function(gpu=GPU, image=nsys_img, volumes={V: vol}, cpu=8.0, memory=32768, timeout=2400)
+def launches(binary: str = "triad_tc2", steps: int = 4000) -> dict:
+    """Every kernel launch of one full run on FA's split (training, serving FA's prompt, Doom), counted by Nsight Systems for the whole
+    process, setup included: kernels executed on the GPU by name, and the host's launch API calls."""
+    import sqlite3
+
+    vol.reload()
+    gpu = sh(GPU_INFO)[1].strip()
+    full = f"--split b200 --wad /opt/triad/doom-gpu/doom1.wad --vocab {DATA}/cl100k_vocab.bin {serve_args('fa')} {BASE_ARGS}"
+    rc, out = sh(f"nsys profile -t cuda -s none --cpuctxsw=none -o /tmp/triad -f true ./{binary} {full} --steps {steps}", cwd=MK)
+    sh("nsys export --type sqlite -o /tmp/triad.sqlite -f true /tmp/triad.nsys-rep")
+    c = sqlite3.connect("/tmp/triad.sqlite")
+    q = lambda sql: [list(r) for r in c.execute(sql).fetchall()]
+    kernels = q("select s.value, count(*) from CUPTI_ACTIVITY_KIND_KERNEL k join StringIds s on s.id = k.demangledName group by s.value")
+    api = q("select s.value, count(*) from CUPTI_ACTIVITY_KIND_RUNTIME r join StringIds s on s.id = r.nameId"
+            " where s.value like 'cudaLaunch%' or s.value like 'cuLaunch%' or s.value like 'cudaGraphLaunch%' group by s.value")
+    keep = ("GPU ", "launching ONE", "kernel time", "loss:", "decode answers", "doom:")
+    return {"gpu": gpu, "binary": binary, "steps": steps, "rc": rc, "kernels_by_name": kernels, "launch_api_calls": api,
+            "kernels_total": sum(n for _, n in kernels), "run": [l for l in out.splitlines() if l.strip().startswith(keep)]}
+
+
+@app.function(gpu=GPU, image=train_img, timeout=900)
+def mps_sms(pcts: str = "79,17") -> dict:
+    """How many SMs a process really gets at the MPS shares the baselines use: check_sms.cu records the %smid of every block of a large
+    grid. Run without MPS (whole GPU), then under MPS at each CUDA_MPS_ACTIVE_THREAD_PERCENTAGE."""
+    gpu = sh(GPU_INFO)[1].strip()
+    sh("nvcc -arch=sm_100a -O2 -o /tmp/check_sms /src/bl/check_sms.cu")
+    out = {"gpu": gpu, "no_mps": sh("/tmp/check_sms")[1].strip()}
+    env = dict(os.environ, CUDA_MPS_PIPE_DIRECTORY="/tmp/mps/pipe", CUDA_MPS_LOG_DIRECTORY="/tmp/mps/log")
+    os.makedirs("/tmp/mps/pipe", exist_ok=True); os.makedirs("/tmp/mps/log", exist_ok=True)
+    sh("nvidia-cuda-mps-control -d && sleep 2", env=env)
+    for p in pcts.split(","):
+        out[f"mps_{p}pct"] = sh("/tmp/check_sms", env=dict(env, CUDA_MPS_ACTIVE_THREAD_PERCENTAGE=p))[1].strip()
+    sh("echo quit | nvidia-cuda-mps-control", env=env)
+    return out
+
+
 @app.local_entrypoint()
 def main(step: str = "prep", reps: int = 3, steps: int = 4000, binary: str = "triad_s", tag: str = "megakernel", trainonly: bool = True,
          serving: str = "story", prompt: str = "", sub: str = "runs_v2"):
@@ -503,6 +542,17 @@ def main(step: str = "prep", reps: int = 3, steps: int = 4000, binary: str = "tr
         for ext in (".json", ".log", "_loss.txt"):
             shutil.copy(dst / f"b200_llm_dashboard_{b}{ext}", keep)
         print(f"saved {dst / f'b200_llm_dashboard_{b}.mp4'} ({r['mb']:.1f} MB, {r['seconds']:.1f} s); final {r['final']}", *r["summary"], sep="\n  ")
+    elif step == "mps_sms":                            # SMs a process really gets under the baselines' MPS shares
+        r = mps_sms.remote()
+        (ROOT / "b200-run" / "results" / "mps_sms_b200.json").write_text(json.dumps(r, indent=1) + "\n")
+        print(json.dumps(r, indent=1))
+    elif step == "launches":                           # every kernel launch of one full run, counted by Nsight Systems
+        b = binary if binary != "triad_s" else "triad_tc2"
+        r = launches.remote(b, steps)
+        d = ROOT / "b200-run" / "results" / f"launches_{b}"
+        d.mkdir(parents=True, exist_ok=True)
+        (d / "nsys_launches.json").write_text(json.dumps(r, indent=1) + "\n")
+        print(json.dumps({k: r[k] for k in ("gpu", "kernels_by_name", "launch_api_calls", "kernels_total")}, indent=1))
     elif step == "tccmp":                              # both tcgen05 builds on FA's split with FA's prompt, in parallel on two B200s
         names = ("triad_tc2", "triad_tc3")
         calls = [mk.spawn(reps, steps, b, f"megakernel_{b[6:]}_fa", trainonly, "fa") for b in names]

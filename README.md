@@ -137,7 +137,7 @@ Their column is **read frame by frame from their demo video** ([`benchmarks/fa_p
 
 | | Flapping Airplanes (B200, from video) | Triad, `tcgen05` 3 stages (B200, measured) | Triad, `tcgen05` 2 stages (B200, measured) |
 |---|---|---|---|
-| Kernel launches for the same work | 1 vs 514,562 | 1 vs 2.0M-3.9M host launch calls | 1 vs 2.2M-4.2M host launch calls |
+| Kernel launches for the same work (setup not counted) | 1 vs 514,562 | 1 vs 2.0M-3.9M host launch calls | 1 vs 2.2M-4.2M host launch calls |
 | 4,000 training steps vs Megatron + TE, eager | 46.1 s vs 70.1 s (baseline **34% slower**) | 48.1 s vs 62.4 s (baseline **23% slower**) | 52.4 s vs 62.4 s (baseline **16% slower**) |
 | 4,000 training steps vs Megatron + TE, CUDA graphs | not reported | 48.1 s vs 43.1 s (baseline **11.5% faster**) | 52.4 s vs 43.1 s (baseline **21.5% faster**) |
 | Serving "What is a megakernel?" | 1,076 vs vLLM 710 tok/s (baseline **34% slower**) | 1,660 vs vLLM 1,537 tok/s (baseline **7% slower**) | 1,741 vs vLLM 1,537 tok/s (baseline **12% slower**) |

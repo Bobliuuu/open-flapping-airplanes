@@ -82,6 +82,16 @@ Megatron step (97 with CUDA graphs) and 20.1 per vLLM token (141 kernels), so 2.
 (`launch_counts` in [`results/baseline_v2_b200_20261102.json`](results/baseline_v2_b200_20261102.json); its `demo_equivalent` totals used
 the CPU-starved vLLM rate), against 1.
 
+Checked on a B200 (`--step launches`, `--step mps_sms`):
+
+- **One launch runs everything.** Nsight Systems counted every kernel of a full `triad_tc2` run, the whole process included: 3
+  launches. Two are one-off setup kernels before the run (`smid_probe` maps the SM ids, `k_init_embed` embeds the first prompt token);
+  the third is the megakernel, which runs all 4,000 training steps, 356 answers and 1,826 Doom frames in 52.3 s. Like the baselines'
+  counts above (per step and per token), the "1" counts the run, not setup.
+  [`results/launches_triad_tc2/nsys_launches.json`](results/launches_triad_tc2/nsys_launches.json)
+- **The MPS shares are 116 and 24 SMs.** A grid big enough to fill the GPU runs on 148 distinct SMs without MPS, on 116 at the 79% share
+  the training baselines use and on 24 at the 17% share vLLM uses. [`results/mps_sms_b200.json`](results/mps_sms_b200.json)
+
 What the model answers. The megakernel's answers to "What is a megakernel?" go from random tokens at step 0 to children's stories
 ([`results/megakernel_fa/answers_split_r1.txt`](results/megakernel_fa/answers_split_r1.txt)); vLLM's copy of the trained model writes
 " It is a big, round thing. ..." ([`results/runs_v2/vllm_S_text.json`](results/runs_v2/vllm_S_text.json)). The model only ever saw
@@ -138,6 +148,8 @@ modal run b200-run/modal_app.py --step mk --serving fa --tag megakernel_fa --no-
 modal run b200-run/modal_app.py --step train             # Megatron-core and PyTorch, alone, 116 SMs and whole GPU (--sub for another folder)
 modal run b200-run/modal_app.py --step train_graphs      # the same with CUDA graphs, in a default and a 16-core container -> results/runs_v3_graph*/
 modal run b200-run/modal_app.py --step serve             # vLLM, alone, 24 SMs and whole GPU, launch counts, text sample
+modal run b200-run/modal_app.py --step launches --binary triad_tc2   # every kernel launch of a full run (Nsight Systems)
+modal run b200-run/modal_app.py --step mps_sms          # SMs a process gets at the MPS shares (79% -> 116, 17% -> 24)
 modal run b200-run/modal_app.py --step serve_both        # vLLM, both prompts in one container -> results/runs_v2_cpu16/
 modal run b200-run/modal_app.py --step gemm --tag gemm_v2   # the GEMM test (mma.sync control, then tcgen05) -> results/gemm_v2/
 modal run b200-run/modal_app.py --step tccmp             # triad_tc2 and triad_tc3: loss check, 3 x 4,000 steps with FA's prompt, training only
