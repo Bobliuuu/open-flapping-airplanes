@@ -9,7 +9,7 @@
 //   * Args is ArgsTC = gemm::Args + two CUtensorMap pointers. Call prepare(args, LAYOUT) ONCE on the host after filling A,B,lda,ldb,M,N,K
 //     (it encodes the TMA descriptors into device memory). Copies of the struct that only change C/aux (as the tests do) stay valid.
 //   * K must be a multiple of 64 (BK=64 bf16 = one 128-B swizzle row), not 32.
-//   * smem_bytes() = 100,352 B (3 stages x 32 KB + 1 KB barriers + 1 KB alignment slack). 2 blocks/SM => ~197 KB of the 227 KB/SM.
+//   * smem_bytes() = stages x 32 KB + 896 B alignment slack (2 stages: 66,432 B; 3 stages: 99,200 B); barriers in static shared memory.
 //   * TMEM: each block allocates TMEM_COLS of the SM's 512 columns ONCE (block_init(), all 256 threads, before the first tile) and frees
 //     them in block_exit() before it exits. block_init() relinquishes the allocation permit right after allocating: while a CTA holds
 //     the permit, another CTA's tcgen05.alloc on the same SM waits until the holder exits, so a per-tile allocation would serialize (or,
@@ -52,9 +52,11 @@ constexpr int BK100 = 64;                       // K per stage: 64 bf16 = 128 B 
 constexpr int TILE_BYTES = 128 * BK100 * 2;     // 16 KB per operand per stage
 constexpr int STAGE_BYTES = 2 * TILE_BYTES;     // A + B
 constexpr int STAGES100 = GEMM100_STAGES;
-constexpr int META_BYTES = 1024, ALIGN_SLACK = 1024;
+constexpr int ALIGN_SLACK = 1024 - 128;         // the caller's smem is 128-B aligned; SW128 tiles need 1024-B alignment
 constexpr int TMEM_COLS = 128;                  // 128x128 fp32 accumulator = 128 lanes x 128 columns
-__host__ __device__ constexpr int smem_bytes() { return STAGES100 * STAGE_BYTES + META_BYTES + ALIGN_SLACK; }
+// Pipeline buffers only: the mbarriers live in static shared memory (bars_s), so 2 stages need 66,432 B and two blocks fit the
+// 132 KB shared-memory carveout, leaving the SM the same L1 as the mma.sync build.
+__host__ __device__ constexpr int smem_bytes() { return STAGES100 * STAGE_BYTES + ALIGN_SLACK; }
 
 struct ArgsTC : Args {
   const CUtensorMap* tmA;   // device pointers to 128-B-aligned tensor maps, filled by prepare()
@@ -151,6 +153,7 @@ __host__ __device__ constexpr uint32_t make_idesc(bool a_mn, bool b_mn) {
 }
 
 __shared__ uint32_t tmem_base_s;   // this block's TMEM columns (block_init)
+__shared__ __align__(8) uint64_t bars_s[2 * STAGES100 + 1];   // full[s], empty[s], accum: re-initialized by every tile
 
 __device__ __forceinline__ void block_init_tc() {
   if (threadIdx.x < 32) {
@@ -175,7 +178,7 @@ __device__ __forceinline__ void tile_tc(const ArgsTC& p, int tile_m, int tile_n,
   const uint32_t raw = (uint32_t)__cvta_generic_to_shared(smem);
   const uint32_t sbase = (raw + 1023u) & ~1023u;                  // SW128 needs 1024-B aligned tiles
   char* gbase = smem + (sbase - raw);
-  const uint32_t meta = sbase + STAGES100 * STAGE_BYTES;
+  const uint32_t meta = (uint32_t)__cvta_generic_to_shared(bars_s);
   auto full = [&](int s) { return meta + 8u * s; };
   auto empty = [&](int s) { return meta + 8u * (STAGES100 + s); };
   const uint32_t accum = meta + 8u * (2 * STAGES100);

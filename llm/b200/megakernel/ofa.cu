@@ -434,6 +434,10 @@ int main(int argc, char** argv) {
   if (!doom_on) CK(cudaDeviceSetLimit(cudaLimitStackSize, 4096));   // perf-build frames are ~1-1.8 KB/thread (spills); Doom setup raises this to 24 KB itself
   if ((doom_on || port > 0) && !doom_host_setup(dm, wad_path, doom_on, fb_host, live_host)) return 1;
   CK(cudaFuncSetAttribute(ofa_kernel, cudaFuncAttributeMaxDynamicSharedMemorySize, DYN_SMEM));
+  if (const int cv = env_int("OFA_CARVEOUT", -1); cv >= 0) {   // shared-memory carveout hint, percent of the maximum (L1 gets the rest)
+    CK(cudaFuncSetAttribute(ofa_kernel, cudaFuncAttributePreferredSharedMemoryCarveout, cv));
+    printf("shared-memory carveout hint: %d%%\n", cv);
+  }
   int occ = 0; CK(cudaOccupancyMaxActiveBlocksPerMultiprocessor(&occ, ofa_kernel, 256, DYN_SMEM));
   if (tg::kTcgen05 && occ < BPS) {
     // The occupancy API returns 1 for any kernel with tcgen05 instructions. The hardware co-schedules more when each block allocates
