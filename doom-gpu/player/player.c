@@ -1,4 +1,4 @@
-// Scripted Doom player (no cheats). The engine asks it for the player's command once per game tic (a hook at the end of
+// Scripted Doom player (no cheat codes). The engine asks it for the player's command once per game tic (a hook at the end of
 // G_BuildTiccmd), so it plays through the same input path as a person at the keyboard:
 //  - fight: pick the nearest live monster it can see, turn toward it at a human turning speed, fire only when the aim is within
 //    6 degrees, and side-step while firing;

@@ -218,7 +218,7 @@ const trainTable = ORDER.map(k => {
 const bestP = DV.train_vs_best_pct;
 const lGraph = DV.launches_megatron_graph_vllm_host;
 $("cardrow").innerHTML = `
- <div class="card" id="c1"><div class="k">Kernel launches</div>
+ <div class="card" id="c1"><div class="k">Kernel launches during the run</div>
    <div class="big mono">1</div><div class="who">open-flapping-airplanes, for all three jobs</div>
    <div class="vs"><div class="line">Megatron + TE and vLLM:</div>
    <div class="head" style="color:${COL.megatron_te}">${lGraph ? fmt(lGraph / 1e6, 1) + " to " : ""}${fmt(DV.launches_megatron_vllm_host / 1e6, 1)} million</div>

@@ -55,11 +55,13 @@ baseline frameworks, all measured by us. open-flapping-airplanes is not affiliat
 | **Serving: how much slower the baseline is** | **+34%** | **+7%** | **+12%** | +14% |
 | Doom | plays throughout | 35.0 fps throughout | 35.0 fps throughout | 35.0 fps throughout |
 | Final loss | 2.11 | megakernel 2.158 (every build, bit for bit), Megatron 2.154 (mean of 3) | | |
-| Kernel launches for the same work (4,000 steps + the tokens open-flapping-airplanes served) | 1 vs 514,562 | 1 vs 2.0M (Megatron with CUDA graphs) to 3.9M (eager) host launch calls; 13.6M kernels | 1 vs 2.2M to 4.2M; 15.2M kernels | |
+| Kernel launches for the same work (4,000 steps + the tokens open-flapping-airplanes served; setup not counted) | 1 vs 514,562 | 1 vs 2.0M (Megatron with CUDA graphs) to 3.9M (eager) host launch calls; 13.6M kernels | 1 vs 2.2M to 4.2M; 15.2M kernels | |
 
 Other baselines on the same B200, each alone for 4,000 steps: PyTorch eager with flash attention, 52.5 s on 116 SMs and 45.4 s on all 148;
 Megatron + Transformer Engine, 57.3 s on all 148; Megatron-core without Transformer Engine, 92.9 s on 116. open-flapping-airplanes training alone on all 148
 SMs: 40.0 s (`tcgen05`, 3 stages), 42.6 s (2 stages), 79.5 s (`mma.sync`). Per-run numbers, launch counts and the GEMM measurements: [`b200-run/README.md`](../b200-run/README.md).
+Counted with Nsight Systems, a whole `ofa_tc2` process makes 3 kernel launches: two one-off setup kernels and the megakernel, which runs
+all of the training, serving and Doom ([`b200-run/results/launches_ofa_tc2/`](../b200-run/results/launches_ofa_tc2/nsys_launches.json)).
 
 ## 2. What is still not like-for-like
 
