@@ -104,16 +104,20 @@ on the A100 and 42-58% slower on the B200. Numbers: [`benchmarks/results/`](benc
 
 ## Architecture
 
-Every block of the kernel is a long-lived worker. Warp 0 of each block polls sharded ticket queues, claims the next ready task (priority Doom,
-then inference, then training), and the other warps run it. Tasks signal completion through dependency counters guarded by memory fences, so a
-forward pass releases its backward pass and a token releases the next token, with no kernel launch in between.
+Every block of the kernel is a long-lived worker. At start each block reads its SM id and takes a role from a static partition (B200: 24 SMs
+serve, 8 run Doom, 116 train). Inside the training and serving jobs, thread 0 of a block claims the next task from one ticket counter with a
+single `atomicAdd` (no locks, no CAS retry loop) and the whole block runs it. Each task belongs to a phase, and each phase has a completion
+counter. When a task finishes, the block does a `__threadfence` and then an `atomicAdd` on its phase's counter. Before it starts a task, thread 0
+reads the counters of the phases it depends on with acquire loads and sleeps (`__nanosleep`) until they reach the target. So a forward pass
+releases its backward pass and a token releases the next token, with no kernel launch in between. Tickets are handed out in dependency order, so
+a block waiting on its inputs can never deadlock: the lowest unfinished ticket always has its dependencies done.
 
 ```mermaid
 flowchart TB
     H["host: ONE launch"] --> K
     subgraph K["persistent megakernel (all SMs)"]
         direction TB
-        S["warp 0 of every block: scheduler<br/>probe ticket queues, claim ready task (Doom > serve > train)"]
+        S["each block reads its SM id: static role<br/>no preemption, no host in the loop"]
         subgraph P["SM partition (B200: 116 / 24 / 8)"]
             direction LR
             T["116 SMs<br/>training tasks<br/>fwd, bwd, AdamW"]
@@ -121,7 +125,7 @@ flowchart TB
             D["8 SMs<br/>Doom engine<br/>35 fps"]
         end
         S --> P
-        C["dependency counters in global memory<br/>fence, then atomicAdd"]
+        C["one ticket counter per job + one completion counter per phase<br/>in global memory"]
         P <--> C
     end
     K --> W["pinned memory + HTTP"] --> B["browser: loss, streaming text, Doom frame"]
@@ -130,20 +134,20 @@ flowchart TB
 ```mermaid
 sequenceDiagram
     autonumber
-    participant S as warp 0 (scheduler)
-    participant Q as ticket queues
-    participant C as dependency counters
-    participant W as compute warps
+    participant T as thread 0 of a block
+    participant Q as ticket counter
+    participant C as phase counters
+    participant W as all threads of the block
     loop persistent loop, inside ONE launch
-        S->>Q: probe 32 shards (one memory round trip)
-        Q-->>S: head task of each job
-        S->>C: is its dependency met?
-        C-->>S: counter >= target
-        S->>Q: claim with CAS (Doom > serve > train)
-        S->>W: run the task (registers + L2)
-        W->>C: fence, then atomicAdd (signals dependents)
+        T->>Q: atomicAdd(ticket), get the next task
+        T->>C: acquire-load the counters of the phases it depends on
+        C-->>T: counter >= target (else __nanosleep and retry)
+        T->>W: run the task (registers, shared memory, L2)
+        W->>C: __threadfence, then atomicAdd(phase counter)
     end
 ```
+
+(The small demo, `a100-demo/`, uses a different scheduler: sharded ticket queues with a CAS claim and Doom > serve > train priority.)
 
 On Blackwell the GEMMs use `tcgen05` instructions with TMA loads and TMEM accumulators ([`llm/b200/gemm_tcgen05/`](llm/b200/gemm_tcgen05/README.md)),
 34-73% of cuBLAS speed on the model's 15 GEMM shapes against 13-33% for the earlier `mma.sync` code.

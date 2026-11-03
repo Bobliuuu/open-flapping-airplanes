@@ -21,7 +21,7 @@ def arrow(x1, y1, x2, y2, color=MUTE, rad=0.0):
                                  color=color, lw=1.4, connectionstyle=f"arc3,rad={rad}"))
 
 t(4, 63, "One launch. Three programs. 148 SMs.", 20, weight="bold")
-t(4, 58.6, "A persistent kernel: blocks never exit, they pull work from queues", 12, MUTE)
+t(4, 58.6, "A persistent kernel: blocks never exit; they claim work with an atomicAdd", 12, MUTE)
 
 # --- GPU strip (SM split)
 t(4, 52, "ONE persistent kernel launch  ·  B200", 10.5, MUTE, weight="bold")
@@ -51,7 +51,7 @@ for cx, top, c, name, lines in cols:
 # --- scheduler loop
 box(4, 3, 112, 11.4, "#161b22", LINE)
 t(6, 12.2, "HOW BLOCKS GET WORK", 10, MUTE, weight="bold")
-steps = ["ticket queue\n(sharded per SM group)", "atomicAdd\nclaims a task", "run tile\n(GEMM, norm, attn…)", "decrement\ndependency counters", "last one in\nreleases next tasks"]
+steps = ["ticket counter\n(one per job)", "atomicAdd\nclaims a task", "wait: acquire-load\nof phase counters", "run the task\n(GEMM, norm, attn…)", "fence, then atomicAdd\nphase counter"]
 sx, sw, gap = 6, 18.0, 3.5
 for i, s in enumerate(steps):
     xx = sx + i * (sw + gap)
