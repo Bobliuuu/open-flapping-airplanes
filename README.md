@@ -28,6 +28,8 @@ https://github.com/user-attachments/assets/97e664f5-5b6b-43c1-978b-eb30530e9565
 
 ## What It Does
 
+Built by Jerry Zhu and Arnold Hsu from [Magni](https://magnihq.com): we use AI agents to push GPUs closer to their physical limit. Serving models on GPUs you pay for? [Book a call](https://magnihq.com).
+
 | | Program | What happens |
 |---|---|---|
 | Train | **Training** | A GPT learns online: forward, backward and AdamW all run as tasks inside the kernel. |
