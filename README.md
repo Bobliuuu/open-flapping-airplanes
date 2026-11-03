@@ -18,6 +18,11 @@ Flapping Airplanes showed a demo video of one GPU kernel that trains a model, se
 It is a real persistent megakernel: **one launch, and its blocks never exit.** They pull training, serving and Doom tasks from on-GPU queues
 until the run ends. We never saw their code; everything here was written from scratch, and every number comes from a result file in this repo.
 
+<p align="center">
+<a href="video/release/ofa_explainer.mp4"><img src="site/assets/explainer_poster.jpg" alt="Watch the 98 s explainer video" width="80%"></a><br>
+▶️ <a href="video/release/ofa_explainer.mp4"><b>Watch the explainer (98 s)</b></a>
+</p>
+
 | | Program | What happens |
 |---|---|---|
 | Train | **Training** | A GPT learns online: forward, backward and AdamW all run as tasks inside the kernel. |
