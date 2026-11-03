@@ -2,7 +2,7 @@
 
 Goal: replace the toy char-level MLP with a real GPT-style transformer LM that trains (forward, backward, AdamW) and generates text INSIDE the persistent
 megakernel, next to Doom, on one NVIDIA A100-SXM4-40GB (sm_80, 108 SMs, bf16 tensor cores via `mma.sync`, `cp.async`; NO Hopper/Blackwell features).
-Each workstream below builds device functions ("tasks") that the megakernel scheduler will call; it also verifies them standalone.
+Each component below builds device functions ("tasks") that the megakernel scheduler calls, and verifies them standalone.
 
 ## Model "S" (fixed; kernels should be shape-generic through constexpr config, but verified at these shapes)
 - GPT, pre-LayerNorm, L=12 layers, d=768, H=12 heads (dh=64), context T=512, MLP hidden 4d=3072, GELU(tanh approx, same as `F.gelu(x, approximate='tanh')`).
@@ -28,10 +28,9 @@ Each workstream below builds device functions ("tasks") that the megakernel sche
 - Accuracy bar (bf16 aware): compare against an fp32 PyTorch reference computed from the same bf16 inputs. Activations/outputs relative error <= 2e-2, gradients <= 5e-2 (report max and mean). Print `PASS`/`FAIL`.
 - Speed: report TFLOP/s (GEMM, attention) or GB/s (memory-bound ops) from running the tasks as an ordinary grid, and compare with cuBLAS / PyTorch where applicable.
 
-## Environment and etiquette (IMPORTANT, 5 agents share ONE A100)
-- Box: `ubuntu@<ip>` (ssh works without a password). nvcc 12.8, `-arch=sm_80`. Work in `~/llm/<area>/` on the box and keep the source of truth locally in `/Users/jhome/flapping-airplanes/llm/<area>/` (rsync it up; never edit only on the box).
-- GPU is shared: keep each run short (< 60 s where possible). Correctness runs may happen any time. For TIMING runs, first check `nvidia-smi --query-gpu=utilization.gpu,memory.used --format=csv,noheader` and retry a few times if another job is running; report noise honestly.
-- Use uniquely named binaries prefixed with your area. Never run `pkill -f`; never kill processes you did not start; `pkill -x <your_binary>` only.
-- Touch only your own `llm/<area>/` directory (and `~/llm/<area>/`, plus the baseline agent's venv/data locations). Do NOT modify live-demo/, doom-gpu/, benchmarks/, site/, tools/, README.md. Do NOT run any git command.
-- No package installs or downloads unless your brief explicitly allows it (only the baseline workstream does).
-- Be honest: report what failed, measured numbers (not hoped-for ones), and known limitations.
+## Environment (one shared A100)
+- Box: an A100 reached over SSH (`ubuntu@<ip>`), nvcc 12.8, `-arch=sm_80`. Each component builds in `~/llm/<area>/` on the box; the repository is the source of truth (rsync it up; never edit only on the box).
+- The GPU is shared: keep each run short (< 60 s where possible). Correctness runs may happen any time. For timing runs, first check `nvidia-smi --query-gpu=utilization.gpu,memory.used --format=csv,noheader` and retry if another job is running; report noise honestly.
+- Name binaries after their area. Never run `pkill -f`; stop only your own processes (`pkill -x <binary>`).
+- Each component stays in its own `llm/<area>/` directory. Only the baselines (`llm/baseline/`) install packages or download data.
+- Report what failed, measured numbers (not hoped-for ones), and known limitations.

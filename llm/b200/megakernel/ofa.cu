@@ -393,6 +393,8 @@ int main(int argc, char** argv) {
   int steps = 100, sched_steps = 4000, prof_step = -1, infer_sms = 0, doom_sms = 0, prompt_n = 0, nopt = 0, dump_every = 0, opt_mode = 2, train_sms_arg = -1; std::string split_mode = getenv("OFA_SPLIT") ? getenv("OFA_SPLIT") : "";
   std::string data_path, init_path, starts_path, dump_grads, dump_w, loss_out, text_out, prompt_path; float temp = 0.8f; u64 seed = 1234; int dec_seed_steps = 1 << 20;
   int port = 0; std::string wad_path, vocab_path, prompt_text = "Once upon a time", index_path = "index.html"; bool no_doom = false;
+  int answer_len = 0;                                         // --answer-len N: ask the prompt again after every N sampled tokens
+  double start_delay = 0;                                     // --start-delay S (with --port): wait S seconds before the launch
   for (int i = 1; i < argc; i++) {
     auto is = [&](const char* s) { return !strcmp(argv[i], s) && i + 1 < argc; };
     if (is("--steps")) steps = atoi(argv[++i]); else if (is("--sched-steps")) sched_steps = atoi(argv[++i]);
@@ -404,6 +406,7 @@ int main(int argc, char** argv) {
     else if (is("--temp")) temp = atof(argv[++i]); else if (is("--text-out")) text_out = argv[++i]; else if (is("--prompt")) prompt_path = argv[++i];
     else if (is("--port")) port = atoi(argv[++i]); else if (is("--wad")) wad_path = argv[++i]; else if (is("--vocab")) vocab_path = argv[++i];
     else if (is("--prompt-text")) prompt_text = argv[++i]; else if (is("--index")) index_path = argv[++i];
+    else if (is("--answer-len")) answer_len = atoi(argv[++i]); else if (is("--start-delay")) start_delay = atof(argv[++i]);
     else if (!strcmp(argv[i], "--no-doom")) no_doom = true;
     else if (!strcmp(argv[i], "--no-opt")) nopt = 1; else if (is("--opt-mode")) opt_mode = atoi(argv[++i]);
   }
@@ -645,7 +648,7 @@ int main(int argc, char** argv) {
     dstate = decode::alloc_state<DC>(out_cap);
     int* dout_dev; CK(cudaHostAlloc((void**)&h_out_tokens_pinned, out_cap * 4, cudaHostAllocMapped)); CK(cudaHostGetDevicePointer((void**)&dout_dev, h_out_tokens_pinned, 0));
     memset(h_out_tokens_pinned, 0xFF, out_cap * 4); CK(cudaMemcpy(&dstate->out_tokens, &dout_dev, sizeof(dout_dev), cudaMemcpyHostToDevice));
-    P.st = dstate; P.temperature = temp; P.seed = seed; P.valid_vocab = VALID; P.auto_reset = 1;
+    P.st = dstate; P.temperature = temp; P.seed = seed; P.valid_vocab = VALID; P.auto_reset = 1; P.answer_len = answer_len;
     if (!prompt_path.empty()) { FILE* f = fopen(prompt_path.c_str(), "r"); int x; while (f && fscanf(f, "%d", &x) == 1) forced.push_back(x); if (f) fclose(f); }
     if (forced.empty()) forced.push_back(100257);            // <|endoftext|>
     int* dforced = dalloc<int>(forced.size()); CK(cudaMemcpy(dforced, forced.data(), forced.size() * 4, cudaMemcpyHostToDevice));
@@ -664,7 +667,7 @@ int main(int argc, char** argv) {
   if (port > 0) {
     dash::fb_host = fb_host; dash::live = live_host; dash::nsm = nsm; dash::index_path = index_path; dash::prompt = prompt_text; dash::tokens_per_step = N;
     dash::sm_infer = infer_sms; dash::sm_doom = doom_on ? doom_sms : 0; dash::sm_train = train_sms_arg;
-    if (use_decode) { dash::tok_host = h_out_tokens_pinned; dash::tok_cap = out_cap; dash::skip_tokens = (int)forced.size() - 1; }
+    if (use_decode) { dash::tok_host = h_out_tokens_pinned; dash::tok_cap = out_cap; dash::skip_tokens = answer_len > 0 ? 0 : (int)forced.size() - 1; }
     if (!vocab_path.empty() && !dash::load_vocab(vocab_path)) fprintf(stderr, "warning: cannot read vocab %s (text panel will be empty)\n", vocab_path.c_str());
     dash::note = "one kernel launch: training + inference + Doom"; dash::start(port); printf("dashboard on http://localhost:%d\n", port);
   }
@@ -678,6 +681,7 @@ int main(int argc, char** argv) {
   CK(cudaDeviceSynchronize());
 
   // ---------------- run: ONE launch
+  if (port > 0 && start_delay > 0) usleep((useconds_t)(start_delay * 1e6));   // --start-delay: dashboard up first (screen recordings)
   printf("launching ONE persistent kernel (%d blocks)...\n", nblocks);
   cudaEvent_t e0, e1; CK(cudaEventCreate(&e0)); CK(cudaEventCreate(&e1));
   const double tw0 = now_s();
@@ -719,6 +723,12 @@ int main(int argc, char** argv) {
   if (use_decode) {
     int dpos = 0, dstep = 0; CK(cudaMemcpy(&dstep, &dstate->step, 4, cudaMemcpyDeviceToHost)); (void)dpos;
     printf("decode: %d tokens generated during %.2f s of training -> %.0f tok/s\n", dstep, (tend ? (double)(tend - sd[0]) * 1e-9 : ms * 1e-3), dstep / ((double)(sd[steps - 1] - sd[0]) * 1e-9 + 1e-9));
+    if (answer_len > 0) {                                     // sampled tokens only, as vLLM counts them (prompt steps take time but do not count)
+      long gen = 0, answers = 0;
+      for (int i = 0; i < std::min(dstep, out_cap); i++) { const int id = h_out_tokens_pinned[i]; if (id == decode::OUT_RESTART) answers++; else if (id >= 0 && id < decode::OUT_RESTART) gen++; }
+      printf("decode answers: %ld answers (%d prompt tokens + %d sampled each), %ld sampled tokens -> %.0f tok/s sampled (prompt steps excluded)\n",
+             answers, (int)forced.size(), answer_len, gen, gen / ((double)(sd[steps - 1] - sd[0]) * 1e-9 + 1e-9));
+    }
     FILE* f = text_out.empty() ? nullptr : fopen(text_out.c_str(), "w"); int cnt = std::min(dstep, out_cap);
     if (f) { for (int i = 0; i < cnt; i++) fprintf(f, "%d ", h_out_tokens_pinned[i]); fclose(f); }
     printf("first sampled token ids:"); for (int i = 0; i < std::min(cnt, 40); i++) printf(" %d", h_out_tokens_pinned[i]); printf("\n");

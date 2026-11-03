@@ -69,7 +69,7 @@ greedy, 128 consecutive steps from position 0 (context 0..127) and from 384 (con
 17-SM partition reaches 1047 tok/s, i.e. about the demo's number.) A pure streaming kernel (16 B loads, no dependencies) on this
 box gets 1348 GB/s with >= 108 blocks (87% of peak), 710 GB/s with 34 blocks on 34 SMs, 372 GB/s with 17 blocks: per-SM streaming
 bandwidth is only ~21 GB/s per block, so ~17 SMs cannot exceed ~0.4-0.7 TB/s in any case.
-The L2-prefetch options (`prefetch` bit 0/1) were neutral to slightly negative. GPU sharing: other agents' jobs raised some runs by 2x;
+The L2-prefetch options (`prefetch` bit 0/1) were neutral to slightly negative. GPU sharing: other jobs on the GPU raised some runs by 2x;
 the table only contains runs where `nvidia-smi` showed 0% at the start (later parts of some runs were still contaminated and discarded); repeats of the same configuration differ by ~5%.
 
 Per-phase timeline (108 SMs x 1 block, from the `globaltimer` stamps, time between phase completions): QKV 8.5 us, ATT+WO 9.9 us,

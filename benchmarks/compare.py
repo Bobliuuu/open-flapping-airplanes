@@ -1,9 +1,14 @@
 #!/usr/bin/env python3
 """Merge a benchmark run (demo --bench) with Flapping Airplanes' published numbers and derive the comparison.
-usage: compare.py results/a100_YYYYMMDD.json  ->  results/summary.md, ../site/data/benchmarks.json, ../site/data/benchmarks.js"""
+usage: compare.py results/a100_YYYYMMDD.json  ->  results/summary.md, ../site/data/benchmarks.json, ../site/data/benchmarks.js
+       compare.py results/b200_YYYYMMDD.json --summary results/summary_b200.md --no-site   (another GPU; leaves summary.md and the site alone)"""
 import json, sys, os, datetime
 here = os.path.dirname(os.path.abspath(__file__))
-src = sys.argv[1] if len(sys.argv) > 1 else os.path.join(here, 'results', 'latest.json')
+args = sys.argv[1:]
+summary_path = args[args.index('--summary') + 1] if '--summary' in args else os.path.join(here, 'results', 'summary.md')
+write_site = '--no-site' not in args
+pos = [a for i, a in enumerate(args) if not a.startswith('--') and (i == 0 or args[i - 1] != '--summary')]
+src = pos[0] if pos else os.path.join(here, 'results', 'latest.json')
 run = json.load(open(src)); fa = json.load(open(os.path.join(here, 'fa_published.json')))
 m = {k: v for k, v in run['metrics'].items()}
 g = lambda k: m[k]['mean'] if k in m else None
@@ -43,9 +48,10 @@ ours['same_work'] = {'steps': STEPS, 'tokens': toks, 'seconds_mega': t,
                      'launches_perop': STEPS * run['meta']['launches_per_step_perop'] + toks * run['meta']['launches_per_token_perop'], 'launches_mega': 1}
 out = {'ours': ours, 'baselines': rows, 'fa': fa, 'all_metrics': m,
        'generated': datetime.datetime.now(datetime.timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ'), 'source_file': os.path.basename(src)}
-os.makedirs(os.path.join(here, '..', 'site', 'data'), exist_ok=True)
-json.dump(out, open(os.path.join(here, '..', 'site', 'data', 'benchmarks.json'), 'w'), indent=1)
-open(os.path.join(here, '..', 'site', 'data', 'benchmarks.js'), 'w').write('window.BENCH = ' + json.dumps(out) + ';\n')
+if write_site:
+    os.makedirs(os.path.join(here, '..', 'site', 'data'), exist_ok=True)
+    json.dump(out, open(os.path.join(here, '..', 'site', 'data', 'benchmarks.json'), 'w'), indent=1)
+    open(os.path.join(here, '..', 'site', 'data', 'benchmarks.js'), 'w').write('window.BENCH = ' + json.dumps(out) + ';\n')
 f = lambda v, d=0: ('%.*f' % (d, v)) if v is not None else 'n/a'
 L = []
 L.append(f"# Benchmark summary ({ours['gpu']}, {ours['reps']} reps x {ours['secs']:.0f} s, {ours['date']})\n")
@@ -54,5 +60,5 @@ for k, v in ours['mega_all'].items(): L.append(f"| megakernel, all three at once
 L.append('\n| baseline (each job alone unless stated) | train steps/s | infer tok/s | baseline slower than megakernel (train / infer) | 4,000 steps take | GPU-equivalents needed |\n|---|---|---|---|---|---|')
 for r in rows: L.append(f"| {r['label']} | {f(r['train_steps_s'])} | {f(r['infer_tok_s'])} | {f(r['train_slower_pct'], 1)}% / {f(r['infer_slower_pct'], 1)}% | {f(r['seconds_for_4000_steps'], 3)} s | {f(r['gpu_equivalents'], 2)} |")
 L.append(f"\nMegakernel: 4,000 steps take {ours['seconds_for_4000_steps_mega']:.3f} s. Flapping Airplanes (B200): 46.1 s vs 70.1 s, baseline 34% slower, both jobs 34% slower, 1 vs 514,562 launches.")
-open(os.path.join(here, 'results', 'summary.md'), 'w').write('\n'.join(L) + '\n')
+open(summary_path, 'w').write('\n'.join(L) + '\n')
 print('\n'.join(L))

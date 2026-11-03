@@ -9,6 +9,24 @@ python3 compare.py results/latest.json   # re-derive results/summary.md and ../s
 ```
 Then open `../site/index.html` (see `../site/README.md`).
 
+## On a Modal GPU (no SSH box)
+
+`run_modal.py` compiles the Doom object and the demo while Modal builds the image (CPU only: CUDA 12.8, clang 14, doomgeneric, the shareware
+WAD checked by md5), then runs on one GPU, a B200 by default, so GPU time is spent only on running.
+
+```bash
+uv tool install modal && modal setup        # once
+modal run run_modal.py                      # smoke test: Doom alone (doomtest), then all three jobs in one launch for 4 s
+modal run run_modal.py --mode bench         # this suite, 5 x 6 s -> results/b200_<date>.json (+ .log); about 7 B200-minutes
+modal run run_modal.py --mode mps           # the per-op baselines limited to FA's SM shares with CUDA MPS (116 / 24 of 148 SMs)
+modal run run_modal.py --mode live          # 20 s live demo -> results/b200_<date>_live_frame*.png and _live_state.json
+python3 compare.py results/b200_20261101.json --summary results/summary_b200.md --no-site   # leaves summary.md and the site alone
+OFA_GPU=H100 OFA_ARCH=sm_90 modal run run_modal.py --mode bench                         # another GPU type
+```
+`gpu="B200"` asks for exactly a B200; Modal's `"B200+"` may place the job on a B300 (that is what happened to `../llm/b200/results/`).
+B200 results from 2026-11-01: `results/b200_20261101.json`, `results/summary_b200.md`, `results/b200_20261101_mps_baselines.json`,
+`results/b200_20261101_live_*`. The comparison with Flapping Airplanes is in `../docs/FA_COMPARISON.md`.
+
 ## What is measured
 
 Every number is a mean over repetitions with its standard deviation (`results/*.json` keeps the raw values).
