@@ -26,7 +26,7 @@ LEVELS = {
     "code":  dict(pad=1, arp=.75, bass_sus=0, bass_pulse=.7, kick13=.55, kick4=0, hats=.35, snare=0, bright=.35),
     "race":  dict(pad=1, arp=.9, bass_sus=0, bass_pulse=1, kick13=0, kick4=1, hats=.7, snare=.6, bright=1),
     "cards": dict(pad=1, arp=.7, bass_sus=.7, bass_pulse=0, kick13=.4, kick4=0, hats=.3, snare=0, bright=.5),
-    "vsfa":  dict(pad=1, arp=.75, bass_sus=0, bass_pulse=.6, kick13=.5, kick4=0, hats=.35, snare=0, bright=.55),
+    "sbs":   dict(pad=1, arp=.8, bass_sus=0, bass_pulse=.8, kick13=0, kick4=.8, hats=.5, snare=.4, bright=.8),
     "measured": dict(pad=1, arp=.55, bass_sus=.6, bass_pulse=0, kick13=0, kick4=0, hats=.15, snare=0, bright=.3),
     "end":   dict(pad=1, arp=.3, bass_sus=.5, bass_pulse=0, kick13=0, kick4=0, hats=0, snare=0, bright=.15),
 }

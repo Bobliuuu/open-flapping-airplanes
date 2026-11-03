@@ -32,7 +32,7 @@ img = (
 
 
 @app.function(image=img, volumes={"/vol": vol}, cpu=16.0, memory=32768, timeout=3600)
-def render(files: dict, build: str, stills: str = "", conc: int = 8) -> dict:
+def render(files: dict, build: str, stills: str = "", conc: int = 8, fa: bytes = b"") -> dict:
     w = Path("/tmp/demo")
     (w / "frames").mkdir(parents=True, exist_ok=True)
     for name, text in files.items():
@@ -40,6 +40,11 @@ def render(files: dict, build: str, stills: str = "", conc: int = 8) -> dict:
     (w / "node_modules").symlink_to("/opt/r/node_modules")
     rec = f"/vol/video/b200_llm_dashboard_{build}.mp4"
     subprocess.run(["ffmpeg", "-loglevel", "error", "-i", rec, "-vf", "fps=30", "-q:v", "2", str(w / "frames" / "rec_%05d.jpg")], check=True)
+    if fa:                                                          # Flapping Airplanes' demo video: the two stretches of their dashboard
+        (w / "fa.mp4").write_bytes(fa)
+        for name, start, length in (("fa_a", 0.0, 6.0), ("fa_b", 21.5, 12.0)):
+            subprocess.run(["ffmpeg", "-loglevel", "error", "-ss", str(start), "-t", str(length), "-i", str(w / "fa.mp4"), "-vf", "fps=60",
+                            "-q:v", "2", str(w / "frames" / f"{name}_%05d.jpg")], check=True)
     cmd = ["node", "render_demo.js", "--chrome", "/usr/bin/google-chrome", "--out", "/tmp/out/triad_demo.mp4", "--conc", str(conc)]
     if stills:
         cmd += ["--stills", stills]
@@ -63,7 +68,7 @@ def render(files: dict, build: str, stills: str = "", conc: int = 8) -> dict:
 
 
 @app.local_entrypoint()
-def main(build: str = "triad_tc2", stills: str = "", conc: int = 8, check_times: str = ""):
+def main(build: str = "triad_tc2", stills: str = "", conc: int = 8, check_times: str = "", fa_video: str = ""):
     if check_times:                                     # inspect an already rendered MP4: --check-times 9.3,9.4,...
         f = OUT / f"triad_demo_{build}.mp4"
         r = check.remote(f.read_bytes(), check_times)
@@ -72,7 +77,10 @@ def main(build: str = "triad_tc2", stills: str = "", conc: int = 8, check_times:
         print("contact sheet ->", OUT / f"triad_demo_{build}_sheet.png")
         return
     files = {p.name: p.read_text() for p in HERE.iterdir() if p.name in ("demo.html", "data.js", "data.json", "render_demo.js", "make_music.py")}
-    r = render.remote(files, build, stills, conc)
+    # --fa-video PATH: add the side-by-side scene with Flapping Airplanes' demo video (their footage: kept out of the repository; the MP4
+    # goes to video/out/triad_demo_<build>_with_fa.mp4, which git ignores)
+    fa = Path(fa_video).read_bytes() if fa_video else b""
+    r = render.remote(files, build, stills, conc, fa)
     print(r["log"])
     if r.get("music_log"):
         print("music:", r["music_log"].strip())
@@ -84,7 +92,7 @@ def main(build: str = "triad_tc2", stills: str = "", conc: int = 8, check_times:
             (d / name).write_bytes(b)
         print(f"{len(r['stills'])} stills -> {d}")
     if "mp4" in r:
-        f = OUT / f"triad_demo_{build}.mp4"
+        f = OUT / (f"triad_demo_{build}_with_fa.mp4" if fa else f"triad_demo_{build}.mp4")
         f.write_bytes(r["mp4"])
         print(f"wrote {f} ({len(r['mp4']) / 1e6:.1f} MB)")
     if r["rc"]:
