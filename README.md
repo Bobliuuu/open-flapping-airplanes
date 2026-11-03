@@ -224,21 +224,12 @@ Modal runs cost money (a B200 is billed per second); read `b200-run/README.md` b
 | `tools/` | `gen_svgs.py` regenerates the animated SVGs |
 | `docs/` | `FA_COMPARISON.md` (every run next to FA's numbers), `RESEARCH.md` (research log), `REORG_PLAN.md` (a folder regrouping that is not done) |
 
-## Honest limitations
+## Limitations
 
-- **Not their code, not their model.** Same chip, split and frameworks as theirs; their model size, data and training settings are unpublished.
-- **Not reproduced:** their 46 s exactly (our fastest is 48.1 s), their trained answers (their model learned to answer "What is a megakernel?"; ours
-  trained on TinyStories only and writes children's stories), SwiGLU, and greedy decoding (ours samples at temperature 0.8).
-- **Megatron + TE with CUDA graphs still trains faster than us on the B200** (43.1 s). Our GEMMs run at 34-73% of cuBLAS and a large part of a step is  non-GEMM code.
-- **The GPU is not full.** Training SMs are busy about 86% of the time and serving SMs about 73%; the demo shows the mechanism, it is not a saturation
-  benchmark.
-- **"1 launch" counts the run, not setup** (3 launches by Nsight Systems, 2 of them setup). The baselines' counts leave out setup too.
-- **The small demo is a toy.** Its per-op baseline reuses the megakernel's own task code and is faster per job.
-- **vLLM depends on CPU cores**, and Megatron-core depends on its container (without CUDA graphs it took 129 s in a second container). The comparison
-  uses the baselines' faster figures.
-- **B300 data is not B200 data.** `llm/b200/results/` is B300; the B200 results are in `b200-run/`.
-- Doom is played by a scripted player that reads game state from engine memory, as built-in bots do; there is no sound. Single runs are noted where n=1.
-- `ofa_fast` depends on the `nvcc --dryrun` layout and the PTX text format (CUDA 12.8.93); see its README.
+- **Not their code or model.** Same chip, SM split and baselines as the Flapping Airplanes video, but their model, data and training settings are unpublished. We do not reproduce their 46.1 s (our fastest is 48.1 s) or their trained answers (ours is trained on TinyStories).
+- **Megatron + TE with CUDA graphs still trains faster than us on the B200** (43.1 s against 48.1 s).
+- **"1 launch" counts the run, not setup.** Nsight Systems shows 3 launches, 2 of them one-off setup kernels. The baselines' counts leave out setup too.
+- **B300 data is not B200 data.** `llm/b200/results/` was measured on a B300; the B200 results are in `b200-run/`.
 
 ## Videos
 
