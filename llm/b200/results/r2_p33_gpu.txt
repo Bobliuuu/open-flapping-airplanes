@@ -1,0 +1,19 @@
+$ nvidia-smi --query-gpu=name,driver_version,compute_cap,clocks.max.sm --format=csv,noheader   [0.0s rc=0]
+NVIDIA B300 SXM6 AC, 610.57.04, 10.3, 2032 MHz
+
+$ cd /tmp && timeout -s KILL 100 bash -c "echo TUNE d;  stdbuf -o0 /tmp/bin/ofa_r2_d --split b200 --vocab /vol/data/cl100k_vocab.bin --prompt /vol/data/prompt_ids.txt --prompt-text 'Once upon a time' --data /vol/data/tinystories_cl100k_train.u32 --init /vol/data/init_flat_S.f32 --starts /vol/data/starts_4000.u32 --no-doom --steps 600 --loss-out /tmp/l_d.txt > /tmp/o.txt 2>&1; grep -E 'HANG|rror|steady|decode:|loss:' /tmp/o.txt | cut -c1-250; sed -n 20p /tmp/l_d.txt" 2>&1 | tail -400   [10.4s rc=0]
+TUNE d
+steady state: 13.23 ms/step (median 13.23) -> 309696 tok/s;  4,000 steps = 52.9 s
+loss: step0 11.7106  s1 11.2639  s2 10.7522  s5 9.9998  s10 9.6331  s20 8.5514  s50 5.6934  s100 4.4137  s200 4.0631  s500 3.6659
+decode: 9178 tokens generated during 7.92 s of training -> 1159 tok/s
+19 8.821558
+
+$ cd /tmp && timeout -s KILL 100 bash -c "echo TUNE e;  stdbuf -o0 /tmp/bin/ofa_r2_e --split b200 --vocab /vol/data/cl100k_vocab.bin --prompt /vol/data/prompt_ids.txt --prompt-text 'Once upon a time' --data /vol/data/tinystories_cl100k_train.u32 --init /vol/data/init_flat_S.f32 --starts /vol/data/starts_4000.u32 --no-doom --steps 600 --loss-out /tmp/l_e.txt > /tmp/o.txt 2>&1; grep -E 'HANG|rror|steady|decode:|loss:' /tmp/o.txt | cut -c1-250; sed -n 20p /tmp/l_e.txt" 2>&1 | tail -400   [10.3s rc=0]
+TUNE e
+steady state: 13.29 ms/step (median 13.29) -> 308208 tok/s;  4,000 steps = 53.2 s
+loss: step0 11.7106  s1 11.2639  s2 10.7522  s5 9.9998  s10 9.6331  s20 8.5514  s50 5.6934  s100 4.4137  s200 4.0631  s500 3.6659
+decode: 9313 tokens generated during 7.96 s of training -> 1170 tok/s
+19 8.821558
+
+$ cd /tmp && timeout -s KILL 60 bash -c "stdbuf -o0 /tmp/bin/ofa_r2_e --split b200 --vocab /vol/data/cl100k_vocab.bin --prompt /vol/data/prompt_ids.txt --prompt-text 'Once upon a time' --data /vol/data/tinystories_cl100k_train.u32 --init /vol/data/init_flat_S.f32 --starts /vol/data/starts_4000.u32 --no-doom --steps 400 --prof-step 300 > /tmp/o.txt 2>&1; grep -E 'tasks=' /tmp/o.txt | awk '!s[$0]++' | cut -c1-100 | tail -30" 2>&1 | tail -400   [8.1s rc=0]
+  data                 0.00 ->     0.00 ms  (  0.00 ms)  tasks=8

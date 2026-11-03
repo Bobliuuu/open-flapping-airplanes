@@ -1,0 +1,81 @@
+{
+ "cg": "full",
+ "mps_pct": null,
+ "enforce_eager": false,
+ "new_tokens": 256,
+ "prompt_tokens": 4,
+ "seconds": [
+  0.480496883392334
+ ],
+ "tok_s": [
+  532.7818115960007
+ ],
+ "launches": {
+  "method": "torch.profiler chrome trace (CUPTI); per-token = (64-new-token generate minus 32-new-token generate)/32, steady-state decode only",
+  "cg_mode": "full",
+  "kernel_records_per_token": 129.0625,
+  "memops_per_token": 5.0625,
+  "host_launch_calls_per_token": 20.0625,
+  "host_launch_breakdown_per_token": {
+   "cuda_driver:cuLaunchKernel": 0.0,
+   "cuda_driver:cuLaunchKernelEx": 8.0625,
+   "cuda_runtime:cudaGraphLaunch": 1.0,
+   "cuda_runtime:cudaLaunchKernel": 11.0,
+   "cuda_runtime:cudaLaunchKernelExC": 0.0
+  },
+  "top_kernels": [
+   [
+    "std::enable_if<!(false), void>::type internal::gemvx::kernel<int, int, __nv_bfloat16, __nv",
+    1512.0
+   ],
+   [
+    "void vllm::reshape_and_cache_flash_kernel<__nv_bfloat16, __nv_bfloat16, (vllm::Fp8KVCacheD",
+    768.0
+   ],
+   [
+    "triton_per_fused_add_native_layer_norm_0",
+    768.0
+   ],
+   [
+    "triton_poi_fused_add_mul_pow_tanh_1",
+    768.0
+   ],
+   [
+    "triton_per_fused_add_native_layer_norm_2",
+    768.0
+   ],
+   [
+    "ampere_bf16_s16816gemm_bf16_64x64_sliced1x2_ldg8_relu_f2f_stages_64x6_tn",
+    756.0
+   ],
+   [
+    "void flash::flash_fwd_splitkv_kernel<Flash_fwd_kernel_traits<64, 64, 256, 4, false, false,",
+    756.0
+   ],
+   [
+    "void gemv2T_kernel_val<int, int, __nv_bfloat16, __nv_bfloat16, __nv_bfloat16, float, 128, ",
+    756.0
+   ],
+   [
+    "void at::native::vectorized_elementwise_kernel<4, at::native::FillFunctor<int>, std::array",
+    128.0
+   ],
+   [
+    "void at::native::vectorized_elementwise_kernel<4, at::native::FillFunctor<bool>, std::arra",
+    64.0
+   ],
+   [
+    "void (anonymous namespace)::elementwise_kernel_with_index<int, at::native::arange_cuda_out",
+    64.0
+   ],
+   [
+    "_prepare_pos_seq_lens_kernel",
+    64.0
+   ]
+  ],
+  "whole_64tok_run": {
+   "kernels_per_unit": 8277.0,
+   "host_launch_calls_per_unit": 1410.0
+  }
+ }
+}

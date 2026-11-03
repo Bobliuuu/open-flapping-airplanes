@@ -1,0 +1,62 @@
+$ nvidia-smi --query-gpu=name,driver_version,compute_cap,clocks.max.sm --format=csv,noheader   [0.1s rc=0]
+NVIDIA B300 SXM6 AC, 610.57.04, 10.3, 2032 MHz
+
+$ cd /tmp && timeout -s KILL 300 bash -c "echo RUN S_tc_split_r1; stdbuf -o0 /tmp/bin/ofa_r2_h --split b200 --vocab /vol/data/cl100k_vocab.bin --prompt /vol/data/prompt_ids.txt --prompt-text 'Once upon a time' --data /vol/data/tinystories_cl100k_train.u32 --init /vol/data/init_flat_S.f32 --starts /vol/data/starts_4000.u32 --no-doom --steps 4000 --loss-out /tmp/l_S_tc_split_r1.txt > /tmp/o_S_tc_split_r1.txt 2>&1; grep -E 'HANG|rror|partition|steady|loss:|decode:|SM utili|kernel time' /tmp/o_S_tc_split_r1.txt | cut -c1-260; tail -1 /tmp/l_S_tc_split_r1.txt" 2>&1 | tail -400   [52.4s rc=0]
+RUN S_tc_split_r1
+SM partition (B200 preset 116/24/8): infer 24, doom 8, train 116, idle 0 of 148 SMs
+decode job: 38 phases, 2225 tasks per token; partition: infer SMs [0,24), doom [24,32), train rest
+kernel time 49.856 s (event) / 49.920 s (wall incl. launch)
+steady state: 12.46 ms/step (median 12.46) -> 328625 tok/s;  4,000 steps = 49.9 s
+loss: step0 11.7106  s1 11.2639  s2 10.7522  s5 9.9998  s10 9.6331  s20 8.5514  s50 5.6934  s100 4.4137  s200 4.0631  s500 3.6659  s1000 2.9972  s2000 2.4032  s3000 2.2013  s3999 2.1575
+SM utilisation (task time / wall, 1 blocks per SM): training 101.8 SM-equivalents, serving 18.1 SM-equivalents (of 148 SMs)
+decode: 54066 tokens generated during 49.84 s of training -> 1085 tok/s
+3999 2.157486
+
+$ cd /tmp && timeout -s KILL 300 bash -c "echo RUN S_tc_split_r2; stdbuf -o0 /tmp/bin/ofa_r2_h --split b200 --vocab /vol/data/cl100k_vocab.bin --prompt /vol/data/prompt_ids.txt --prompt-text 'Once upon a time' --data /vol/data/tinystories_cl100k_train.u32 --init /vol/data/init_flat_S.f32 --starts /vol/data/starts_4000.u32 --no-doom --steps 4000 --loss-out /tmp/l_S_tc_split_r2.txt > /tmp/o_S_tc_split_r2.txt 2>&1; grep -E 'HANG|rror|partition|steady|loss:|decode:|SM utili|kernel time' /tmp/o_S_tc_split_r2.txt | cut -c1-260; tail -1 /tmp/l_S_tc_split_r2.txt" 2>&1 | tail -400   [52.0s rc=0]
+RUN S_tc_split_r2
+SM partition (B200 preset 116/24/8): infer 24, doom 8, train 116, idle 0 of 148 SMs
+decode job: 38 phases, 2225 tasks per token; partition: infer SMs [0,24), doom [24,32), train rest
+kernel time 49.876 s (event) / 49.923 s (wall incl. launch)
+steady state: 12.47 ms/step (median 12.47) -> 328493 tok/s;  4,000 steps = 49.9 s
+loss: step0 11.7106  s1 11.2639  s2 10.7522  s5 9.9998  s10 9.6331  s20 8.5514  s50 5.6934  s100 4.4137  s200 4.0631  s500 3.6659  s1000 2.9972  s2000 2.4032  s3000 2.2013  s3999 2.1575
+SM utilisation (task time / wall, 1 blocks per SM): training 101.8 SM-equivalents, serving 18.0 SM-equivalents (of 148 SMs)
+decode: 53498 tokens generated during 49.86 s of training -> 1073 tok/s
+3999 2.157486
+
+$ cd /tmp && timeout -s KILL 300 bash -c "echo RUN S_tc_trainonly; stdbuf -o0 /tmp/bin/ofa_r2_h  --vocab /vol/data/cl100k_vocab.bin --prompt /vol/data/prompt_ids.txt --prompt-text 'Once upon a time' --data /vol/data/tinystories_cl100k_train.u32 --init /vol/data/init_flat_S.f32 --starts /vol/data/starts_4000.u32 --no-doom --steps 4000 --loss-out /tmp/l_S_tc_trainonly.txt > /tmp/o_S_tc_trainonly.txt 2>&1; grep -E 'HANG|rror|partition|steady|loss:|decode:|SM utili|kernel time' /tmp/o_S_tc_trainonly.txt | cut -c1-260; tail -1 /tmp/l_S_tc_trainonly.txt" 2>&1 | tail -400   [42.1s rc=0]
+RUN S_tc_trainonly
+kernel time 40.061 s (event) / 40.107 s (wall incl. launch)
+steady state: 10.02 ms/step (median 10.02) -> 408972 tok/s;  4,000 steps = 40.1 s
+loss: step0 11.7106  s1 11.2639  s2 10.7522  s5 9.9998  s10 9.6331  s20 8.5514  s50 5.6934  s100 4.4137  s200 4.0631  s500 3.6659  s1000 2.9972  s2000 2.4032  s3000 2.2013  s3999 2.1575
+SM utilisation (task time / wall, 1 blocks per SM): training 128.2 SM-equivalents, serving 0.0 SM-equivalents (of 148 SMs)
+3999 2.157486
+
+$ cd /tmp && timeout -s KILL 400 bash -c "echo RUN S_mma_split; stdbuf -o0 /tmp/bin/ofa_r2_mma --split b200 --vocab /vol/data/cl100k_vocab.bin --prompt /vol/data/prompt_ids.txt --prompt-text 'Once upon a time' --data /vol/data/tinystories_cl100k_train.u32 --init /vol/data/init_flat_S.f32 --starts /vol/data/starts_4000.u32 --no-doom --steps 4000 --loss-out /tmp/l_S_mma_split.txt > /tmp/o_S_mma_split.txt 2>&1; grep -E 'HANG|rror|partition|steady|loss:|decode:|SM utili|kernel time' /tmp/o_S_mma_split.txt | cut -c1-260; tail -1 /tmp/l_S_mma_split.txt" 2>&1 | tail -400   [92.3s rc=0]
+RUN S_mma_split
+SM partition (B200 preset 116/24/8): infer 24, doom 8, train 116, idle 0 of 148 SMs
+decode job: 38 phases, 2225 tasks per token; partition: infer SMs [0,24), doom [24,32), train rest
+kernel time 90.096 s (event) / 90.219 s (wall incl. launch)
+steady state: 22.52 ms/step (median 22.52) -> 181850 tok/s;  4,000 steps = 90.1 s
+loss: step0 11.7106  s1 11.2639  s2 10.7522  s5 9.9998  s10 9.6331  s20 8.5514  s50 5.6934  s100 4.4137  s200 4.0631  s500 3.6659  s1000 2.9972  s2000 2.4032  s3000 2.2013  s3999 2.1575
+SM utilisation (task time / wall, 2 blocks per SM): training 103.0 SM-equivalents, serving 17.6 SM-equivalents (of 148 SMs)
+decode: 161076 tokens generated during 90.07 s of training -> 1788 tok/s
+3999 2.157486
+
+$ cd /tmp && timeout -s KILL 400 bash -c "echo RUN F_tc_split; stdbuf -o0 /tmp/bin/ofa_r2_hF --split b200 --vocab /vol/data/cl100k_vocab.bin --prompt /vol/data/prompt_ids.txt --prompt-text 'Once upon a time' --data /vol/data/tinystories_cl100k_train.u32 --init /vol/data/init_flat_F.f32 --starts /vol/data/starts_4000.u32 --no-doom --steps 4000 --loss-out /tmp/l_F_tc_split.txt > /tmp/o_F_tc_split.txt 2>&1; grep -E 'HANG|rror|partition|steady|loss:|decode:|SM utili|kernel time' /tmp/o_F_tc_split.txt | cut -c1-260; tail -1 /tmp/l_F_tc_split.txt" 2>&1 | tail -400   [83.5s rc=0]
+RUN F_tc_split
+SM partition (B200 preset 116/24/8): infer 24, doom 8, train 116, idle 0 of 148 SMs
+decode job: 14 phases, 2705 tasks per token; partition: infer SMs [0,24), doom [24,32), train rest
+kernel time 78.243 s (event) / 78.414 s (wall incl. launch)
+steady state: 19.56 ms/step (median 19.54) -> 209400 tok/s;  4,000 steps = 78.2 s
+loss: step0 11.8006  s1 11.2063  s2 10.2593  s5 9.1653  s10 8.1938  s20 6.5659  s50 5.1789  s100 4.3295  s200 4.0589  s500 3.8471  s1000 3.3220  s2000 2.9311  s3000 2.7911  s3999 2.7195
+SM utilisation (task time / wall, 1 blocks per SM): training 106.2 SM-equivalents, serving 20.6 SM-equivalents (of 148 SMs)
+decode: 48374 tokens generated during 78.22 s of training -> 618 tok/s
+3999 2.719511
+
+$ cd /tmp && timeout -s KILL 300 bash -c "echo RUN F_tc_trainonly; stdbuf -o0 /tmp/bin/ofa_r2_hF  --vocab /vol/data/cl100k_vocab.bin --prompt /vol/data/prompt_ids.txt --prompt-text 'Once upon a time' --data /vol/data/tinystories_cl100k_train.u32 --init /vol/data/init_flat_F.f32 --starts /vol/data/starts_4000.u32 --no-doom --steps 4000 --loss-out /tmp/l_F_tc_trainonly.txt > /tmp/o_F_tc_trainonly.txt 2>&1; grep -E 'HANG|rror|partition|steady|loss:|decode:|SM utili|kernel time' /tmp/o_F_tc_trainonly.txt | cut -c1-260; tail -1 /tmp/l_F_tc_trainonly.txt" 2>&1 | tail -400   [66.7s rc=0]
+RUN F_tc_trainonly
+kernel time 62.665 s (event) / 62.740 s (wall incl. launch)
+steady state: 15.67 ms/step (median 15.64) -> 261450 tok/s;  4,000 steps = 62.7 s
+loss: step0 11.8006  s1 11.2063  s2 10.2593  s5 9.1653  s10 8.1938  s20 6.5659  s50 5.1789  s100 4.3295  s200 4.0589  s500 3.8471  s1000 3.3220  s2000 2.9311  s3000 2.7911  s3999 2.7195
+SM utilisation (task time / wall, 1 blocks per SM): training 136.2 SM-equivalents, serving 0.0 SM-equivalents (of 148 SMs)
+3999 2.719511

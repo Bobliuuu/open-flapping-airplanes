@@ -1,0 +1,26 @@
+$ nvidia-smi --query-gpu=name,driver_version,compute_cap,clocks.max.sm --format=csv,noheader   [0.0s rc=0]
+NVIDIA B200, 610.57.04, 10.0, 1965 MHz
+
+$ cd /tmp && timeout -s KILL 100 bash -c "CUDA_DISABLE_PTX_JIT=1 /tmp/bin/t_s128n1_103a --only wo_fwd --iters 20" 2>&1 | tail -400   [0.9s rc=0]
+config S (d=768,h=3072), 148 SMs, smem/tile 100352 B
+case                   M x N x K          | relmax    relmean   cublas_rm | persist alias |     ours   cublas  ratio
+CUDA error no kernel image is available for execution on the device at test_gemm_r2.cu:233
+
+$ cd /tmp && timeout -s KILL 100 bash -c "CUDA_DISABLE_PTX_JIT=1 /tmp/bin/t_s128n1_100f --only wo_fwd --iters 20" 2>&1 | tail -400   [1.0s rc=0]
+config S (d=768,h=3072), 148 SMs, smem/tile 100352 B
+case                   M x N x K          | relmax    relmean   cublas_rm | persist alias |     ours   cublas  ratio
+  [kernel L=0 E=1] regs grid=82 persist=88, local(spill)=0 B, static smem=0 B, dyn smem=100352 B
+wo_fwd       NN RES    4096x768x768       | 2.19e-03  1.41e-03  2.61e-03  | bitexact ok    |  237.9TF  660.4TF  0.36  PASS
+OVERALL PASS
+
+$ cd /tmp && timeout -s KILL 100 bash -c "CUDA_DISABLE_PTX_JIT=1 /tmp/bin/t_s128n1_100a --only wo_fwd --iters 20" 2>&1 | tail -400   [1.0s rc=0]
+config S (d=768,h=3072), 148 SMs, smem/tile 100352 B
+case                   M x N x K          | relmax    relmean   cublas_rm | persist alias |     ours   cublas  ratio
+  [kernel L=0 E=1] regs grid=82 persist=88, local(spill)=0 B, static smem=0 B, dyn smem=100352 B
+wo_fwd       NN RES    4096x768x768       | 2.19e-03  1.41e-03  2.61e-03  | bitexact ok    |  242.9TF  665.3TF  0.37  PASS
+OVERALL PASS
+
+$ cd /tmp && timeout -s KILL 100 bash -c "CUDA_DISABLE_PTX_JIT=1 /tmp/bin/t_s128n1_103f --only wo_fwd --iters 20" 2>&1 | tail -400   [1.0s rc=0]
+config S (d=768,h=3072), 148 SMs, smem/tile 100352 B
+case                   M x N x K          | relmax    relmean   cublas_rm | persist alias |     ours   cublas  ratio
+CUDA error no kernel image is available for execution on the device at test_gemm_r2.cu:233

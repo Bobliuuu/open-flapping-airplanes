@@ -1,0 +1,10 @@
+{
+ "b_t": {
+  "rc": 0,
+  "tail": "$ mkdir -p /tmp/o && cd /src/llm/b200/gemm_tcgen05 && ./make_test_r2.sh >/dev/null && nvcc -gencode arch=compute_100f,code=sm_100f -O3 -std=c++17 -DOFA_GEMM_BACKEND=2 -DG2_FORCE_TC -o /tmp/o/t_r2n test_gemm_r2.cu -lcublas 2>&1 | grep -E 'error' | head -20   [10.1s rc=0]\n"
+ },
+ "t_r2n": {
+  "published": true,
+  "sass": "|UTMALDG|UTCBAR|LDTM'; cuobjdump -lelf /vol/bin2/t_r2n | head -3; cuobjdump -lptx /vol/bin2/t_r2n | head -3   [1.6s rc=0]\n484\nELF file    1: t_r2n.1.sm_100.cubin\nELF file    2: t_r2n.2.sm_100.cubin\ncuobjdump info    : No PTX file found to extract from '/vol/bin2/t_r2n'. You may try with -all option."
+ }
+}

@@ -1,0 +1,90 @@
+$ nvidia-smi --query-gpu=name,driver_version,compute_cap,clocks.max.sm --format=csv,noheader   [0.1s rc=0]
+NVIDIA B300 SXM6 AC, 610.57.04, 10.3, 2032 MHz
+
+$ cd /tmp && timeout -s KILL 120 bash -c "echo ofa_r2_mma; stdbuf -o0 /tmp/bin/ofa_r2_mma --steps 200 --data /vol/data/tinystories_cl100k_train.u32 --init /vol/data/init_flat_S.f32 --starts /vol/data/starts_4000.u32 --no-doom --prof-step 100 > /tmp/o.txt 2>&1; sed -n '/busy time by phase kind/,/^$/p' /tmp/o.txt | head -40; grep -E 'steady' /tmp/o.txt" 2>&1 | tail -400   [6.8s rc=0]
+ofa_r2_mma
+busy time by phase kind (all steps, block-seconds; % of train busy):
+  data                  0.005 s    0.0%
+  embed                 0.260 s    0.0%
+  ln1                   2.699 s    0.3%
+  qkv                  36.789 s    4.0%
+  attn                 14.436 s    1.6%
+  wo+res               15.119 s    1.6%
+  ln2                   2.549 s    0.3%
+  up+gelu              54.962 s    5.9%
+  down+res             41.554 s    4.5%
+  lnf                   0.216 s    0.0%
+  logits              131.760 s   14.2%
+  cross-entropy        36.300 s    3.9%
+  loss mean             0.001 s    0.0%
+  head dX             108.538 s   11.7%
+  head dWte           102.115 s   11.0%
+  lnf bwd               0.299 s    0.0%
+  lnf dgamma            0.005 s    0.0%
+  dpre                 62.738 s    6.8%
+  dWdown               39.720 s    4.3%
+  dln2                 39.262 s    4.2%
+  dWup                 37.711 s    4.1%
+  ln2 bwd               5.622 s    0.6%
+  dgamma2               0.052 s    0.0%
+  dO                   11.383 s    1.2%
+  dWo                   9.727 s    1.0%
+  attn prep             3.608 s    0.4%
+  attn bwd             41.419 s    4.5%
+  dln1                 30.006 s    3.2%
+  dWqkv                30.837 s    3.3%
+  ln1 bwd               5.679 s    0.6%
+  dgamma1               0.056 s    0.0%
+  embed bwd wte (+adamw)   30.606 s    3.3%
+  embed bwd wpe         0.529 s    0.1%
+  adamw wpe             0.149 s    0.0%
+  adamw L11             2.944 s    0.3%
+  adamw L10             2.635 s    0.3%
+  adamw L9              2.761 s    0.3%
+  adamw L8              2.630 s    0.3%
+  adamw L7              2.662 s    0.3%
+steady state: 18.78 ms/step (median 18.78) -> 218066 tok/s;  4,000 steps = 75.1 s
+
+$ cd /tmp && timeout -s KILL 120 bash -c "echo ofa_r2_tcp; stdbuf -o0 /tmp/bin/ofa_r2_tcp --steps 200 --data /vol/data/tinystories_cl100k_train.u32 --init /vol/data/init_flat_S.f32 --starts /vol/data/starts_4000.u32 --no-doom --prof-step 100 > /tmp/o.txt 2>&1; sed -n '/busy time by phase kind/,/^$/p' /tmp/o.txt | head -40; grep -E 'steady' /tmp/o.txt" 2>&1 | tail -400   [7.9s rc=0]
+ofa_r2_tcp
+busy time by phase kind (all steps, block-seconds; % of train busy):
+  data                  0.005 s    0.0%
+  embed                 0.206 s    0.1%
+  ln1                   2.177 s    0.6%
+  qkv                  10.245 s    2.9%
+  attn                 11.237 s    3.1%
+  wo+res                5.765 s    1.6%
+  ln2                   2.105 s    0.6%
+  up+gelu              19.116 s    5.3%
+  down+res             11.370 s    3.2%
+  lnf                   0.175 s    0.0%
+  logits               33.978 s    9.5%
+  cross-entropy        31.203 s    8.7%
+  loss mean             0.001 s    0.0%
+  head dX              21.336 s    5.9%
+  head dWte            34.357 s    9.6%
+  lnf bwd               0.287 s    0.1%
+  lnf dgamma            0.004 s    0.0%
+  dpre                 22.105 s    6.2%
+  dWdown               12.765 s    3.6%
+  dln2                  9.501 s    2.6%
+  dWup                 11.389 s    3.2%
+  ln2 bwd               4.858 s    1.4%
+  dgamma2               0.051 s    0.0%
+  dO                    4.500 s    1.3%
+  dWo                   3.267 s    0.9%
+  attn prep             3.054 s    0.8%
+  attn bwd             31.247 s    8.7%
+  dln1                  8.242 s    2.3%
+  dWqkv                 9.849 s    2.7%
+  ln1 bwd               4.874 s    1.4%
+  dgamma1               0.051 s    0.0%
+  embed bwd wte (+adamw)   23.374 s    6.5%
+  embed bwd wpe         0.408 s    0.1%
+  adamw wpe             0.114 s    0.0%
+  adamw L11             2.396 s    0.7%
+  adamw L10             2.181 s    0.6%
+  adamw L9              2.186 s    0.6%
+  adamw L8              2.172 s    0.6%
+  adamw L7              2.171 s    0.6%
+steady state: 14.27 ms/step (median 14.28) -> 286995 tok/s;  4,000 steps = 57.1 s

@@ -1,0 +1,10 @@
+{
+ "b_dbg": {
+  "rc": 0,
+  "tail": "$ cd /src/llm/b200/megakernel && GENCODE='-gencode arch=compute_100f,code=sm_100f' NODOOM=1 ./build_r2.sh sm_100f ofa_r2_tcdbg -DOFA_GEMM_BACKEND=2 -DG2_FORCE_TC -DG2_DEBUG 2>&1 | tail -2   [20.1s rc=0]\n  nvcc warnings: 12\nbuilt 2157296 ofa_r2_tcdbg\n"
+ },
+ "ofa_r2_tcdbg": {
+  "published": true,
+  "sass": "|UTMALDG|UTCBAR|LDTM'; cuobjdump -lelf /vol/bin2/ofa_r2_tcdbg | head -3; cuobjdump -lptx /vol/bin2/ofa_r2_tcdbg | head -3   [1.2s rc=0]\n150\nELF file    1: ofa_r2_tcdbg.1.sm_100.cubin\ncuobjdump info    : No PTX file found to extract from '/vol/bin2/ofa_r2_tcdbg'. You may try with -all option."
+ }
+}

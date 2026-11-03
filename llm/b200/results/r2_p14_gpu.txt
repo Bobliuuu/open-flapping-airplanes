@@ -1,0 +1,13 @@
+$ nvidia-smi --query-gpu=name,driver_version,compute_cap,clocks.max.sm --format=csv,noheader   [0.1s rc=0]
+NVIDIA B300 SXM6 AC, 610.57.04, 10.3, 2032 MHz
+
+$ cd /tmp && timeout -s KILL 90 bash -c "stdbuf -o0 /tmp/bin/ofa_r2_tcdbg --steps 20 --data /vol/data/tinystories_cl100k_train.u32 --init /vol/data/init_flat_S.f32 --starts /vol/data/starts_4000.u32 --no-doom --loss-out /tmp/lt.txt > /tmp/o.txt 2>&1; grep -m2 HANG /tmp/o.txt | cut -c1-200; tail -5 /tmp/o.txt | cut -c1-200; head -1 /tmp/lt.txt; tail -1 /tmp/lt.txt" 2>&1 | tail -400   [6.2s rc=0]
+G2 HANG blk=24 tid=33 tag=4 addr=100384 parity=0 a=0x10c0c b=22004 c=0x100000c | bars[-6..+3]= 3ae5bc9b3c623cf4 3c0abbc1bab13caa 7ffff800001ffffe 7ffff800001ffffe 7ffff800001ffffe 7ffff800001ffffe [ff
+G2 HANG blk=16 tid=33 tag=4 addr=100384 parity=0 a=0x10c0c b=31004 c=0x100000c | bars[-6..+3]= 3ae5bc9b3c623cf4 3c0abbc1bab13caa 7ffff800001ffffe 7ffff800001ffffe 7ffff800001ffffe 7ffff800001ffffe [ff
+G2 HANG blk=10 tid=33 tag=4 addr=100384 parity=0 a=0x10c0c b=31006 c=0x100000c | bars[-6..+3]= bc8f3bbf3b8cbae5 bc823ba33c813cb9 7ffff800001ffffe 7ffff800001ffffe 7ffff800001ffffe 7ffff800001ffffe [ff
+G2 HANG blk=11 tid=33 tag=4 addr=100384 parity=0 a=0x10c0c b=3007 c=0x100000c | bars[-6..+3]= 3d47bccc3a5a3d0f bcd93d00bc143bf6 7ffff800001ffffe 7ffff800001ffffe 7ffff800001ffffe 7ffff800001ffffe [fff
+G2 HANG blk=1 tid=33 tag=4 addr=100384 parity=0 a=0x10c0c b=25008 c=0x100000c | bars[-6..+3]= b939bd05bc413d15 3c2d3c63bcd33cae 7ffff800001ffffe 7ffff800001ffffe 7ffff800001ffffe 7ffff800001ffffe [fff
+G2 HANG blk=9 tid=33 tag=4 addr=100384 parity=0 a=0x10c0c b=15006 c=0x100000c | bars[-6..+3]= bc8f3bbf3b8cbae5 bc823ba33c813cb9 7ffff800001ffffe 7ffff800001ffffe 7ffff800001ffffe 7ffff800001ffffe [fff
+CUDA error ofa_r2.cu:703: unspecified launch failure
+head: cannot open '/tmp/lt.txt' for reading: No such file or directory
+tail: cannot open '/tmp/lt.txt' for reading: No such file or directory

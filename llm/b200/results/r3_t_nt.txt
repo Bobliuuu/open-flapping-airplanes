@@ -1,0 +1,3 @@
+config S (d=768,h=3072), 148 SMs, smem/tile 100352 B
+case                   M x N x K          | relmax    relmean   cublas_rm | persist alias |     ours   cublas  ratio
+CUDA error PTX JIT compilation was disabled at test_gemm_sm100.cu:231

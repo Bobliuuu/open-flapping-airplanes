@@ -7,7 +7,7 @@ Every number comes from `data.json`; `value: null` renders as "pending" (hatched
 ## Render
 ```
 cd video && npm install            # once: puppeteer-core only (no browser download; uses /Applications/Google Chrome.app)
-node render.js                     # -> out/ofa_explainer_preview.mp4 (86 s, ~2 min, 3 scenes in parallel; --conc N)
+node render.js                     # -> out/ofa_explainer_preview.mp4 (97 s, ~3 min, 3 scenes in parallel; --conc N)
 node render.js --scene results     # re-render one scene segment only (out/seg/results.mp4), then re-run plain `node render.js` or compose.sh
 node render.js --stills 20,50,76   # PNGs at global times (s) into out/stills/ for a quick visual check
 CHROME=/path/to/chrome node render.js   # other Chrome/Chromium
@@ -19,11 +19,11 @@ Needs ffmpeg and node on PATH (found: Homebrew ffmpeg, mise node 22).
 ./compose.sh recording.mp4 [out/ofa_explainer.mp4]     # MAXS=45 ./compose.sh ...  to allow a longer recording (default cap 30 s)
 ```
 Replaces the placeholder `slot` scene with the recording (scaled into the dashboard window, header + caption overlay) and re-concatenates.
-Missing scene segments are rendered first. Final length = 78 s + recording length.
+Missing scene segments are rendered first. Final length = 89 s + recording length.
 
 ## Updating numbers
 Edit `data.json` (a number is `{value, unit, status, source}`; set `status` to `measured` and fill `value` when a pending run finishes).
-Pending now: `b300.launches_base`, `b300.train_s_base`, `b300.train_toks_base`, `b300.loss_end_base`, `b300.doom_fps`.
+Pending now: `b300.launches_base`, `b300.doom_fps`. A100 baselines are Megatron-core + TE (llm/baseline/results/baseline_v2_*); B300 baselines are no-TE and all B300 values are `interim`. The A100 open-flapping-airplanes row (224 s, Doom build) is `interim` until llm/ofa/README.md is updated.
 Scene lengths and burned-in captions are in `data.json` under `scenes` (`[start_s, end_s, text]` relative to the scene).
 `tools/make_data.py` bootstraps data.json from the repo results (refuses to overwrite without --force, and does not carry the `scenes` block).
 `python3 tools/refresh_numbers.py [--dry]` re-reads the repo result files (llm/ofa/README.md, llm/b200/results/mk_split_100a.txt + bl_gpu1.log, llm/baseline/results, benchmarks/fa_published.json) and updates only value/status in data.json (scenes, captions, sources untouched), printing a diff and the still-pending list. B300 numbers carry status `interim` until the baselines are complete.
@@ -31,3 +31,5 @@ Scene lengths and burned-in captions are in `data.json` under `scenes` (`[start_
 Percentages use FA's convention, 1 - faster/slower (70.1 s vs 46.1 s = 34%).
 
 Large outputs (`out/`, `*.mp4`, `node_modules/`) are ignored by `video/.gitignore`. Not affiliated with Flapping Airplanes.
+
+Scenes: title, problem, launches (which definition of 'launch'), idea, arch, doom, method, slot, resA (launches, training), resB (inference, loss, 'what it means'), end. Release copy: `release/ofa_explainer_preview.mp4` (ignored by git).

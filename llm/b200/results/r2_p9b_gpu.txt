@@ -1,0 +1,5 @@
+$ nvidia-smi --query-gpu=name,driver_version,compute_cap,clocks.max.sm --format=csv,noheader   [0.0s rc=0]
+NVIDIA B300 SXM6 AC, 610.57.04, 10.3, 2032 MHz
+
+$ cd /tmp && timeout -s KILL 60 bash -c "stdbuf -o0 /tmp/bin/ofa_r2_tcdbg --steps 2 --data /vol/data/tinystories_cl100k_train.u32 --init /vol/data/init_flat_S.f32 --starts /vol/data/starts_4000.u32 --no-doom > /tmp/o.txt 2>&1; grep -o 'tag=[0-9]' /tmp/o.txt | sort | uniq -c; grep -E 'tag=[123] ' /tmp/o.txt | head -8" 2>&1 | tail -400   [4.6s rc=0]
+     48 tag=4

@@ -1,0 +1,14 @@
+{
+ "t_r2_sh1056": {
+  "published": true,
+  "sass": "mp -lelf /vol/bin2/t_r2_sh1056 | head -3; cuobjdump -lptx /vol/bin2/t_r2_sh1056 | head -3   [2.0s rc=0]\n388\nELF file    1: t_r2_sh1056.1.sm_100.cubin\nELF file    2: t_r2_sh1056.2.sm_100.cubin\ncuobjdump info    : No PTX file found to extract from '/vol/bin2/t_r2_sh1056'. You may try with -all option."
+ },
+ "t_r2_sh2080": {
+  "published": true,
+  "sass": "mp -lelf /vol/bin2/t_r2_sh2080 | head -3; cuobjdump -lptx /vol/bin2/t_r2_sh2080 | head -3   [1.7s rc=0]\n388\nELF file    1: t_r2_sh2080.1.sm_100.cubin\nELF file    2: t_r2_sh2080.2.sm_100.cubin\ncuobjdump info    : No PTX file found to extract from '/vol/bin2/t_r2_sh2080'. You may try with -all option."
+ },
+ "t_r2_sh32": {
+  "published": true,
+  "sass": "'; cuobjdump -lelf /vol/bin2/t_r2_sh32 | head -3; cuobjdump -lptx /vol/bin2/t_r2_sh32 | head -3   [1.7s rc=0]\n388\nELF file    1: t_r2_sh32.1.sm_100.cubin\nELF file    2: t_r2_sh32.2.sm_100.cubin\ncuobjdump info    : No PTX file found to extract from '/vol/bin2/t_r2_sh32'. You may try with -all option."
+ }
+}

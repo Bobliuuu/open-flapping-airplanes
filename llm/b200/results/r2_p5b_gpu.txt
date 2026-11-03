@@ -1,0 +1,36 @@
+$ nvidia-smi --query-gpu=name,driver_version,compute_cap,clocks.max.sm --format=csv,noheader   [0.0s rc=0]
+NVIDIA B300 SXM6 AC, 610.57.04, 10.3, 2032 MHz
+
+$ cd /tmp && timeout -s KILL 100 bash -c "stdbuf -o0 /tmp/bin/ofa_r2_tcdbg --steps 20 --data /vol/data/tinystories_cl100k_train.u32 --init /vol/data/init_flat_S.f32 --starts /vol/data/starts_4000.u32 --no-doom --loss-out /tmp/lt.txt > /tmp/o.txt 2>&1; head -30 /tmp/o.txt | cut -c1-200; grep -c HANG /tmp/o.txt; grep HANG /tmp/o.txt | awk '{print $4,$5,$6,$8,$9,$10}' | sort | uniq -c | sort -rn | head -20; grep -E 'tid=(0|32|1|2) ' /tmp/o.txt | head" 2>&1 | tail -400   [5.0s rc=0]
+GPU NVIDIA B300 SXM6 AC (sm_103), 148 SMs; smem/SM 233472 B, opt-in/block 232448 B, reserved/block 1024 B; kernel needs 100352 B dyn -> 2 blocks/SM fit by smem, 1 by occupancy (target 2)
+  smem headroom per SM at 2 blocks/SM: 30720 B (a larger GEMM_STAGES / GEMM100_STAGES can use it)
+148 persistent blocks (1 per SM)
+WARNING: only 1 block/SM fits (registers/smem); performance will differ from the 2/SM design
+smid probe: 148 distinct SMs seen, max %smid 147 (device reports 148 SMs)
+model: L=12 d=768 H=12 T=512 V=100352  params=162.4M  tokens/step=4096
+init weights from /vol/data/init_flat_S.f32
+data: /vol/data/tinystories_cl100k_train.u32 (73910428 tokens)
+batch starts: /vol/data/starts_4000.u32 (4000 steps)
+device memory used: 8.0 GB of 287.4 GB
+training graph: 278 phases, 97719 tasks per step
+launching ONE persistent kernel (148 blocks)...
+G2 HANG blk=144 tid=33 tag=4 addr=100384 parity=0 a=0 b=12 c=6
+G2 HANG blk=144 tid=34 tag=4 addr=100384 parity=0 a=0 b=12 c=6
+G2 HANG blk=144 tid=35 tag=4 addr=100384 parity=0 a=0 b=12 c=6
+G2 HANG blk=144 tid=36 tag=4 addr=100384 parity=0 a=0 b=12 c=6
+G2 HANG blk=144 tid=37 tag=4 addr=100384 parity=0 a=0 b=12 c=6
+G2 HANG blk=144 tid=38 tag=4 addr=100384 parity=0 a=0 b=12 c=6
+G2 HANG blk=144 tid=39 tag=4 addr=100384 parity=0 a=0 b=12 c=6
+G2 HANG blk=144 tid=40 tag=4 addr=100384 parity=0 a=0 b=12 c=6
+G2 HANG blk=144 tid=41 tag=4 addr=100384 parity=0 a=0 b=12 c=6
+G2 HANG blk=144 tid=42 tag=4 addr=100384 parity=0 a=0 b=12 c=6
+G2 HANG blk=144 tid=43 tag=4 addr=100384 parity=0 a=0 b=12 c=6
+G2 HANG blk=144 tid=44 tag=4 addr=100384 parity=0 a=0 b=12 c=6
+G2 HANG blk=144 tid=45 tag=4 addr=100384 parity=0 a=0 b=12 c=6
+G2 HANG blk=144 tid=46 tag=4 addr=100384 parity=0 a=0 b=12 c=6
+G2 HANG blk=144 tid=47 tag=4 addr=100384 parity=0 a=0 b=12 c=6
+G2 HANG blk=144 tid=48 tag=4 addr=100384 parity=0 a=0 b=12 c=6
+G2 HANG blk=144 tid=49 tag=4 addr=100384 parity=0 a=0 b=12 c=6
+G2 HANG blk=144 tid=50 tag=4 addr=100384 parity=0 a=0 b=12 c=6
+4340
+awk: line 1: syntax error at or near ,

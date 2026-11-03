@@ -1,0 +1,9 @@
+{
+ "t_r2": {
+  "published": true,
+  "sass": "CHMMA|UTMALDG|UTCBAR|LDTM'; cuobjdump -lelf /vol/bin2/t_r2 | head -3; cuobjdump -lptx /vol/bin2/t_r2 | head -3   [1.2s rc=0]\n388\nELF file    1: t_r2.1.sm_100.cubin\nELF file    2: t_r2.2.sm_100.cubin\ncuobjdump info    : No PTX file found to extract from '/vol/bin2/t_r2'. You may try with -all option."
+ },
+ "t_r2_mma": {
+  "published": false
+ }
+}

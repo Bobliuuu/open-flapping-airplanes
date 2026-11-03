@@ -1,0 +1,9 @@
+$ nvidia-smi --query-gpu=name,driver_version,compute_cap,clocks.max.sm --format=csv,noheader   [0.1s rc=0]
+NVIDIA B300 SXM6 AC, 610.57.04, 10.3, 2032 MHz
+
+$ cd /tmp && timeout -s KILL 60 bash -c "/tmp/bin/occ_probe" 2>&1 | tail -400   [1.1s rc=0]
+no tcgen05 (control)         smem 100 KB  occupancyAPI=2  max concurrent CTAs per SM observed=2
+tcgen05.alloc 128 cols       smem 100 KB  occupancyAPI=1  max concurrent CTAs per SM observed=1
+tcgen05.alloc 256 cols       smem 100 KB  occupancyAPI=1  max concurrent CTAs per SM observed=1
+tcgen05.alloc 512 cols       smem 100 KB  occupancyAPI=1  max concurrent CTAs per SM observed=1
+tcgen05.alloc 128 cols       smem  64 KB  occupancyAPI=1  max concurrent CTAs per SM observed=1

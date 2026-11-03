@@ -22,6 +22,7 @@ ap.add_argument("--steps", type=int, default=STEPS); ap.add_argument("--out"); a
 ap.add_argument("--no_load_golden", action="store_true"); ap.add_argument("--tag", default="")
 ap.add_argument("--impl", default="local", choices=["local", "te"])  # local = v1 baseline (no TE); te = Transformer Engine spec
 ap.add_argument("--save", default=None)
+ap.add_argument("--attn", default="auto", choices=["auto", "flash", "fused", "unfused"])  # TE attention backend (auto -> cuDNN fused on this box)
 ap.add_argument("--count3", action="store_true"); ap.add_argument("--cuda_graph", action="store_true")
 a = ap.parse_args()
 dev = "cuda"
@@ -35,7 +36,9 @@ kw = dict(num_layers=L, hidden_size=D, num_attention_heads=H, ffn_hidden_size=FF
           gated_linear_unit=False, normalization="LayerNorm", layernorm_epsilon=1e-5, hidden_dropout=0.0, attention_dropout=0.0,
           init_method_std=0.02, bf16=True, params_dtype=torch.bfloat16, pipeline_dtype=torch.bfloat16,
           attention_softmax_in_fp32=True, apply_query_key_layer_scaling=False, bias_dropout_fusion=False, apply_rope_fusion=False)
+from megatron.core.transformer.enums import AttnBackend
 if TE:
+    kw["attention_backend"] = AttnBackend[a.attn]
     # TE modules; F.gelu here is only the *selector* for TE's GELU op, which is the tanh approximation (== F.gelu(approximate='tanh')).
     kw.update(activation_func=F.gelu, use_te_activation_func=True, bias_activation_fusion=False, masked_softmax_fusion=True,
               gradient_accumulation_fusion=False, cross_entropy_loss_fusion=True, cross_entropy_fusion_impl="te", persist_layer_norm=True)

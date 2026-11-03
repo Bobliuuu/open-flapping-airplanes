@@ -1,0 +1,10 @@
+{
+ "b_mbar_probe": {
+  "rc": 0,
+  "tail": "$ mkdir -p /tmp/o && cd /src/llm/b200/gemm_tcgen05 && nvcc -gencode arch=compute_100f,code=sm_100f -O2 -o /tmp/o/mbar_probe mbar_probe.cu 2>&1 | head -20   [1.7s rc=0]\n"
+ },
+ "mbar_probe": {
+  "published": true,
+  "sass": "cuobjdump -lelf /vol/bin2/mbar_probe | head -3; cuobjdump -lptx /vol/bin2/mbar_probe | head -3   [1.3s rc=0]\n1\nELF file    1: mbar_probe.1.sm_100.cubin\nELF file    2: mbar_probe.2.sm_100.cubin\ncuobjdump info    : No PTX file found to extract from '/vol/bin2/mbar_probe'. You may try with -all option."
+ }
+}

@@ -33,7 +33,7 @@ out = {"source": "Measured by llm/baseline/run_v2.sh (BASELINE v2). Each system 
        "date": datetime.date.today().isoformat(), "gpu_sms": TOTAL_SMS,
        "sm_split": {"training": TRAIN_SMS, "inference": INFER_SMS, "total": TOTAL_SMS}, "training": {}, "inference": {"vllm": {}}, "launch_counts": {}}
 systems = {"megatron_te": "megatron_te_{m}", "megatron_te_fwdbwd_cudagraph": "megatron_te_graph_{m}", "pytorch_eager": "pytorch_{m}",
-           "pytorch_cuda_graph": "pytorch_graph_{m}"}
+           "pytorch_cuda_graph": "pytorch_graph_{m}", "megatron_te_flash_attn_n1": "megatron_te_flashattn_{m}"}
 for sysname, pat in systems.items():
     for m in ("S", "F"):
         pre = pat.format(m=m)
@@ -84,13 +84,21 @@ for sysname in ("megatron_te", "pytorch_eager"):
         if not (t and l and s): continue
         tr = t["sm_restricted"] or t["full_gpu"]; se = sv["sm_restricted"] or sv["full_gpu"]
         if not (tr and se): continue
-        toks = tr["seconds"]["mean"] * se["tok_s"]["mean"]
-        a = l["a_kernels_per_step"] * STEPS + s["a_kernels_per_token"] * toks
-        b = l["b_host_launch_calls_per_step"] * STEPS + s["b_host_launch_calls_per_token_default_vllm"] * toks
-        c = l["c_host_launch_calls_per_step_one_graph"] * STEPS + (s["c_host_launch_calls_per_token_full_cudagraph"] or 0) * toks
-        demo["rows"].append({"system": sysname, "model": m, "train_seconds": tr["seconds"]["mean"], "serve_tok_s": se["tok_s"]["mean"], "served_tokens": toks,
-                             "a_gpu_kernel_executions": a, "b_host_launch_calls": b, "c_host_launch_calls_one_graph_per_step_and_token": c,
-                             "ratio_to_fa": {"a": a / FA, "b": b / FA, "c": c / FA}})
+        FA_TOK = 46.1 * 1076   # tokens FA's megakernel served in its run (concurrent serving), = 49,604; also 70.1 s x 710 tok/s = 49,771 for their baseline
+        row = {"system": sysname, "model": m, "train_seconds": tr["seconds"]["mean"], "serve_tok_s": se["tok_s"]["mean"],
+               "per_step": {"a": l["a_kernels_per_step"], "b": l["b_host_launch_calls_per_step"], "c": l["c_host_launch_calls_per_step_one_graph"]},
+               "per_token": {"a": s["a_kernels_per_token"], "b": s["b_host_launch_calls_per_token_default_vllm"],
+                             "c": s["c_host_launch_calls_per_token_full_cudagraph"], "c_ideal_floor": 1}}
+        for tag, toks in (("walltime_matched", tr["seconds"]["mean"] * se["tok_s"]["mean"]), ("fixed_fa_tokens_49604", FA_TOK)):
+            a = l["a_kernels_per_step"] * STEPS + s["a_kernels_per_token"] * toks
+            b = l["b_host_launch_calls_per_step"] * STEPS + s["b_host_launch_calls_per_token_default_vllm"] * toks
+            c = l["c_host_launch_calls_per_step_one_graph"] * STEPS + (s["c_host_launch_calls_per_token_full_cudagraph"] or 0) * toks
+            c_ideal = l["c_host_launch_calls_per_step_one_graph"] * STEPS + 1 * toks
+            row[tag] = {"served_tokens": toks, "a_gpu_kernel_executions": a, "b_host_launch_calls": b, "c_host_launch_calls_graphed": c,
+                        "c_with_ideal_1_launch_per_token": c_ideal, "training_only_a": l["a_kernels_per_step"] * STEPS,
+                        "training_only_b": l["b_host_launch_calls_per_step"] * STEPS, "training_only_c": l["c_host_launch_calls_per_step_one_graph"] * STEPS,
+                        "ratio_to_fa": {"a": a / FA, "b": b / FA, "c": c / FA, "c_ideal": c_ideal / FA}}
+        demo["rows"].append(row)
 out["launch_counts"]["demo_equivalent"] = demo
 p = f"{here}/results/baseline_v2_a100_{datetime.date.today():%Y%m%d}.json"
 json.dump(out, open(p, "w"), indent=1); print("wrote", p)

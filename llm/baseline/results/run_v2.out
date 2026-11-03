@@ -1,0 +1,55 @@
+c3_megatron_te_S rc=0 noisy=0 maxp=1: [rank0]:[W1101 15:06:52.379456726 ProcessGroupNCCL.cpp:1624] Warning: WARNING: destroy_process_group() was not called before program exit, which can leak resources. For more info, please see https://p
+c3_pytorch_S rc=0 noisy=0 maxp=1: }
+c3_megatron_te_F rc=0 noisy=0 maxp=1: [rank0]:[W1101 15:07:26.597676876 ProcessGroupNCCL.cpp:1624] Warning: WARNING: destroy_process_group() was not called before program exit, which can leak resources. For more info, please see https://p
+c3_pytorch_F rc=0 noisy=0 maxp=1: }
+megatron_te_S_full_r1 rc=0 noisy=0 maxp=3: [rank0]:[W1101 15:11:21.128327085 ProcessGroupNCCL.cpp:1624] Warning: WARNING: destroy_process_group() was not called before program exit, which can leak resources. For more info, please see https://p
+megatron_te_S_mps_r1 rc=0 noisy=0 maxp=2: [rank0]:[W1101 15:15:58.306401638 ProcessGroupNCCL.cpp:1624] Warning: WARNING: destroy_process_group() was not called before program exit, which can leak resources. For more info, please see https://p
+megatron_te_S_full_r2 rc=0 noisy=0 maxp=1: [rank0]:[W1101 15:25:11.528505374 ProcessGroupNCCL.cpp:1624] Warning: WARNING: destroy_process_group() was not called before program exit, which can leak resources. For more info, please see https://p
+megatron_te_S_mps_r2 rc=0 noisy=0 maxp=2: [rank0]:[W1101 15:31:20.550444112 ProcessGroupNCCL.cpp:1624] Warning: WARNING: destroy_process_group() was not called before program exit, which can leak resources. For more info, please see https://p
+megatron_te_S_full_r3 rc=0 noisy=0 maxp=1: [rank0]:[W1101 15:35:29.997580122 ProcessGroupNCCL.cpp:1624] Warning: WARNING: destroy_process_group() was not called before program exit, which can leak resources. For more info, please see https://p
+megatron_te_S_mps_r3 rc=0 noisy=0 maxp=2: [rank0]:[W1101 15:41:38.339177718 ProcessGroupNCCL.cpp:1624] Warning: WARNING: destroy_process_group() was not called before program exit, which can leak resources. For more info, please see https://p
+megatron_te_F_full_r1 rc=0 noisy=0 maxp=1: [rank0]:[W1101 15:46:41.610899771 ProcessGroupNCCL.cpp:1624] Warning: WARNING: destroy_process_group() was not called before program exit, which can leak resources. For more info, please see https://p
+megatron_te_F_mps_r1 rc=0 noisy=0 maxp=2: [rank0]:[W1101 15:55:00.802139992 ProcessGroupNCCL.cpp:1624] Warning: WARNING: destroy_process_group() was not called before program exit, which can leak resources. For more info, please see https://p
+megatron_te_F_full_r2 rc=0 noisy=0 maxp=1: [rank0]:[W1101 16:48:00.357245758 ProcessGroupNCCL.cpp:1624] Warning: WARNING: destroy_process_group() was not called before program exit, which can leak resources. For more info, please see https://p
+megatron_te_F_mps_r2 rc=0 noisy=0 maxp=2: [rank0]:[W1101 16:54:16.965491170 ProcessGroupNCCL.cpp:1624] Warning: WARNING: destroy_process_group() was not called before program exit, which can leak resources. For more info, please see https://p
+megatron_te_F_full_r3 rc=0 noisy=0 maxp=1: [rank0]:[W1101 16:59:16.938396348 ProcessGroupNCCL.cpp:1624] Warning: WARNING: destroy_process_group() was not called before program exit, which can leak resources. For more info, please see https://p
+megatron_te_F_mps_r3 rc=0 noisy=0 maxp=2: [rank0]:[W1101 17:08:33.776654556 ProcessGroupNCCL.cpp:1624] Warning: WARNING: destroy_process_group() was not called before program exit, which can leak resources. For more info, please see https://p
+pytorch_F_full_r1 rc=0 noisy=0 maxp=1: {"model": "F", "model_params": 407914496, "tag": "full", "env": {"TRAIN_SMS": 85, "TOTAL_SMS": 108, "MPS_PCT": null, "torch": "2.13.0+cu130", "gpu": "NVIDIA A100-SXM4-40GB"}, "steps": 4000, "seconds":
+pytorch_F_mps_r1 rc=0 noisy=0 maxp=3: {"model": "F", "model_params": 407914496, "tag": "mps85", "env": {"TRAIN_SMS": 85, "TOTAL_SMS": 108, "MPS_PCT": "79", "torch": "2.13.0+cu130", "gpu": "NVIDIA A100-SXM4-40GB"}, "steps": 4000, "seconds"
+pytorch_F_full_r2 rc=0 noisy=0 maxp=1: {"model": "F", "model_params": 407914496, "tag": "full", "env": {"TRAIN_SMS": 85, "TOTAL_SMS": 108, "MPS_PCT": null, "torch": "2.13.0+cu130", "gpu": "NVIDIA A100-SXM4-40GB"}, "steps": 4000, "seconds":
+pytorch_F_mps_r2 rc=0 noisy=0 maxp=2: {"model": "F", "model_params": 407914496, "tag": "mps85", "env": {"TRAIN_SMS": 85, "TOTAL_SMS": 108, "MPS_PCT": "79", "torch": "2.13.0+cu130", "gpu": "NVIDIA A100-SXM4-40GB"}, "steps": 4000, "seconds"
+pytorch_F_full_r3 rc=0 noisy=0 maxp=1: {"model": "F", "model_params": 407914496, "tag": "full", "env": {"TRAIN_SMS": 85, "TOTAL_SMS": 108, "MPS_PCT": null, "torch": "2.13.0+cu130", "gpu": "NVIDIA A100-SXM4-40GB"}, "steps": 4000, "seconds":
+pytorch_F_mps_r3 rc=0 noisy=0 maxp=2: {"model": "F", "model_params": 407914496, "tag": "mps85", "env": {"TRAIN_SMS": 85, "TOTAL_SMS": 108, "MPS_PCT": "79", "torch": "2.13.0+cu130", "gpu": "NVIDIA A100-SXM4-40GB"}, "steps": 4000, "seconds"
+pytorch_graph_S_full_r1 rc=0 noisy=0 maxp=1: {"model": "S", "model_params": 162417408, "tag": "full", "env": {"TRAIN_SMS": 85, "TOTAL_SMS": 108, "MPS_PCT": null, "torch": "2.13.0+cu130", "gpu": "NVIDIA A100-SXM4-40GB"}, "cuda_graph": true, "step
+megatron_te_graph_S_full_r1 rc=0 noisy=0 maxp=1: [rank0]:[W1101 17:49:01.651751349 ProcessGroupNCCL.cpp:1624] Warning: WARNING: destroy_process_group() was not called before program exit, which can leak resources. For more info, please see https://p
+pytorch_graph_S_full_r2 rc=0 noisy=0 maxp=1: {"model": "S", "model_params": 162417408, "tag": "full", "env": {"TRAIN_SMS": 85, "TOTAL_SMS": 108, "MPS_PCT": null, "torch": "2.13.0+cu130", "gpu": "NVIDIA A100-SXM4-40GB"}, "cuda_graph": true, "step
+megatron_te_graph_S_full_r2 rc=0 noisy=0 maxp=1: [rank0]:[W1101 17:54:44.174819354 ProcessGroupNCCL.cpp:1624] Warning: WARNING: destroy_process_group() was not called before program exit, which can leak resources. For more info, please see https://p
+pytorch_graph_S_full_r3 rc=0 noisy=0 maxp=1: {"model": "S", "model_params": 162417408, "tag": "full", "env": {"TRAIN_SMS": 85, "TOTAL_SMS": 108, "MPS_PCT": null, "torch": "2.13.0+cu130", "gpu": "NVIDIA A100-SXM4-40GB"}, "cuda_graph": true, "step
+megatron_te_graph_S_full_r3 rc=0 noisy=0 maxp=1: [rank0]:[W1101 18:00:25.942171504 ProcessGroupNCCL.cpp:1624] Warning: WARNING: destroy_process_group() was not called before program exit, which can leak resources. For more info, please see https://p
+pytorch_graph_F_full_r1 rc=0 noisy=0 maxp=1: {"model": "F", "model_params": 407914496, "tag": "full", "env": {"TRAIN_SMS": 85, "TOTAL_SMS": 108, "MPS_PCT": null, "torch": "2.13.0+cu130", "gpu": "NVIDIA A100-SXM4-40GB"}, "cuda_graph": true, "step
+megatron_te_graph_F_full_r1 rc=0 noisy=0 maxp=1: [rank0]:[W1101 18:10:18.154247212 ProcessGroupNCCL.cpp:1624] Warning: WARNING: destroy_process_group() was not called before program exit, which can leak resources. For more info, please see https://p
+pytorch_graph_F_full_r2 rc=0 noisy=0 maxp=1: {"model": "F", "model_params": 407914496, "tag": "full", "env": {"TRAIN_SMS": 85, "TOTAL_SMS": 108, "MPS_PCT": null, "torch": "2.13.0+cu130", "gpu": "NVIDIA A100-SXM4-40GB"}, "cuda_graph": true, "step
+megatron_te_graph_F_full_r2 rc=0 noisy=0 maxp=1: [rank0]:[W1101 18:20:12.358346915 ProcessGroupNCCL.cpp:1624] Warning: WARNING: destroy_process_group() was not called before program exit, which can leak resources. For more info, please see https://p
+pytorch_graph_F_full_r3 rc=0 noisy=0 maxp=1: {"model": "F", "model_params": 407914496, "tag": "full", "env": {"TRAIN_SMS": 85, "TOTAL_SMS": 108, "MPS_PCT": null, "torch": "2.13.0+cu130", "gpu": "NVIDIA A100-SXM4-40GB"}, "cuda_graph": true, "step
+megatron_te_graph_F_full_r3 rc=0 noisy=0 maxp=1: [rank0]:[W1101 18:30:07.253878572 ProcessGroupNCCL.cpp:1624] Warning: WARNING: destroy_process_group() was not called before program exit, which can leak resources. For more info, please see https://p
+Writing model shards:   0%|          | 0/1 [00:00<?, ?it/s]Writing model shards: 100%|██████████| 1/1 [00:01<00:00,  1.38s/it]Writing model shards: 100%|██████████| 1/1 [00:01<00:00,  1.38s/it]
+serving weights S=/home/ubuntu/data/hf_trained F=/home/ubuntu/data/hf_trained_F
+vllm_S_full_r1 rc=0 noisy=0 maxp=1: {"cg": "default", "mps_pct": null, "enforce_eager": false, "new_tokens": 256, "prompt_tokens": 4, "seconds": [0.49076151847839355], "tok_s": [521.6382914327272]}
+vllm_S_mps_r1 rc=0 noisy=0 maxp=2: {"cg": "default", "mps_pct": "16", "enforce_eager": false, "new_tokens": 256, "prompt_tokens": 4, "seconds": [0.5034408569335938], "tok_s": [508.50064406625546]}
+vllm_S_full_r2 rc=0 noisy=0 maxp=1: {"cg": "default", "mps_pct": null, "enforce_eager": false, "new_tokens": 256, "prompt_tokens": 4, "seconds": [0.49112987518310547], "tok_s": [521.247052838227]}
+vllm_S_mps_r2 rc=0 noisy=0 maxp=2: {"cg": "default", "mps_pct": "16", "enforce_eager": false, "new_tokens": 256, "prompt_tokens": 4, "seconds": [0.4837934970855713], "tok_s": [529.1513869908835]}
+vllm_S_full_r3 rc=0 noisy=0 maxp=1: {"cg": "default", "mps_pct": null, "enforce_eager": false, "new_tokens": 256, "prompt_tokens": 4, "seconds": [0.4860496520996094], "tok_s": [526.6951614802025]}
+vllm_S_mps_r3 rc=0 noisy=0 maxp=2: {"cg": "default", "mps_pct": "16", "enforce_eager": false, "new_tokens": 256, "prompt_tokens": 4, "seconds": [0.5011303424835205], "tok_s": [510.8451400713547]}
+vllmc3_S_default rc=0 noisy=0 maxp=1: }
+vllmc3_S_eager rc=0 noisy=0 maxp=1: }
+vllmc3_S_full rc=0 noisy=0 maxp=1: }
+vllm_F_full_r1 rc=0 noisy=0 maxp=1: {"cg": "default", "mps_pct": null, "enforce_eager": false, "new_tokens": 256, "prompt_tokens": 4, "seconds": [0.4733455181121826], "tok_s": [540.8311480818292]}
+vllm_F_mps_r1 rc=0 noisy=0 maxp=2: {"cg": "default", "mps_pct": "16", "enforce_eager": false, "new_tokens": 256, "prompt_tokens": 4, "seconds": [0.4730560779571533], "tok_s": [541.1620565272327]}
+vllm_F_full_r2 rc=0 noisy=0 maxp=1: {"cg": "default", "mps_pct": null, "enforce_eager": false, "new_tokens": 256, "prompt_tokens": 4, "seconds": [0.4780454635620117], "tok_s": [535.5139197274108]}
+vllm_F_mps_r2 rc=0 noisy=0 maxp=2: {"cg": "default", "mps_pct": "16", "enforce_eager": false, "new_tokens": 256, "prompt_tokens": 4, "seconds": [0.47351765632629395], "tok_s": [540.6345393456547]}
+vllm_F_full_r3 rc=0 noisy=0 maxp=1: {"cg": "default", "mps_pct": null, "enforce_eager": false, "new_tokens": 256, "prompt_tokens": 4, "seconds": [0.4724111557006836], "tok_s": [541.9008355556273]}
+vllm_F_mps_r3 rc=0 noisy=0 maxp=2: {"cg": "default", "mps_pct": "16", "enforce_eager": false, "new_tokens": 256, "prompt_tokens": 4, "seconds": [0.4680790901184082], "tok_s": [546.916120383076]}
+vllmc3_F_default rc=0 noisy=0 maxp=1: }
+vllmc3_F_eager rc=0 noisy=0 maxp=1: }
+vllmc3_F_full rc=0 noisy=0 maxp=1: }
+ALL_DONE

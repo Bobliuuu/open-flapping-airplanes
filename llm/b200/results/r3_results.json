@@ -1,0 +1,7 @@
+{
+ "t_nt": "config S (d=768,h=3072), 148 SMs, smem/tile 100352 B\ncase                   M x N x K          | relmax    relmean   cublas_rm | persist alias |     ours   cublas  ratio\nCUDA error PTX JIT compilation was disabled at test_gemm_sm100.cu:231\n",
+ "tc_loss20": "CUDA error ofa.cu:431: PTX JIT compilation was disabled\n",
+ "tc_loss20_file": null,
+ "wall_s": 5.694606781005859,
+ "cost_usd_est": 0.009885837371826172
+}

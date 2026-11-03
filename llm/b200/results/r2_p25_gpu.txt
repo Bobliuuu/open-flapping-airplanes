@@ -1,0 +1,128 @@
+$ nvidia-smi --query-gpu=name,driver_version,compute_cap,clocks.max.sm --format=csv,noheader   [0.0s rc=0]
+NVIDIA B300 SXM6 AC, 610.57.04, 10.3, 2032 MHz
+
+$ cd /tmp && timeout -s KILL 120 bash -c "echo W0 N1; /tmp/bin/t_r2n --nocheck --iters 40 --wide 0 --nsub 1 | grep -E ' (PASS|FAIL) ' | cut -c1-14,110-150" 2>&1 | tail -400   [3.7s rc=0]
+W0 N1
+qkv_fwd      N 0.34  PASS cfg1
+wo_fwd       N 0.31  PASS cfg1
+up_fwd       N 0.26  PASS cfg1
+down_fwd     N 0.35  PASS cfg1
+logits       N 0.28  PASS cfg1
+down_bwd_dX  N 0.24  PASS cfg1
+up_bwd_dX    N 0.35  PASS cfg1
+wo_bwd_dX    N 0.38  PASS cfg1
+qkv_bwd_dX   N 0.34  PASS cfg1
+head_bwd_dX  N 0.44  PASS cfg1
+dW_qkv       T 0.48  PASS cfg1
+dW_o         T 0.28  PASS cfg1
+dW_up        T 0.53  PASS cfg1
+dW_down      T 0.47  PASS cfg1
+dwte         T 0.40  PASS cfg1
+
+$ cd /tmp && timeout -s KILL 120 bash -c "echo W0 N2; /tmp/bin/t_r2n --nocheck --iters 40 --wide 0 --nsub 2 | grep -E ' (PASS|FAIL) ' | cut -c1-14,110-150" 2>&1 | tail -400   [3.4s rc=0]
+W0 N2
+qkv_fwd      N 0.45  PASS cfg2
+wo_fwd       N 0.40  PASS cfg2
+up_fwd       N 0.35  PASS cfg2
+down_fwd     N 0.41  PASS cfg2
+logits       N 0.40  PASS cfg2
+down_bwd_dX  N 0.31  PASS cfg2
+up_bwd_dX    N 0.41  PASS cfg2
+wo_bwd_dX    N 0.51  PASS cfg2
+qkv_bwd_dX   N 0.42  PASS cfg2
+head_bwd_dX  N 0.43  PASS cfg2
+dW_qkv       T 0.30  PASS cfg2
+dW_o         T 0.17  PASS cfg2
+dW_up        T 0.33  PASS cfg2
+dW_down      T 0.30  PASS cfg2
+dwte         T 0.44  PASS cfg2
+
+$ cd /tmp && timeout -s KILL 120 bash -c "echo W0 N4; /tmp/bin/t_r2n --nocheck --iters 40 --wide 0 --nsub 4 | grep -E ' (PASS|FAIL) ' | cut -c1-14,110-150" 2>&1 | tail -400   [3.0s rc=0]
+W0 N4
+qkv_fwd      N 0.53  PASS cfg4
+wo_fwd       N 0.24  PASS cfg4
+up_fwd       N 0.31  PASS cfg4
+down_fwd     N 0.23  PASS cfg4
+logits       N 0.46  PASS cfg4
+down_bwd_dX  N 0.26  PASS cfg4
+up_bwd_dX    N 0.23  PASS cfg4
+wo_bwd_dX    N 0.32  PASS cfg4
+qkv_bwd_dX   N 0.24  PASS cfg4
+head_bwd_dX  N 0.22  PASS cfg4
+dW_qkv       T 0.17  PASS cfg4
+dW_o         T 0.10  PASS cfg4
+dW_up        T 0.19  PASS cfg4
+dW_down      T 0.17  PASS cfg4
+dwte         T 0.49  PASS cfg4
+
+$ cd /tmp && timeout -s KILL 120 bash -c "echo W1 N1; /tmp/bin/t_r2n --nocheck --iters 40 --wide 1 --nsub 1 | grep -E ' (PASS|FAIL) ' | cut -c1-14,110-150" 2>&1 | tail -400   [3.0s rc=0]
+W1 N1
+qkv_fwd      N 0.49  PASS cfg11
+wo_fwd       N 0.44  PASS cfg11
+up_fwd       N 0.34  PASS cfg11
+down_fwd     N 0.56  PASS cfg11
+logits       N 0.39  PASS cfg11
+down_bwd_dX  N 0.36  PASS cfg11
+up_bwd_dX    N 0.56  PASS cfg11
+wo_bwd_dX    N 0.56  PASS cfg11
+qkv_bwd_dX   N 0.54  PASS cfg11
+head_bwd_dX  N 0.81  PASS cfg11
+dW_qkv       T 0.40  PASS cfg11
+dW_o         T 0.23  PASS cfg11
+dW_up        T 0.44  PASS cfg11
+dW_down      T 0.40  PASS cfg11
+dwte         T 0.57  PASS cfg11
+
+$ cd /tmp && timeout -s KILL 120 bash -c "echo W1 N2; /tmp/bin/t_r2n --nocheck --iters 40 --wide 1 --nsub 2 | grep -E ' (PASS|FAIL) ' | cut -c1-14,110-150" 2>&1 | tail -400   [2.8s rc=0]
+W1 N2
+qkv_fwd      N 0.60  PASS cfg12
+wo_fwd       N 0.27  PASS cfg12
+up_fwd       N 0.32  PASS cfg12
+down_fwd     N 0.36  PASS cfg12
+logits       N 0.49  PASS cfg12
+down_bwd_dX  N 0.27  PASS cfg12
+up_bwd_dX    N 0.36  PASS cfg12
+wo_bwd_dX    N 0.38  PASS cfg12
+qkv_bwd_dX   N 0.35  PASS cfg12
+head_bwd_dX  N 0.39  PASS cfg12
+dW_qkv       T 0.24  PASS cfg12
+dW_o         T 0.14  PASS cfg12
+dW_up        T 0.27  PASS cfg12
+dW_down      T 0.24  PASS cfg12
+dwte         T 0.70  PASS cfg12
+
+$ cd /tmp && timeout -s KILL 120 bash -c "echo W1 N4; /tmp/bin/t_r2n --nocheck --iters 40 --wide 1 --nsub 4 | grep -E ' (PASS|FAIL) ' | cut -c1-14,110-150" 2>&1 | tail -400   [3.2s rc=0]
+W1 N4
+qkv_fwd      N 0.38  PASS cfg14
+wo_fwd       N 0.14  PASS cfg14
+up_fwd       N 0.33  PASS cfg14
+down_fwd     N 0.20  PASS cfg14
+logits       N 0.55  PASS cfg14
+down_bwd_dX  N 0.26  PASS cfg14
+up_bwd_dX    N 0.20  PASS cfg14
+wo_bwd_dX    N 0.23  PASS cfg14
+qkv_bwd_dX   N 0.20  PASS cfg14
+head_bwd_dX  N 0.20  PASS cfg14
+dW_qkv       T 0.13  PASS cfg14
+dW_o         T 0.08  PASS cfg14
+dW_up        T 0.15  PASS cfg14
+dW_down      T 0.14  PASS cfg14
+dwte         T 0.84  PASS cfg14
+
+$ cd /tmp && timeout -s KILL 120 bash -c "echo AUTO; /tmp/bin/t_r2n --nocheck --iters 40 | grep -E ' (PASS|FAIL) ' | cut -c1-14,110-170" 2>&1 | tail -400   [2.6s rc=0]
+AUTO
+qkv_fwd      N 0.60  PASS cfg12
+wo_fwd       N 0.44  PASS cfg11
+up_fwd       N 0.41  PASS cfg13
+down_fwd     N 0.56  PASS cfg11
+logits       N 0.54  PASS cfg14
+down_bwd_dX  N 0.34  PASS cfg13
+up_bwd_dX    N 0.56  PASS cfg11
+wo_bwd_dX    N 0.56  PASS cfg11
+qkv_bwd_dX   N 0.54  PASS cfg11
+head_bwd_dX  N 0.82  PASS cfg11
+dW_qkv       T 0.48  PASS cfg1
+dW_o         T 0.28  PASS cfg1
+dW_up        T 0.53  PASS cfg1
+dW_down      T 0.47  PASS cfg1
+dwte         T 0.84  PASS cfg14

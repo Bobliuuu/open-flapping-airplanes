@@ -1,0 +1,59 @@
+{
+ "pytorch_S_full_r1": {
+  "rc": 0,
+  "wall_s": 96.37163662910461,
+  "summary": "pytorch_S_full_r1 rc=0 noisy=0 maxp=1: {\"model\": \"S\", \"model_params\": 162417408, \"tag\": \"full\", \"env\": {\"TRAIN_SMS\": 116, \"TOTAL_SMS\": 148, \"MPS_PCT\": null, \"torch\": \"2.13.0+cu130\", \"gpu\": \"NVIDIA B300 SXM6 AC\"}, \"steps\": 4000, \"seconds\":"
+ },
+ "pytorch_S_mps_r1": {
+  "rc": 0,
+  "wall_s": 66.38557195663452,
+  "summary": "pytorch_S_mps_r1 rc=0 noisy=0 maxp=2: {\"model\": \"S\", \"model_params\": 162417408, \"tag\": \"mps116\", \"env\": {\"TRAIN_SMS\": 116, \"TOTAL_SMS\": 148, \"MPS_PCT\": \"79\", \"torch\": \"2.13.0+cu130\", \"gpu\": \"NVIDIA B300 SXM6 AC\"}, \"steps\": 4000, \"seconds\""
+ },
+ "pytorch_S_full_r2": {
+  "rc": 0,
+  "wall_s": 55.09165382385254,
+  "summary": "pytorch_S_full_r2 rc=0 noisy=0 maxp=1: {\"model\": \"S\", \"model_params\": 162417408, \"tag\": \"full\", \"env\": {\"TRAIN_SMS\": 116, \"TOTAL_SMS\": 148, \"MPS_PCT\": null, \"torch\": \"2.13.0+cu130\", \"gpu\": \"NVIDIA B300 SXM6 AC\"}, \"steps\": 4000, \"seconds\":"
+ },
+ "pytorch_S_mps_r2": {
+  "rc": 0,
+  "wall_s": 66.08024382591248,
+  "summary": "pytorch_S_mps_r2 rc=0 noisy=0 maxp=2: {\"model\": \"S\", \"model_params\": 162417408, \"tag\": \"mps116\", \"env\": {\"TRAIN_SMS\": 116, \"TOTAL_SMS\": 148, \"MPS_PCT\": \"79\", \"torch\": \"2.13.0+cu130\", \"gpu\": \"NVIDIA B300 SXM6 AC\"}, \"steps\": 4000, \"seconds\""
+ },
+ "pytorch_graph_S_full_r1": {
+  "rc": 0,
+  "wall_s": 63.31936311721802,
+  "summary": "pytorch_graph_S_full_r1 rc=0 noisy=0 maxp=1: {\"model\": \"S\", \"model_params\": 162417408, \"tag\": \"full\", \"env\": {\"TRAIN_SMS\": 116, \"TOTAL_SMS\": 148, \"MPS_PCT\": null, \"torch\": \"2.13.0+cu130\", \"gpu\": \"NVIDIA B300 SXM6 AC\"}, \"cuda_graph\": true, \"steps"
+ },
+ "megatron_local_S_full_r1": {
+  "rc": 0,
+  "wall_s": 173.3144154548645,
+  "summary": "megatron_local_S_full_r1 rc=0 noisy=0 maxp=1: [rank0]:[W1101 16:50:00.142658619 ProcessGroupNCCL.cpp:1624] Warning: WARNING: destroy_process_group() was not called before program exit, which can leak resources. For more info, please see https://p"
+ },
+ "megatron_local_S_mps_r1": {
+  "rc": 0,
+  "wall_s": 141.0546019077301,
+  "summary": "megatron_local_S_mps_r1 rc=0 noisy=0 maxp=2: [rank0]:[W1101 16:52:23.305808519 ProcessGroupNCCL.cpp:1624] Warning: WARNING: destroy_process_group() was not called before program exit, which can leak resources. For more info, please see https://p"
+ },
+ "vllm_S_full_r1": {
+  "rc": 0,
+  "wall_s": 169.07574558258057,
+  "summary": "vllm_S_full_r1 rc=0 noisy=0 maxp=1: {\"cg\": \"default\", \"mps_pct\": null, \"enforce_eager\": false, \"new_tokens\": 256, \"prompt_tokens\": 4, \"seconds\": [0.3173248767852783], \"tok_s\": [806.7441878287578]}"
+ },
+ "vllm_S_mps_r1": {
+  "rc": 0,
+  "wall_s": 24.77780246734619,
+  "summary": "vllm_S_mps_r1 rc=0 noisy=0 maxp=2: {\"cg\": \"default\", \"mps_pct\": \"17\", \"enforce_eager\": false, \"new_tokens\": 256, \"prompt_tokens\": 4, \"seconds\": [0.31029772758483887], \"tok_s\": [825.0140985322129]}"
+ },
+ "vllm_S_full_r2": {
+  "rc": 0,
+  "wall_s": 24.583558320999146,
+  "summary": "vllm_S_full_r2 rc=0 noisy=0 maxp=1: {\"cg\": \"default\", \"mps_pct\": null, \"enforce_eager\": false, \"new_tokens\": 256, \"prompt_tokens\": 4, \"seconds\": [0.31279993057250977], \"tok_s\": [818.4145039017423]}"
+ },
+ "vllm_S_mps_r2": {
+  "rc": 0,
+  "wall_s": 24.622084379196167,
+  "summary": "vllm_S_mps_r2 rc=0 noisy=0 maxp=2: {\"cg\": \"default\", \"mps_pct\": \"17\", \"enforce_eager\": false, \"new_tokens\": 256, \"prompt_tokens\": 4, \"seconds\": [0.31290221214294434], \"tok_s\": [818.1469803193673]}"
+ },
+ "wall_s": 970.2330396175385,
+ "cost_usd_est": 1.6843245567760468
+}

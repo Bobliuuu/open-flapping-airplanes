@@ -1,0 +1,6 @@
+{
+ "occ_probe": {
+  "published": true,
+  "sass": "TM'; cuobjdump -lelf /vol/bin2/occ_probe | head -3; cuobjdump -lptx /vol/bin2/occ_probe | head -3   [1.0s rc=0]\n0\nELF file    1: occ_probe.1.sm_100.cubin\nELF file    2: occ_probe.2.sm_100.cubin\ncuobjdump info    : No PTX file found to extract from '/vol/bin2/occ_probe'. You may try with -all option."
+ }
+}

@@ -57,3 +57,4 @@ video/frames/
 # release video, exactly this path
 !video/release/
 !video/release/*.mp4
+*.procs

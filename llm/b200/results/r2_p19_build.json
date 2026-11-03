@@ -1,0 +1,26 @@
+{
+ "b_m1": {
+  "rc": 0,
+  "tail": "$ cd /src/llm/b200/megakernel && GENCODE='-gencode arch=compute_100f,code=sm_100f' NODOOM=1 ./build_r2.sh sm_100f ofa_r2_m1 -DOFA_GEMM_BACKEND=2 -DG2_FORCE_TC -DG2_DEBUG -DGEMM100_LAYOUT_MASK=1 2>&1 | tail -2   [19.4s rc=0]\n  nvcc warnings: 12\nbuilt 2030272 ofa_r2_m1\n"
+ },
+ "b_m2": {
+  "rc": 0,
+  "tail": "$ cd /src/llm/b200/megakernel && GENCODE='-gencode arch=compute_100f,code=sm_100f' NODOOM=1 ./build_r2.sh sm_100f ofa_r2_m2 -DOFA_GEMM_BACKEND=2 -DG2_FORCE_TC -DG2_DEBUG -DGEMM100_LAYOUT_MASK=2 2>&1 | tail -2   [19.4s rc=0]\n  nvcc warnings: 12\nbuilt 2017984 ofa_r2_m2\n"
+ },
+ "b_m4": {
+  "rc": 0,
+  "tail": "$ cd /src/llm/b200/megakernel && GENCODE='-gencode arch=compute_100f,code=sm_100f' NODOOM=1 ./build_r2.sh sm_100f ofa_r2_m4 -DOFA_GEMM_BACKEND=2 -DG2_FORCE_TC -DG2_DEBUG -DGEMM100_LAYOUT_MASK=4 2>&1 | tail -2   [19.1s rc=0]\n  nvcc warnings: 12\nbuilt 1964736 ofa_r2_m4\n"
+ },
+ "ofa_r2_m1": {
+  "published": true,
+  "sass": "c -E 'UTCHMMA|UTMALDG|UTCBAR|LDTM'; cuobjdump -lelf /vol/bin2/ofa_r2_m1 | head -3; cuobjdump -lptx /vol/bin2/ofa_r2_m1 | head -3   [1.1s rc=0]\n78\nELF file    1: ofa_r2_m1.1.sm_100.cubin\ncuobjdump info    : No PTX file found to extract from '/vol/bin2/ofa_r2_m1'. You may try with -all option."
+ },
+ "ofa_r2_m2": {
+  "published": true,
+  "sass": "c -E 'UTCHMMA|UTMALDG|UTCBAR|LDTM'; cuobjdump -lelf /vol/bin2/ofa_r2_m2 | head -3; cuobjdump -lptx /vol/bin2/ofa_r2_m2 | head -3   [1.1s rc=0]\n44\nELF file    1: ofa_r2_m2.1.sm_100.cubin\ncuobjdump info    : No PTX file found to extract from '/vol/bin2/ofa_r2_m2'. You may try with -all option."
+ },
+ "ofa_r2_m4": {
+  "published": true,
+  "sass": "c -E 'UTCHMMA|UTMALDG|UTCBAR|LDTM'; cuobjdump -lelf /vol/bin2/ofa_r2_m4 | head -3; cuobjdump -lptx /vol/bin2/ofa_r2_m4 | head -3   [1.0s rc=0]\n28\nELF file    1: ofa_r2_m4.1.sm_100.cubin\ncuobjdump info    : No PTX file found to extract from '/vol/bin2/ofa_r2_m4'. You may try with -all option."
+ }
+}

@@ -1,0 +1,14 @@
+$ nvidia-smi --query-gpu=name,driver_version,compute_cap,clocks.max.sm --format=csv,noheader   [0.1s rc=0]
+NVIDIA B300 SXM6 AC, 610.57.04, 10.3, 2032 MHz
+
+$ cd /tmp && timeout -s KILL 40 bash -c "/tmp/bin/t_r2_sh1056 --only wo_fwd --nobench --nocheck --wide 0| grep -E 'HANG|PASS|FAIL|error' | head -3 | cut -c1-300" 2>&1 | tail -400   [1.8s rc=0]
+wo_fwd       NN RES    4096x768x768       | 0.00e+00  0.00e+00  0.00e+00  | skip   n/a   |    0.0TF    0.0TF  0.00  PASS w0
+OVERALL PASS
+
+$ cd /tmp && timeout -s KILL 40 bash -c "/tmp/bin/t_r2_sh2080 --only wo_fwd --nobench --nocheck --wide 0| grep -E 'HANG|PASS|FAIL|error' | head -3 | cut -c1-300" 2>&1 | tail -400   [1.5s rc=0]
+wo_fwd       NN RES    4096x768x768       | 0.00e+00  0.00e+00  0.00e+00  | skip   n/a   |    0.0TF    0.0TF  0.00  PASS w0
+OVERALL PASS
+
+$ cd /tmp && timeout -s KILL 40 bash -c "/tmp/bin/t_r2_sh32 --only wo_fwd --nobench --nocheck --wide 0| grep -E 'HANG|PASS|FAIL|error' | head -3 | cut -c1-300" 2>&1 | tail -400   [1.4s rc=0]
+wo_fwd       NN RES    4096x768x768       | 0.00e+00  0.00e+00  0.00e+00  | skip   n/a   |    0.0TF    0.0TF  0.00  PASS w0
+OVERALL PASS

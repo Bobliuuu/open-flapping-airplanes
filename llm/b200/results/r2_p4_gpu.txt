@@ -1,0 +1,27 @@
+$ nvidia-smi --query-gpu=name,driver_version,compute_cap,clocks.max.sm --format=csv,noheader   [0.0s rc=0]
+NVIDIA B300 SXM6 AC, 610.57.04, 10.3, 2032 MHz
+
+$ cd /tmp && timeout -s KILL 200 bash -c "/tmp/bin/t_r2 --nocheck --iters 40 | grep -E ' (PASS|FAIL) w' | cut -c1-24,100-170" 2>&1 | tail -400   [3.8s rc=0]
+qkv_fwd      NN BF16   4 1284.7TF  0.46  PASS w1
+wo_fwd       NN RES    4  755.5TF  0.33  PASS w0
+up_fwd       NN GELU   4 1235.5TF  0.32  PASS w1
+down_fwd     NN RES    4 1343.4TF  0.36  PASS w0
+logits       NT F32    4 1345.0TF  0.33  PASS w1
+down_bwd_dX  NT DGELU  4 1304.9TF  0.33  PASS w1
+up_bwd_dX    NT RES    4 1369.8TF  0.36  PASS w0
+wo_bwd_dX    NT BF16   4  754.4TF  0.41  PASS w0
+qkv_bwd_dX   NT RES    4 1236.1TF  0.36  PASS w0
+head_bwd_dX  NN BF16   4 1673.4TF  0.35  PASS w0
+dW_qkv       TN F32    7 1065.2TF  0.50  PASS w0
+dW_o         TN F32    7  617.2TF  0.28  PASS w0
+dW_up        TN F32    7 1347.1TF  0.51  PASS w0
+dW_down      TN F32    3 1384.3TF  0.49  PASS w0
+dwte         TN F32    1 1635.8TF  0.40  PASS w1
+
+$ cd /tmp && timeout -s KILL 90 bash -c "/tmp/bin/ofa_r2_mma --steps 20 --data /vol/data/tinystories_cl100k_train.u32 --init /vol/data/init_flat_S.f32 --starts /vol/data/starts_4000.u32 --no-doom --loss-out /tmp/lm.txt 2>&1 | grep -E 'error|steady|loss:' | tail -4; head -1 /tmp/lm.txt; tail -1 /tmp/lm.txt" 2>&1 | tail -400   [2.3s rc=0]
+steady state: 18.87 ms/step (median 18.87) -> 217098 tok/s;  4,000 steps = 75.5 s
+loss: step0 11.7106  s1 11.2639  s2 10.7522  s5 9.9998  s10 9.6331
+0 11.710616
+19 8.821558
+
+$ cd /tmp && timeout -s KILL 90 bash -c "/tmp/bin/ofa_r2_tc --steps 20 --data /vol/data/tinystories_cl100k_train.u32 --init /vol/data/init_flat_S.f32 --starts /vol/data/starts_4000.u32 --no-doom --loss-out /tmp/lt.txt 2>&1 | tail -12; head -1 /tmp/lt.txt; tail -1 /tmp/lt.txt" 2>&1 | tail -400   [90.0s rc=0]

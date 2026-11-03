@@ -1,0 +1,52 @@
+$ nvidia-smi --query-gpu=name,driver_version,compute_cap,clocks.max.sm --format=csv,noheader   [0.0s rc=0]
+NVIDIA B300 SXM6 AC, 610.57.04, 10.3, 2032 MHz
+
+$ cd /tmp && timeout -s KILL 100 bash -c "stdbuf -o0 /tmp/bin/ofa_r2_d --split b200 --vocab /vol/data/cl100k_vocab.bin --prompt /vol/data/prompt_ids.txt --prompt-text 'Once upon a time' --data /vol/data/tinystories_cl100k_train.u32 --init /vol/data/init_flat_S.f32 --starts /vol/data/starts_4000.u32 --no-doom --steps 400 --prof-step 300 > /tmp/o.txt 2>&1; grep -E 'steady' /tmp/o.txt; grep -E 'tasks=' /tmp/o.txt | head -120" 2>&1 | tail -400   [6.8s rc=0]
+steady state: 13.20 ms/step (median 13.20) -> 310418 tok/s;  4,000 steps = 52.8 s
+  data                 0.00 ->     0.01 ms  (  0.01 ms)  tasks=8
+  embed                0.01 ->     0.07 ms  (  0.06 ms)  tasks=256
+  L1 ln1               0.32 ->     0.33 ms  (  0.01 ms)  tasks=256
+  L1 qkv               0.33 ->     0.36 ms  (  0.03 ms)  tasks=96
+  L1 attn              0.37 ->     0.42 ms  (  0.05 ms)  tasks=768
+  L1 wo+res            0.42 ->     0.43 ms  (  0.02 ms)  tasks=96
+  L1 ln2               0.43 ->     0.45 ms  (  0.01 ms)  tasks=256
+  L1 up+gelu           0.45 ->     0.51 ms  (  0.06 ms)  tasks=96
+  L1 down+res          0.51 ->     0.54 ms  (  0.03 ms)  tasks=96
+  lnf                  2.76 ->     2.78 ms  (  0.01 ms)  tasks=256
+  logits               2.78 ->     3.66 ms  (  0.89 ms)  tasks=3136
+  cross-entropy        3.66 ->     4.91 ms  (  1.25 ms)  tasks=1024
+  loss mean            4.91 ->     4.92 ms  (  0.00 ms)  tasks=1
+  head dX              4.91 ->     5.47 ms  (  0.56 ms)  tasks=96
+  head dWte            4.91 ->     6.23 ms  (  1.31 ms)  tasks=588
+  lnf bwd              6.08 ->     6.11 ms  (  0.03 ms)  tasks=256
+  lnf dgamma           6.11 ->     6.12 ms  (  0.01 ms)  tasks=3
+  L1 dpre             10.24 ->    10.34 ms  (  0.10 ms)  tasks=96
+  L1 dWdown           10.25 ->    10.39 ms  (  0.13 ms)  tasks=72
+  L1 dln2             10.34 ->    10.39 ms  (  0.05 ms)  tasks=96
+  L1 dWup             10.37 ->    10.42 ms  (  0.05 ms)  tasks=72
+  L1 ln2 bwd          10.39 ->    10.43 ms  (  0.04 ms)  tasks=256
+  L1 dgamma2          10.43 ->    10.44 ms  (  0.01 ms)  tasks=3
+  L1 dO               10.43 ->    10.44 ms  (  0.01 ms)  tasks=96
+  L1 dWo              10.43 ->    10.48 ms  (  0.05 ms)  tasks=18
+  L1 attn prep        10.44 ->    10.47 ms  (  0.02 ms)  tasks=768
+  L1 attn bwd         10.47 ->    10.59 ms  (  0.12 ms)  tasks=1536
+  L1 dln1             10.59 ->    10.61 ms  (  0.02 ms)  tasks=96
+  L1 dWqkv            10.59 ->    10.65 ms  (  0.07 ms)  tasks=54
+  L1 ln1 bwd          10.61 ->    10.65 ms  (  0.03 ms)  tasks=256
+  L1 dgamma1          10.65 ->    10.65 ms  (  0.01 ms)  tasks=3
+  embed bwd wte (+adamw)    11.06 ->    12.27 ms  (  1.21 ms)  tasks=784
+  embed bwd wpe       11.95 ->    12.09 ms  (  0.14 ms)  tasks=128
+  adamw wpe           12.09 ->    12.18 ms  (  0.09 ms)  tasks=6
+  adamw L11           12.08 ->    12.21 ms  (  0.12 ms)  tasks=109
+  adamw L10           12.16 ->    12.31 ms  (  0.15 ms)  tasks=109
+  adamw L9            12.21 ->    12.41 ms  (  0.20 ms)  tasks=109
+  adamw L8            12.31 ->    12.52 ms  (  0.21 ms)  tasks=109
+  adamw L7            12.42 ->    12.62 ms  (  0.21 ms)  tasks=109
+  adamw L6            12.52 ->    12.72 ms  (  0.20 ms)  tasks=109
+  adamw L5            12.63 ->    12.82 ms  (  0.20 ms)  tasks=109
+  adamw L4            12.73 ->    12.92 ms  (  0.19 ms)  tasks=109
+  adamw L3            12.83 ->    13.02 ms  (  0.19 ms)  tasks=109
+  adamw L2            12.93 ->    13.12 ms  (  0.19 ms)  tasks=109
+  adamw L1            13.02 ->    13.22 ms  (  0.19 ms)  tasks=109
+  adamw L0            13.12 ->    13.31 ms  (  0.19 ms)  tasks=109
+  step barrier        13.32 ->    13.33 ms  (  0.00 ms)  tasks=1

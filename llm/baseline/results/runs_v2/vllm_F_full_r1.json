@@ -1,0 +1,13 @@
+{
+ "cg": "default",
+ "mps_pct": null,
+ "enforce_eager": false,
+ "new_tokens": 256,
+ "prompt_tokens": 4,
+ "seconds": [
+  0.4733455181121826
+ ],
+ "tok_s": [
+  540.8311480818292
+ ]
+}

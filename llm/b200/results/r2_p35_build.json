@@ -1,0 +1,18 @@
+{
+ "b_t": {
+  "rc": 0,
+  "tail": "$ mkdir -p /tmp/o && cd /src/llm/b200/gemm_tcgen05 && ./make_test_r2.sh >/dev/null && nvcc -gencode arch=compute_100f,code=sm_100f -O3 -std=c++17 -DOFA_GEMM_BACKEND=2 -DG2_FORCE_TC -o /tmp/o/t_fin2 test_gemm_r2.cu -lcublas 2>&1 | grep -E 'error' | head -20   [11.9s rc=0]\n"
+ },
+ "b_m": {
+  "rc": 0,
+  "tail": "$ cd /src/llm/b200/megakernel && MAXREG=255 GENCODE='-gencode arch=compute_100f,code=sm_100f' NODOOM=1 ./build_r2.sh sm_100f ofa_r2_f -DOFA_GEMM_BACKEND=2 -DG2_FORCE_TC -DG2_PERSIST_TMEM -DOFA_BLOCKS_PER_SM=1 -DCE_CACHE=48 2>&1 | tail -3   [21.2s rc=0]\n  Used 255 registers, used 1 barriers\n  nvcc warnings: 14\nbuilt 2267752 ofa_r2_f\n"
+ },
+ "t_fin2": {
+  "published": true,
+  "sass": "LDG|UTCBAR|LDTM'; cuobjdump -lelf /vol/bin2/t_fin2 | head -3; cuobjdump -lptx /vol/bin2/t_fin2 | head -3   [1.7s rc=0]\n484\nELF file    1: t_fin2.1.sm_100.cubin\nELF file    2: t_fin2.2.sm_100.cubin\ncuobjdump info    : No PTX file found to extract from '/vol/bin2/t_fin2'. You may try with -all option."
+ },
+ "ofa_r2_f": {
+  "published": true,
+  "sass": "p -c -E 'UTCHMMA|UTMALDG|UTCBAR|LDTM'; cuobjdump -lelf /vol/bin2/ofa_r2_f | head -3; cuobjdump -lptx /vol/bin2/ofa_r2_f | head -3   [1.1s rc=0]\n186\nELF file    1: ofa_r2_f.1.sm_100.cubin\ncuobjdump info    : No PTX file found to extract from '/vol/bin2/ofa_r2_f'. You may try with -all option."
+ }
+}

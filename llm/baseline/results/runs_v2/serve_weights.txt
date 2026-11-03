@@ -1,0 +1,1 @@
+serving weights S=/home/ubuntu/data/hf_trained F=/home/ubuntu/data/hf_trained_F

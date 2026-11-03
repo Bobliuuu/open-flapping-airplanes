@@ -1,0 +1,56 @@
+$ nvidia-smi --query-gpu=name,driver_version,compute_cap,clocks.max.sm --format=csv,noheader   [0.0s rc=0]
+NVIDIA B300 SXM6 AC, 610.57.04, 10.3, 2032 MHz
+
+$ cd /tmp && timeout -s KILL 120 bash -c "echo ofa_r2_mma 20 ; stdbuf -o0 /tmp/bin/ofa_r2_mma --steps 20 --data /vol/data/tinystories_cl100k_train.u32 --init /vol/data/init_flat_S.f32 --starts /vol/data/starts_4000.u32 --no-doom  --loss-out /tmp/l_ofa_r2_mma.txt > /tmp/o.txt 2>&1; grep -E 'steady|loss:|error|persistent' /tmp/o.txt | cut -c1-200; head -1 /tmp/l_ofa_r2_mma.txt; sed -n 20p /tmp/l_ofa_r2_mma.txt" 2>&1 | tail -400   [1.6s rc=0]
+ofa_r2_mma 20
+296 persistent blocks (2 per SM)
+launching ONE persistent kernel (296 blocks)...
+steady state: 18.88 ms/step (median 18.88) -> 216942 tok/s;  4,000 steps = 75.5 s
+loss: step0 11.7106  s1 11.2639  s2 10.7522  s5 9.9998  s10 9.6331
+0 11.710616
+19 8.821558
+
+$ cd /tmp && timeout -s KILL 120 bash -c "echo ofa_r2_tc 20 ; stdbuf -o0 /tmp/bin/ofa_r2_tc --steps 20 --data /vol/data/tinystories_cl100k_train.u32 --init /vol/data/init_flat_S.f32 --starts /vol/data/starts_4000.u32 --no-doom  --loss-out /tmp/l_ofa_r2_tc.txt > /tmp/o.txt 2>&1; grep -E 'steady|loss:|error|persistent' /tmp/o.txt | cut -c1-200; head -1 /tmp/l_ofa_r2_tc.txt; sed -n 20p /tmp/l_ofa_r2_tc.txt" 2>&1 | tail -400   [1.6s rc=0]
+ofa_r2_tc 20
+148 persistent blocks (1 per SM)
+launching ONE persistent kernel (148 blocks)...
+steady state: 14.54 ms/step (median 14.54) -> 281615 tok/s;  4,000 steps = 58.2 s
+loss: step0 11.7106  s1 11.2639  s2 10.7522  s5 9.9998  s10 9.6331
+0 11.710616
+19 8.821558
+
+$ cd /tmp && timeout -s KILL 120 bash -c "echo ofa_r2_tcp 20 ; stdbuf -o0 /tmp/bin/ofa_r2_tcp --steps 20 --data /vol/data/tinystories_cl100k_train.u32 --init /vol/data/init_flat_S.f32 --starts /vol/data/starts_4000.u32 --no-doom  --loss-out /tmp/l_ofa_r2_tcp.txt > /tmp/o.txt 2>&1; grep -E 'steady|loss:|error|persistent' /tmp/o.txt | cut -c1-200; head -1 /tmp/l_ofa_r2_tcp.txt; sed -n 20p /tmp/l_ofa_r2_tcp.txt" 2>&1 | tail -400   [1.6s rc=0]
+ofa_r2_tcp 20
+148 persistent blocks (1 per SM)
+launching ONE persistent kernel (148 blocks)...
+steady state: 14.39 ms/step (median 14.39) -> 284640 tok/s;  4,000 steps = 57.6 s
+loss: step0 11.7106  s1 11.2639  s2 10.7522  s5 9.9998  s10 9.6331
+0 11.710616
+19 8.821558
+
+$ cd /tmp && timeout -s KILL 120 bash -c "echo ofa_r2_mma 300 ; stdbuf -o0 /tmp/bin/ofa_r2_mma --steps 300 --data /vol/data/tinystories_cl100k_train.u32 --init /vol/data/init_flat_S.f32 --starts /vol/data/starts_4000.u32 --no-doom  --loss-out /tmp/l_ofa_r2_mma.txt > /tmp/o.txt 2>&1; grep -E 'steady|loss:|error|persistent' /tmp/o.txt | cut -c1-200; head -1 /tmp/l_ofa_r2_mma.txt; sed -n 20p /tmp/l_ofa_r2_mma.txt" 2>&1 | tail -400   [7.6s rc=0]
+ofa_r2_mma 300
+296 persistent blocks (2 per SM)
+launching ONE persistent kernel (296 blocks)...
+steady state: 18.86 ms/step (median 18.86) -> 217159 tok/s;  4,000 steps = 75.4 s
+loss: step0 11.7106  s1 11.2639  s2 10.7522  s5 9.9998  s10 9.6331  s20 8.5514  s50 5.6934  s100 4.4137  s200 4.0631
+0 11.710616
+19 8.821558
+
+$ cd /tmp && timeout -s KILL 120 bash -c "echo ofa_r2_tc 300 ; stdbuf -o0 /tmp/bin/ofa_r2_tc --steps 300 --data /vol/data/tinystories_cl100k_train.u32 --init /vol/data/init_flat_S.f32 --starts /vol/data/starts_4000.u32 --no-doom  --loss-out /tmp/l_ofa_r2_tc.txt > /tmp/o.txt 2>&1; grep -E 'steady|loss:|error|persistent' /tmp/o.txt | cut -c1-200; head -1 /tmp/l_ofa_r2_tc.txt; sed -n 20p /tmp/l_ofa_r2_tc.txt" 2>&1 | tail -400   [5.6s rc=0]
+ofa_r2_tc 300
+148 persistent blocks (1 per SM)
+launching ONE persistent kernel (148 blocks)...
+steady state: 14.55 ms/step (median 14.56) -> 281474 tok/s;  4,000 steps = 58.2 s
+loss: step0 11.7106  s1 11.2639  s2 10.7522  s5 9.9998  s10 9.6331  s20 8.5514  s50 5.6934  s100 4.4137  s200 4.0631
+0 11.710616
+19 8.821558
+
+$ cd /tmp && timeout -s KILL 120 bash -c "echo ofa_r2_tcp 300 ; stdbuf -o0 /tmp/bin/ofa_r2_tcp --steps 300 --data /vol/data/tinystories_cl100k_train.u32 --init /vol/data/init_flat_S.f32 --starts /vol/data/starts_4000.u32 --no-doom  --loss-out /tmp/l_ofa_r2_tcp.txt > /tmp/o.txt 2>&1; grep -E 'steady|loss:|error|persistent' /tmp/o.txt | cut -c1-200; head -1 /tmp/l_ofa_r2_tcp.txt; sed -n 20p /tmp/l_ofa_r2_tcp.txt" 2>&1 | tail -400   [5.5s rc=0]
+ofa_r2_tcp 300
+148 persistent blocks (1 per SM)
+launching ONE persistent kernel (148 blocks)...
+steady state: 14.42 ms/step (median 14.42) -> 284144 tok/s;  4,000 steps = 57.7 s
+loss: step0 11.7106  s1 11.2639  s2 10.7522  s5 9.9998  s10 9.6331  s20 8.5514  s50 5.6934  s100 4.4137  s200 4.0631
+0 11.710616
+19 8.821558

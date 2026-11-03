@@ -1,0 +1,10 @@
+{
+ "b_d": {
+  "rc": 0,
+  "tail": "$ cd /src/llm/b200/megakernel && MAXREG=255 GENCODE='-gencode arch=compute_100f,code=sm_100f' NODOOM=1 ./build_r2.sh sm_100f ofa_r2_d -DOFA_GEMM_BACKEND=2 -DG2_FORCE_TC -DG2_PERSIST_TMEM -DOFA_BLOCKS_PER_SM=1 -DCE_CACHE=48 2>&1 | tail -3   [17.8s rc=0]\n  Used 255 registers, used 1 barriers\n  nvcc warnings: 14\nbuilt 2202216 ofa_r2_d\n"
+ },
+ "ofa_r2_d": {
+  "published": true,
+  "sass": "p -c -E 'UTCHMMA|UTMALDG|UTCBAR|LDTM'; cuobjdump -lelf /vol/bin2/ofa_r2_d | head -3; cuobjdump -lptx /vol/bin2/ofa_r2_d | head -3   [1.0s rc=0]\n186\nELF file    1: ofa_r2_d.1.sm_100.cubin\ncuobjdump info    : No PTX file found to extract from '/vol/bin2/ofa_r2_d'. You may try with -all option."
+ }
+}

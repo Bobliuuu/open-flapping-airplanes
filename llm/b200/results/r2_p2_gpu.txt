@@ -1,0 +1,142 @@
+$ nvidia-smi --query-gpu=name,driver_version,compute_cap,clocks.max.sm --format=csv,noheader   [0.1s rc=0]
+NVIDIA B300 SXM6 AC, 610.57.04, 10.3, 2032 MHz
+
+$ cd /tmp && timeout -s KILL 60 bash -c "/tmp/bin/t_s128n1_103a --only wo_fwd --iters 20 | tail -2" 2>&1 | tail -400   [1.3s rc=0]
+wo_fwd       NN RES    4096x768x768       | 2.19e-03  1.41e-03  2.61e-03  | bitexact ok    |  249.9TF  475.6TF  0.53  PASS
+OVERALL PASS
+
+$ cd /tmp && timeout -s KILL 60 bash -c "/tmp/bin/t_s128n1_100f --only wo_fwd --iters 20 | tail -2" 2>&1 | tail -400   [1.1s rc=0]
+wo_fwd       NN RES    4096x768x768       | 2.19e-03  1.41e-03  2.61e-03  | bitexact ok    |  250.6TF  733.3TF  0.34  PASS
+OVERALL PASS
+
+$ cd /tmp && timeout -s KILL 60 bash -c "/tmp/bin/t_s128n1_100a --only wo_fwd --iters 20 | tail -2" 2>&1 | tail -400   [0.7s rc=0]
+case                   M x N x K          | relmax    relmean   cublas_rm | persist alias |     ours   cublas  ratio
+CUDA error no kernel image is available for execution on the device at test_gemm_r2.cu:233
+
+$ cd /tmp && timeout -s KILL 60 bash -c "/tmp/bin/t_s128n1_103f --only wo_fwd --iters 20 | tail -2" 2>&1 | tail -400   [1.1s rc=0]
+wo_fwd       NN RES    4096x768x768       | 2.19e-03  1.41e-03  2.61e-03  | bitexact ok    |  250.4TF  478.4TF  0.52  PASS
+OVERALL PASS
+
+$ cd /tmp && timeout -s KILL 240 bash -c "/tmp/bin/t_s128n1_100f --nocheck | grep -v kernel" 2>&1 | tail -400   [2.4s rc=0]
+config S (d=768,h=3072), 148 SMs, smem/tile 100352 B
+case                   M x N x K          | relmax    relmean   cublas_rm | persist alias |     ours   cublas  ratio
+qkv_fwd      NN BF16   4096x2304x768      | 0.00e+00  0.00e+00  0.00e+00  | skip   n/a   |  469.5TF 1277.6TF  0.37  PASS
+wo_fwd       NN RES    4096x768x768       | 0.00e+00  0.00e+00  0.00e+00  | skip   n/a   |  245.4TF  725.1TF  0.34  PASS
+up_fwd       NN GELU   4096x3072x768      | 0.00e+00  0.00e+00  0.00e+00  | skip   n/a   |  335.3TF 1220.7TF  0.27  PASS
+down_fwd     NN RES    4096x768x3072      | 0.00e+00  0.00e+00  0.00e+00  | skip   n/a   |  488.2TF 1342.2TF  0.36  PASS
+logits       NT F32    4096x100352x768    | 0.00e+00  0.00e+00  0.00e+00  | skip   n/a   |  380.6TF 1349.6TF  0.28  PASS
+down_bwd_dX  NT DGELU  4096x3072x768      | 0.00e+00  0.00e+00  0.00e+00  | skip   n/a   |  349.8TF 1276.8TF  0.27  PASS
+up_bwd_dX    NT RES    4096x768x3072      | 0.00e+00  0.00e+00  0.00e+00  | skip   n/a   |  490.0TF 1353.0TF  0.36  PASS
+wo_bwd_dX    NT BF16   4096x768x768       | 0.00e+00  0.00e+00  0.00e+00  | skip   n/a   |  308.4TF  734.9TF  0.42  PASS
+qkv_bwd_dX   NT RES    4096x768x2304      | 0.00e+00  0.00e+00  0.00e+00  | skip   n/a   |  442.7TF 1209.6TF  0.37  PASS
+head_bwd_dX  NN BF16   4096x768x100352    | 0.00e+00  0.00e+00  0.00e+00  | skip   n/a   |  582.5TF 1676.7TF  0.35  PASS
+dW_qkv       TN F32    768x2304x4096      | 0.00e+00  0.00e+00  0.00e+00  | skip   n/a   |  523.2TF 1050.5TF  0.50  PASS
+dW_o         TN F32    768x768x4096       | 0.00e+00  0.00e+00  0.00e+00  | skip   n/a   |  172.5TF  505.6TF  0.34  PASS
+dW_up        TN F32    768x3072x4096      | 0.00e+00  0.00e+00  0.00e+00  | skip   n/a   |  690.1TF 1308.3TF  0.53  PASS
+dW_down      TN F32    3072x768x4096      | 0.00e+00  0.00e+00  0.00e+00  | skip   n/a   |  666.7TF 1355.0TF  0.49  PASS
+dwte         TN F32    100352x768x4096    | 0.00e+00  0.00e+00  0.00e+00  | skip   n/a   |  508.4TF 1626.3TF  0.31  PASS
+OVERALL PASS
+
+$ cd /tmp && timeout -s KILL 240 bash -c "/tmp/bin/t_s128n2_100f --nocheck | grep -v kernel" 2>&1 | tail -400   [2.3s rc=0]
+config S (d=768,h=3072), 148 SMs, smem/tile 100352 B
+case                   M x N x K          | relmax    relmean   cublas_rm | persist alias |     ours   cublas  ratio
+qkv_fwd      NN BF16   4096x2304x768      | 0.00e+00  0.00e+00  0.00e+00  | skip   n/a   |  607.1TF 1252.7TF  0.48  PASS
+wo_fwd       NN RES    4096x768x768       | 0.00e+00  0.00e+00  0.00e+00  | skip   n/a   |  310.4TF  464.9TF  0.67  PASS
+up_fwd       NN GELU   4096x3072x768      | 0.00e+00  0.00e+00  0.00e+00  | skip   n/a   |  452.0TF 1220.7TF  0.37  PASS
+down_fwd     NN RES    4096x768x3072      | 0.00e+00  0.00e+00  0.00e+00  | skip   n/a   |  567.0TF 1334.5TF  0.42  PASS
+logits       NT F32    4096x100352x768    | 0.00e+00  0.00e+00  0.00e+00  | skip   n/a   |  511.4TF 1350.6TF  0.38  PASS
+down_bwd_dX  NT DGELU  4096x3072x768      | 0.00e+00  0.00e+00  0.00e+00  | skip   n/a   |  412.2TF 1272.3TF  0.32  PASS
+up_bwd_dX    NT RES    4096x768x3072      | 0.00e+00  0.00e+00  0.00e+00  | skip   n/a   |  568.3TF 1339.2TF  0.42  PASS
+wo_bwd_dX    NT BF16   4096x768x768       | 0.00e+00  0.00e+00  0.00e+00  | skip   n/a   |  397.3TF  533.2TF  0.75  PASS
+qkv_bwd_dX   NT RES    4096x768x2304      | 0.00e+00  0.00e+00  0.00e+00  | skip   n/a   |  531.8TF 1223.6TF  0.43  PASS
+head_bwd_dX  NN BF16   4096x768x100352    | 0.00e+00  0.00e+00  0.00e+00  | skip   n/a   |  581.9TF 1677.6TF  0.35  PASS
+dW_qkv       TN F32    768x2304x4096      | 0.00e+00  0.00e+00  0.00e+00  | skip   n/a   |  319.2TF 1040.1TF  0.31  PASS
+dW_o         TN F32    768x768x4096       | 0.00e+00  0.00e+00  0.00e+00  | skip   n/a   |  105.3TF  600.5TF  0.18  PASS
+dW_up        TN F32    768x3072x4096      | 0.00e+00  0.00e+00  0.00e+00  | skip   n/a   |  424.0TF 1320.0TF  0.32  PASS
+dW_down      TN F32    3072x768x4096      | 0.00e+00  0.00e+00  0.00e+00  | skip   n/a   |  417.6TF 1362.0TF  0.31  PASS
+dwte         TN F32    100352x768x4096    | 0.00e+00  0.00e+00  0.00e+00  | skip   n/a   |  561.7TF 1625.8TF  0.35  PASS
+OVERALL PASS
+
+$ cd /tmp && timeout -s KILL 240 bash -c "/tmp/bin/t_s256n1_100f --nocheck | grep -v kernel" 2>&1 | tail -400   [2.6s rc=0]
+config S (d=768,h=3072), 148 SMs, smem/tile 100352 B
+case                   M x N x K          | relmax    relmean   cublas_rm | persist alias |     ours   cublas  ratio
+qkv_fwd      NN BF16   4096x2304x768      | 0.00e+00  0.00e+00  0.00e+00  | skip   n/a   |  586.2TF 1247.7TF  0.47  PASS
+wo_fwd       NN RES    4096x768x768       | 0.00e+00  0.00e+00  0.00e+00  | skip   n/a   |  306.6TF  711.6TF  0.43  PASS
+up_fwd       NN GELU   4096x3072x768      | 0.00e+00  0.00e+00  0.00e+00  | skip   n/a   |  398.6TF 1225.4TF  0.33  PASS
+down_fwd     NN RES    4096x768x3072      | 0.00e+00  0.00e+00  0.00e+00  | skip   n/a   |  627.0TF 1349.7TF  0.46  PASS
+logits       NT F32    4096x100352x768    | 0.00e+00  0.00e+00  0.00e+00  | skip   n/a   |  445.0TF 1353.9TF  0.33  PASS
+down_bwd_dX  NT DGELU  4096x3072x768      | 0.00e+00  0.00e+00  0.00e+00  | skip   n/a   |  392.8TF 1151.8TF  0.34  PASS
+up_bwd_dX    NT RES    4096x768x3072      | 0.00e+00  0.00e+00  0.00e+00  | skip   n/a   |  608.7TF 1355.7TF  0.45  PASS
+wo_bwd_dX    NT BF16   4096x768x768       | 0.00e+00  0.00e+00  0.00e+00  | skip   n/a   |  390.1TF  738.7TF  0.53  PASS
+qkv_bwd_dX   NT RES    4096x768x2304      | 0.00e+00  0.00e+00  0.00e+00  | skip   n/a   |  550.1TF 1226.6TF  0.45  PASS
+head_bwd_dX  NN BF16   4096x768x100352    | 0.00e+00  0.00e+00  0.00e+00  | skip   n/a   |  652.8TF 1676.7TF  0.39  PASS
+dW_qkv       TN F32    768x2304x4096      | 0.00e+00  0.00e+00  0.00e+00  | skip   n/a   |  341.7TF 1053.0TF  0.32  PASS
+dW_o         TN F32    768x768x4096       | 0.00e+00  0.00e+00  0.00e+00  | skip   n/a   |  112.9TF  602.2TF  0.19  PASS
+dW_up        TN F32    768x3072x4096      | 0.00e+00  0.00e+00  0.00e+00  | skip   n/a   |  452.8TF 1325.5TF  0.34  PASS
+dW_down      TN F32    3072x768x4096      | 0.00e+00  0.00e+00  0.00e+00  | skip   n/a   |  442.9TF 1362.0TF  0.33  PASS
+dwte         TN F32    100352x768x4096    | 0.00e+00  0.00e+00  0.00e+00  | skip   n/a   |  665.2TF 1621.2TF  0.41  PASS
+OVERALL PASS
+
+$ cd /tmp && timeout -s KILL 90 bash -c "/tmp/bin/t_s128n2_100f --only qkv_fwd --nobench | grep -v kernel | tail -2" 2>&1 | tail -400   [1.1s rc=0]
+qkv_fwd      NN BF16   4096x2304x768      | 2.58e-03  1.41e-03  2.58e-03  | bitexact n/a   |    0.0TF    0.0TF  0.00  PASS
+OVERALL PASS
+
+$ cd /tmp && timeout -s KILL 90 bash -c "/tmp/bin/t_s128n2_100f --only wo_fwd --nobench | grep -v kernel | tail -2" 2>&1 | tail -400   [1.0s rc=0]
+wo_fwd       NN RES    4096x768x768       | 2.19e-03  1.41e-03  2.61e-03  | bitexact ok    |    0.0TF    0.0TF  0.00  PASS
+OVERALL PASS
+
+$ cd /tmp && timeout -s KILL 90 bash -c "/tmp/bin/t_s128n2_100f --only up_fwd --nobench | grep -v kernel | tail -2" 2>&1 | tail -400   [1.1s rc=0]
+up_fwd       NN GELU   4096x3072x768      | 2.61e-03  1.45e-03  2.27e-03  | bitexact n/a   |    0.0TF    0.0TF  0.00  PASS
+OVERALL PASS
+
+$ cd /tmp && timeout -s KILL 90 bash -c "/tmp/bin/t_s128n2_100f --only down_fwd --nobench | grep -v kernel | tail -2" 2>&1 | tail -400   [1.1s rc=0]
+down_fwd     NN RES    4096x768x3072      | 2.18e-03  1.41e-03  2.78e-03  | bitexact ok    |    0.0TF    0.0TF  0.00  PASS
+OVERALL PASS
+
+$ cd /tmp && timeout -s KILL 90 bash -c "/tmp/bin/t_s128n2_100f --only down_bwd_dX --nobench | grep -v kernel | tail -2" 2>&1 | tail -400   [1.1s rc=0]
+down_bwd_dX  NT DGELU  4096x3072x768      | 2.35e-03  1.41e-03  2.41e-03  | bitexact n/a   |    0.0TF    0.0TF  0.00  PASS
+OVERALL PASS
+
+$ cd /tmp && timeout -s KILL 90 bash -c "/tmp/bin/t_s128n2_100f --only wo_bwd_dX --nobench | grep -v kernel | tail -2" 2>&1 | tail -400   [1.1s rc=0]
+wo_bwd_dX    NT BF16   4096x768x768       | 2.56e-03  1.41e-03  2.56e-03  | bitexact n/a   |    0.0TF    0.0TF  0.00  PASS
+OVERALL PASS
+
+$ cd /tmp && timeout -s KILL 90 bash -c "/tmp/bin/t_s128n2_100f --only dW_o --nobench | grep -v kernel | tail -2" 2>&1 | tail -400   [0.7s rc=0]
+dW_o         TN F32    768x768x4096       | 3.16e-06  1.24e-06  3.16e-06  | bitexact n/a   |    0.0TF    0.0TF  0.00  PASS
+OVERALL PASS
+
+$ cd /tmp && timeout -s KILL 90 bash -c "/tmp/bin/t_s128n2_100f --only dW_qkv --nobench | grep -v kernel | tail -2" 2>&1 | tail -400   [0.9s rc=0]
+dW_qkv       TN F32    768x2304x4096      | 3.26e-06  1.24e-06  3.26e-06  | bitexact n/a   |    0.0TF    0.0TF  0.00  PASS
+OVERALL PASS
+
+$ cd /tmp && timeout -s KILL 90 bash -c "/tmp/bin/t_s256n1_100f --only qkv_fwd --nobench | grep -v kernel | tail -2" 2>&1 | tail -400   [1.1s rc=0]
+qkv_fwd      NN BF16   4096x2304x768      | 2.58e-03  1.41e-03  2.58e-03  | bitexact n/a   |    0.0TF    0.0TF  0.00  PASS
+OVERALL PASS
+
+$ cd /tmp && timeout -s KILL 90 bash -c "/tmp/bin/t_s256n1_100f --only wo_fwd --nobench | grep -v kernel | tail -2" 2>&1 | tail -400   [1.0s rc=0]
+wo_fwd       NN RES    4096x768x768       | 2.19e-03  1.41e-03  2.61e-03  | bitexact ok    |    0.0TF    0.0TF  0.00  PASS
+OVERALL PASS
+
+$ cd /tmp && timeout -s KILL 90 bash -c "/tmp/bin/t_s256n1_100f --only up_fwd --nobench | grep -v kernel | tail -2" 2>&1 | tail -400   [1.1s rc=0]
+up_fwd       NN GELU   4096x3072x768      | 2.61e-03  1.45e-03  2.27e-03  | bitexact n/a   |    0.0TF    0.0TF  0.00  PASS
+OVERALL PASS
+
+$ cd /tmp && timeout -s KILL 90 bash -c "/tmp/bin/t_s256n1_100f --only down_fwd --nobench | grep -v kernel | tail -2" 2>&1 | tail -400   [1.1s rc=0]
+down_fwd     NN RES    4096x768x3072      | 2.18e-03  1.41e-03  2.78e-03  | bitexact ok    |    0.0TF    0.0TF  0.00  PASS
+OVERALL PASS
+
+$ cd /tmp && timeout -s KILL 90 bash -c "/tmp/bin/t_s256n1_100f --only down_bwd_dX --nobench | grep -v kernel | tail -2" 2>&1 | tail -400   [1.0s rc=0]
+down_bwd_dX  NT DGELU  4096x3072x768      | 2.35e-03  1.41e-03  2.41e-03  | bitexact n/a   |    0.0TF    0.0TF  0.00  PASS
+OVERALL PASS
+
+$ cd /tmp && timeout -s KILL 90 bash -c "/tmp/bin/t_s256n1_100f --only wo_bwd_dX --nobench | grep -v kernel | tail -2" 2>&1 | tail -400   [1.1s rc=0]
+wo_bwd_dX    NT BF16   4096x768x768       | 2.56e-03  1.41e-03  2.56e-03  | bitexact n/a   |    0.0TF    0.0TF  0.00  PASS
+OVERALL PASS
+
+$ cd /tmp && timeout -s KILL 90 bash -c "/tmp/bin/t_s256n1_100f --only dW_o --nobench | grep -v kernel | tail -2" 2>&1 | tail -400   [0.7s rc=0]
+dW_o         TN F32    768x768x4096       | 3.16e-06  1.24e-06  3.16e-06  | bitexact n/a   |    0.0TF    0.0TF  0.00  PASS
+OVERALL PASS
+
+$ cd /tmp && timeout -s KILL 90 bash -c "/tmp/bin/t_s256n1_100f --only dW_qkv --nobench | grep -v kernel | tail -2" 2>&1 | tail -400   [0.8s rc=0]
+dW_qkv       TN F32    768x2304x4096      | 3.26e-06  1.24e-06  3.26e-06  | bitexact n/a   |    0.0TF    0.0TF  0.00  PASS
+OVERALL PASS

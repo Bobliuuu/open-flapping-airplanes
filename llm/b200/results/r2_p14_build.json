@@ -1,0 +1,18 @@
+{
+ "b_dbg": {
+  "rc": 0,
+  "tail": "$ cd /src/llm/b200/megakernel && GENCODE='-gencode arch=compute_100f,code=sm_100f' NODOOM=1 ./build_r2.sh sm_100f ofa_r2_tcdbg -DOFA_GEMM_BACKEND=2 -DG2_FORCE_TC -DG2_DEBUG 2>&1 | tail -3   [20.6s rc=0]\n  Used 128 registers, used 1 barriers\n  nvcc warnings: 12\nbuilt 2128576 ofa_r2_tcdbg\n"
+ },
+ "b_tc": {
+  "rc": 0,
+  "tail": "$ cd /src/llm/b200/megakernel && GENCODE='-gencode arch=compute_100f,code=sm_100f' NODOOM=1 ./build_r2.sh sm_100f ofa_r2_tc -DOFA_GEMM_BACKEND=2 -DG2_FORCE_TC 2>&1 | tail -3   [20.2s rc=0]\n  Used 128 registers, used 1 barriers\n  nvcc warnings: 9\nbuilt 2067088 ofa_r2_tc\n"
+ },
+ "ofa_r2_tcdbg": {
+  "published": true,
+  "sass": "|UTMALDG|UTCBAR|LDTM'; cuobjdump -lelf /vol/bin2/ofa_r2_tcdbg | head -3; cuobjdump -lptx /vol/bin2/ofa_r2_tcdbg | head -3   [1.2s rc=0]\n150\nELF file    1: ofa_r2_tcdbg.1.sm_100.cubin\ncuobjdump info    : No PTX file found to extract from '/vol/bin2/ofa_r2_tcdbg'. You may try with -all option."
+ },
+ "ofa_r2_tc": {
+  "published": true,
+  "sass": " -E 'UTCHMMA|UTMALDG|UTCBAR|LDTM'; cuobjdump -lelf /vol/bin2/ofa_r2_tc | head -3; cuobjdump -lptx /vol/bin2/ofa_r2_tc | head -3   [1.1s rc=0]\n150\nELF file    1: ofa_r2_tc.1.sm_100.cubin\ncuobjdump info    : No PTX file found to extract from '/vol/bin2/ofa_r2_tc'. You may try with -all option."
+ }
+}

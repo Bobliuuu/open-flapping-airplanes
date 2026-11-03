@@ -307,3 +307,143 @@ def gemm_test():
     R["wall_s"] = time.time() - t0; R["cost_usd_est"] = R["wall_s"] * RATE
     json.dump(R, open(f"{V}/gemm_results.json", "w"), indent=1); vol.commit()
     return {k: (v if not isinstance(v, str) else v[-1200:]) for k, v in R.items()}
+
+
+@app.function(image=src, volumes={V: vol}, cpu=4, timeout=600)
+def sass_check():
+    vol.reload(); out = {}
+    for b in ["t_mma", "t_nt", "t_all", "ofa_tc_100a", "ofa_mma_100a"]:
+        rc, o = sh(f"cuobjdump -sass /vol/bin/{b} 2>/dev/null | grep -c -E 'UTCHMMA|UTMALDG|UTCBAR|LDTM'; cuobjdump -lelf /vol/bin/{b} | head -3; cuobjdump -lptx /vol/bin/{b} | head -3")
+        out[b] = o.strip()
+    # does the sm_100a compile define the feature macro under nvcc 13.0?
+    open("/tmp/m.cu", "w").write('#include <cstdio>\n__global__ void k(){\n#if defined(__CUDA_ARCH_FEAT_SM100_ALL)\n printf("FEAT_SM100_ALL\\n");\n#elif defined(__CUDA_ARCH_FEAT_SM103_ALL)\n printf("FEAT_SM103_ALL\\n");\n#elif defined(__CUDA_ARCH_FAMILY_SPECIFIC)\n printf("FAMILY %d\\n", __CUDA_ARCH_FAMILY_SPECIFIC);\n#else\n printf("NO_FEAT\\n");\n#endif\n}\nint main(){k<<<1,1>>>();cudaDeviceSynchronize();}\n')
+    for a in ["sm_100a", "sm_103a", "sm_100f"]:
+        rc, o = sh(f"cd /tmp && nvcc -arch={a} -o m_{a} m.cu && echo built; nvcc -arch={a} -E -dM m.cu 2>/dev/null | grep -i 'ARCH_FEAT\\|FAMILY' | head -5")
+        out["macro_" + a] = o.strip()
+    return out
+
+
+# ---------------------------------------------------------------- round 2: sm_103a native tcgen05 (patched feature-macro guard, copy only), config F megakernel, F init
+@app.function(image=src, volumes={V: vol}, cpu=8, memory=16384, timeout=2400)
+def build2():
+    import shutil
+    sh("mkdir -p /src/llm && for d in gemm attention elementwise decode; do ln -sfn /src/$d /src/llm/$d; done; rm -rf /src/llm/b200p; cp -r /src/b200 /src/llm/b200p; rm -rf /src/llm/b200; ln -sfn /src/b200 /src/llm/b200")
+    # patched COPY: accept the sm_103a feature macro as well (the original guard only knows __CUDA_ARCH_FEAT_SM100_ALL)
+    sh("cd /src/llm/b200p/gemm_tcgen05 && sed -i 's/defined(__CUDA_ARCH_FEAT_SM100_ALL)/(defined(__CUDA_ARCH_FEAT_SM100_ALL) || defined(__CUDA_ARCH_FEAT_SM103_ALL))/g' gemm_sm100.cuh && grep -n 'FEAT_SM10' gemm_sm100.cuh | head")
+    mk = "/src/llm/b200/megakernel"; mkp = "/src/llm/b200p/megakernel"; gtp = "/src/llm/b200p/gemm_tcgen05"
+    jobs = {
+      "ofa_mma_F_100a": f"cd {mk} && MODEL=F NODOOM=1 ./build.sh sm_100a ofa_mma_F_100a",
+      "ofa_mma_F_103a": f"cd {mk} && MODEL=F NODOOM=1 ./build.sh sm_103a ofa_mma_F_103a",
+      "ofa_tc_103a": f"cd {mkp} && NODOOM=1 ./build.sh sm_103a ofa_tc_103a -DOFA_GEMM_BACKEND=1",
+      "t103_nt": f"cd {gtp} && nvcc -arch=sm_103a -O3 -std=c++17 -DOFA_GEMM_BACKEND=1 -DGEMM100_LAYOUT_MASK=2 -Xptxas -v -o t103_nt test_gemm_sm100.cu -lcublas",
+      "t103_all": f"cd {gtp} && nvcc -arch=sm_103a -O3 -std=c++17 -DOFA_GEMM_BACKEND=1 -Xptxas -v -o t103_all test_gemm_sm100.cu -lcublas",
+    }
+    import concurrent.futures as cf
+    res = {}
+    def run(k): rc, o = sh(jobs[k]); return k, rc, o
+    with cf.ThreadPoolExecutor(5) as ex:
+        for k, rc, o in ex.map(run, list(jobs)): res[k] = {"rc": rc, "tail": o[-900:]}
+    loc = {"ofa_mma_F_100a": mk, "ofa_mma_F_103a": mk, "ofa_tc_103a": mkp, "t103_nt": gtp, "t103_all": gtp}
+    for k, d in loc.items():
+        ok = os.path.exists(f"{d}/{k}"); res[k]["built"] = ok
+        if ok: shutil.copy(f"{d}/{k}", f"{V}/bin/{k}")
+    for b in ["t103_nt", "t103_all", "ofa_tc_103a"]:
+        if res[b]["built"]: rc, o = sh(f"cuobjdump -sass {V}/bin/{b} 2>/dev/null | grep -c -E 'UTCHMMA|UTMALDG|UTCBAR|LDTM'"); res[b]["tcgen05_sass_hits"] = o.strip().splitlines()[-1]
+    vol.commit(); return res
+
+@app.function(image=prep_img, volumes={V: vol}, cpu=8, memory=32768, timeout=1800)
+def prep_F():
+    D = f"{V}/data"; os.environ["DATA_DIR"] = D; os.environ["MODEL"] = "F"
+    import sys; sys.path.insert(0, "/src/b200/baseline"); import common, torch
+    w = common.init_weights(); parts = [w["wte"], w["wpe"]]
+    for l in range(common.L):
+        p = f"L{l:02d}_"; parts += [w[p+"gamma1"], w[p+"Wqkv"], w[p+"Wo"], w[p+"gamma2"], w[p+"Wup"], w[p+"Wdown"]]
+    parts.append(w["gamma_f"]); flat = torch.cat([x.reshape(-1) for x in parts]).numpy().astype("float32"); flat.tofile(f"{D}/init_flat_F.f32")
+    print("init_flat_F params", flat.size); vol.commit(); return int(flat.size)
+
+
+@app.function(gpu=GPU, image=src, volumes={V: vol}, timeout=2400)
+def run2(f_steps: int = 4000):
+    t0 = time.time(); vol.reload(); R = {}
+    sh("mkdir -p /tmp/bin && cp /vol/bin/* /tmp/bin/ && chmod +x /tmp/bin/*; nvidia-smi --query-gpu=name,compute_cap --format=csv,noheader")
+    D = f"{V}/data"
+    def go(name, cmd, to):
+        rc, o = sh(f"cd /tmp && timeout -s KILL {to} {cmd} 2>&1 | tail -120")
+        R[name] = o[-6000:]; open(f"{V}/r2_{name}.txt", "w").write(o); vol.commit(); return o
+    base = f"--vocab {D}/cl100k_vocab.bin --prompt {D}/prompt_ids.txt --prompt-text 'Once upon a time' --data {D}/tinystories_cl100k_train.u32 --starts {D}/starts_4000.u32 --no-doom"
+    # (1) config F megakernel, mma.sync backend, FA split 116/24/8 (Doom SMs idle)
+    go("F_split_100a", f"/tmp/bin/ofa_mma_F_100a --split b200 {base} --init {D}/init_flat_F.f32 --steps {f_steps} --loss-out /tmp/lF.txt", 1100)
+    # (2) is the sm_100a tcgen05 test binary really running tcgen05 SASS? forbid PTX JIT
+    go("t_all_nojit_logits", "env CUDA_DISABLE_PTX_JIT=1 /tmp/bin/t_all --only logits", 120)
+    # (3) native sm_103a tcgen05 (patched copy of the guard), NT logits first, then everything
+    o = go("t103_nt_logits", "/tmp/bin/t103_nt --only logits", 90)
+    if "PASS" in o and "FAIL" not in o:
+        go("t103_nt_all", "/tmp/bin/t103_nt", 240)
+        go("t103_all", "/tmp/bin/t103_all", 400)
+    # (4) megakernel with the tcgen05 backend (S): 20-step loss check, then 600 steps timing
+    go("tc_loss20", f"/tmp/bin/ofa_tc_103a --steps 20 --data {D}/tinystories_cl100k_train.u32 --init {D}/init_flat_S.f32 --starts {D}/starts_4000.u32 --no-doom --loss-out /tmp/ltc.txt", 90)
+    sh("head -3 /tmp/ltc.txt; tail -2 /tmp/ltc.txt"); R["tc_loss20_file"] = open("/tmp/ltc.txt").read() if os.path.exists("/tmp/ltc.txt") else None
+    if R["tc_loss20_file"] and "nan" not in R["tc_loss20_file"].lower():
+        go("tc_split600", f"/tmp/bin/ofa_tc_103a --split b200 {base} --init {D}/init_flat_S.f32 --steps 600", 240)
+    R["wall_s"] = time.time() - t0; R["cost_usd_est"] = R["wall_s"] * RATE
+    json.dump(R, open(f"{V}/r2_results.json", "w"), indent=1); vol.commit()
+    return {k: (v if not isinstance(v, str) else v[-700:]) for k, v in R.items()}
+
+# F baselines (PyTorch eager, SDPA attention; no TE): full GPU and MPS 116 SMs, one rep each
+@app.function(gpu=GPU, image=bl_img, volumes={V: vol}, timeout=2400)
+def bl_gpu_F():
+    t0 = time.time(); vol.reload()
+    jobs = [("pytorch_F_full_r1", 0, "MODEL=F python train_pytorch.py --steps 4000 --out \\$OUT --tag full"),
+            ("pytorch_F_mps_r1", 79, "MODEL=F python train_pytorch.py --steps 4000 --out \\$OUT --tag mps116")]
+    res = _baseline_driver(jobs, "gF")
+    res["wall_s"] = time.time() - t0; res["cost_usd_est"] = res["wall_s"] * RATE
+    json.dump(res, open(f"{V}/bl_gF_summary.json", "w"), indent=1); vol.commit(); return res
+
+
+@app.function(gpu=GPU, image=src, volumes={V: vol}, timeout=1500)
+def run3():
+    # sm_100a SASS only (PTX JIT forbidden: the generic compute_100 PTX embedded in the test binaries has no tcgen05 and silently JITs to mma.sync)
+    t0 = time.time(); vol.reload(); R = {}
+    sh("mkdir -p /tmp/bin && cp /vol/bin/* /tmp/bin/ && chmod +x /tmp/bin/*")
+    D = f"{V}/data"
+    def go(name, cmd, to):
+        rc, o = sh(f"cd /tmp && timeout -s KILL {to} {cmd} 2>&1 | tail -120")
+        R[name] = o[-6000:]; open(f"{V}/r3_{name}.txt", "w").write(o); vol.commit(); return o
+    E = "env CUDA_DISABLE_PTX_JIT=1"
+    o = go("t_nt", f"{E} /tmp/bin/t_nt", 240)
+    if "FAIL" not in o and "OVERALL PASS" in o:
+        go("t_nn", f"{E} /tmp/bin/t_nn", 240)
+        go("t_all", f"{E} /tmp/bin/t_all", 300)
+    base = f"--vocab {D}/cl100k_vocab.bin --prompt {D}/prompt_ids.txt --prompt-text 'Once upon a time' --data {D}/tinystories_cl100k_train.u32 --init {D}/init_flat_S.f32 --starts {D}/starts_4000.u32 --no-doom"
+    go("tc_loss20", f"{E} /tmp/bin/ofa_tc_100a --steps 20 --data {D}/tinystories_cl100k_train.u32 --init {D}/init_flat_S.f32 --starts {D}/starts_4000.u32 --no-doom --loss-out /tmp/ltc.txt", 120)
+    R["tc_loss20_file"] = open("/tmp/ltc.txt").read() if os.path.exists("/tmp/ltc.txt") else None
+    if R["tc_loss20_file"] and "nan" not in R["tc_loss20_file"].lower():
+        go("tc_split600", f"{E} /tmp/bin/ofa_tc_100a --split b200 {base} --steps 600", 240)
+    R["wall_s"] = time.time() - t0; R["cost_usd_est"] = R["wall_s"] * RATE
+    json.dump(R, open(f"{V}/r3_results.json", "w"), indent=1); vol.commit()
+    return {k: (v if not isinstance(v, str) else v[-500:]) for k, v in R.items()}
+
+
+@app.function(gpu=GPU, image=src, volumes={V: vol}, timeout=900)
+def run4():
+    t0 = time.time(); vol.reload(); R = {}
+    sh("mkdir -p /tmp/bin && cp /vol/bin/* /tmp/bin/ && chmod +x /tmp/bin/*")
+    D = f"{V}/data"
+    cases = "qkv_fwd wo_fwd up_fwd down_fwd logits down_bwd_dX up_bwd_dX wo_bwd_dX qkv_bwd_dX head_bwd_dX dW_qkv dW_o dW_up dW_down dwte".split()
+    per = {}
+    for c in cases:   # one process per case, PTX JIT forbidden: which cases have usable sm_100a SASS (tcgen05) on this device?
+        rc, o = sh(f"cd /tmp && CUDA_DISABLE_PTX_JIT=1 timeout -s KILL 60 /tmp/bin/t_all --only {c} 2>&1 | grep -E '^{c}|CUDA error|regs' | tail -3")
+        per[c] = o.strip()[-400:]
+    R["per_case_nojit"] = per
+    ld = f"--steps 20 --data {D}/tinystories_cl100k_train.u32 --init {D}/init_flat_S.f32 --starts {D}/starts_4000.u32 --no-doom"
+    for b in ["ofa_mma_100a", "ofa_tc_100a"]:
+        rc, o = sh(f"cd /tmp && rm -f /tmp/l.txt; CUDA_DISABLE_PTX_JIT=1 timeout -s KILL 90 /tmp/bin/{b} {ld} --loss-out /tmp/l.txt 2>&1 | grep -E 'CUDA error|steady|loss:' | tail -3")
+        R[b + "_nojit_loss20"] = o.strip()[-400:]
+    rc, o = sh(f"cd /tmp && timeout -s KILL 90 /tmp/bin/ofa_tc_100a {ld} --loss-out /tmp/l2.txt 2>&1 | grep -E 'CUDA error|steady|loss:' | tail -3; tail -2 /tmp/l2.txt")
+    R["ofa_tc_100a_jit_loss20"] = o.strip()[-400:]
+    base = f"--vocab {D}/cl100k_vocab.bin --prompt {D}/prompt_ids.txt --prompt-text 'Once upon a time' --data {D}/tinystories_cl100k_train.u32 --init {D}/init_flat_S.f32 --starts {D}/starts_4000.u32 --no-doom"
+    rc, o = sh(f"cd /tmp && timeout -s KILL 240 /tmp/bin/ofa_tc_100a --split b200 {base} --steps 600 2>&1 | grep -E 'CUDA error|steady|loss:|decode:|SM util|partition' | tail -6")
+    R["ofa_tc_100a_jit_split600"] = o.strip()[-900:]
+    R["wall_s"] = time.time() - t0; R["cost_usd_est"] = R["wall_s"] * RATE
+    json.dump(R, open(f"{V}/r4_results.json", "w"), indent=1); vol.commit()
+    return R

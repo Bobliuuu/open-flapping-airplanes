@@ -1,0 +1,111 @@
+$ nvidia-smi --query-gpu=name,driver_version,compute_cap,clocks.max.sm --format=csv,noheader   [0.1s rc=0]
+NVIDIA B300 SXM6 AC, 610.57.04, 10.3, 2032 MHz
+
+$ cd /tmp && timeout -s KILL 150 bash -c "echo s128n1; /tmp/bin/t_s128n1_100f --only qkv_fwd --iters 40 | grep -E ' (PASS|FAIL)$' | cut -c1-24,100-150 ; /tmp/bin/t_s128n1_100f --only up_fwd --iters 40 | grep -E ' (PASS|FAIL)$' | cut -c1-24,100-150 ; /tmp/bin/t_s128n1_100f --only down_fwd --iters 40 | grep -E ' (PASS|FAIL)$' | cut -c1-24,100-150 ; /tmp/bin/t_s128n1_100f --only logits --iters 40 | grep -E ' (PASS|FAIL)$' | cut -c1-24,100-150 ; /tmp/bin/t_s128n1_100f --only head_bwd --iters 40 | grep -E ' (PASS|FAIL)$' | cut -c1-24,100-150 ; /tmp/bin/t_s128n1_100f --only dW_up --iters 40 | grep -E ' (PASS|FAIL)$' | cut -c1-24,100-150 ; /tmp/bin/t_s128n1_100f --only dwte --iters 40 | grep -E ' (PASS|FAIL)$' | cut -c1-24,100-150 ; /tmp/bin/t_s128n1_100f --only wo_fwd --iters 40 | grep -E ' (PASS|FAIL)$' | cut -c1-24,100-150" 2>&1 | tail -400   [7.3s rc=0]
+s128n1
+qkv_fwd      NN BF16   4TF 1284.3TF  0.37  PASS
+OVERALL PASS
+up_fwd       NN GELU   4TF 1239.1TF  0.27  PASS
+OVERALL PASS
+down_fwd     NN RES    4TF 1364.4TF  0.36  PASS
+OVERALL PASS
+logits       NT F32    4TF 1327.9TF  0.29  PASS
+OVERALL PASS
+head_bwd_dX  NN BF16   4TF 1646.0TF  0.35  PASS
+OVERALL PASS
+dW_up        TN F32    7TF 1283.4TF  0.54  PASS
+OVERALL PASS
+dwte         TN F32    1TF 1596.8TF  0.32  PASS
+OVERALL PASS
+wo_fwd       NN RES    4TF  763.1TF  0.33  PASS
+OVERALL PASS
+
+$ cd /tmp && timeout -s KILL 150 bash -c "echo s128n2; /tmp/bin/t_s128n2_100f --only qkv_fwd --iters 40 | grep -E ' (PASS|FAIL)$' | cut -c1-24,100-150 ; /tmp/bin/t_s128n2_100f --only up_fwd --iters 40 | grep -E ' (PASS|FAIL)$' | cut -c1-24,100-150 ; /tmp/bin/t_s128n2_100f --only down_fwd --iters 40 | grep -E ' (PASS|FAIL)$' | cut -c1-24,100-150 ; /tmp/bin/t_s128n2_100f --only logits --iters 40 | grep -E ' (PASS|FAIL)$' | cut -c1-24,100-150 ; /tmp/bin/t_s128n2_100f --only head_bwd --iters 40 | grep -E ' (PASS|FAIL)$' | cut -c1-24,100-150 ; /tmp/bin/t_s128n2_100f --only dW_up --iters 40 | grep -E ' (PASS|FAIL)$' | cut -c1-24,100-150 ; /tmp/bin/t_s128n2_100f --only dwte --iters 40 | grep -E ' (PASS|FAIL)$' | cut -c1-24,100-150 ; /tmp/bin/t_s128n2_100f --only wo_fwd --iters 40 | grep -E ' (PASS|FAIL)$' | cut -c1-24,100-150" 2>&1 | tail -400   [7.2s rc=0]
+s128n2
+qkv_fwd      NN BF16   4TF 1290.7TF  0.47  PASS
+OVERALL PASS
+up_fwd       NN GELU   4TF 1237.5TF  0.37  PASS
+OVERALL PASS
+down_fwd     NN RES    4TF 1366.8TF  0.42  PASS
+OVERALL PASS
+logits       NT F32    4TF 1333.3TF  0.38  PASS
+OVERALL PASS
+head_bwd_dX  NN BF16   4TF 1647.5TF  0.35  PASS
+OVERALL PASS
+dW_up        TN F32    7TF 1288.3TF  0.33  PASS
+OVERALL PASS
+dwte         TN F32    1TF 1590.8TF  0.35  PASS
+OVERALL PASS
+wo_fwd       NN RES    4TF  761.2TF  0.42  PASS
+OVERALL PASS
+
+$ cd /tmp && timeout -s KILL 150 bash -c "echo s256n1; /tmp/bin/t_s256n1_100f --only qkv_fwd --iters 40 | grep -E ' (PASS|FAIL)$' | cut -c1-24,100-150 ; /tmp/bin/t_s256n1_100f --only up_fwd --iters 40 | grep -E ' (PASS|FAIL)$' | cut -c1-24,100-150 ; /tmp/bin/t_s256n1_100f --only down_fwd --iters 40 | grep -E ' (PASS|FAIL)$' | cut -c1-24,100-150 ; /tmp/bin/t_s256n1_100f --only logits --iters 40 | grep -E ' (PASS|FAIL)$' | cut -c1-24,100-150 ; /tmp/bin/t_s256n1_100f --only head_bwd --iters 40 | grep -E ' (PASS|FAIL)$' | cut -c1-24,100-150 ; /tmp/bin/t_s256n1_100f --only dW_up --iters 40 | grep -E ' (PASS|FAIL)$' | cut -c1-24,100-150 ; /tmp/bin/t_s256n1_100f --only dwte --iters 40 | grep -E ' (PASS|FAIL)$' | cut -c1-24,100-150 ; /tmp/bin/t_s256n1_100f --only wo_fwd --iters 40 | grep -E ' (PASS|FAIL)$' | cut -c1-24,100-150" 2>&1 | tail -400   [7.2s rc=0]
+s256n1
+qkv_fwd      NN BF16   4TF 1294.1TF  0.46  PASS
+OVERALL PASS
+up_fwd       NN GELU   4TF 1237.0TF  0.32  PASS
+OVERALL PASS
+down_fwd     NN RES    4TF 1364.1TF  0.46  PASS
+OVERALL PASS
+logits       NT F32    4TF 1321.0TF  0.34  PASS
+OVERALL PASS
+head_bwd_dX  NN BF16   4TF 1625.9TF  0.40  PASS
+OVERALL PASS
+dW_up        TN F32    7TF 1289.9TF  0.35  PASS
+OVERALL PASS
+dwte         TN F32    1TF 1586.5TF  0.42  PASS
+OVERALL PASS
+wo_fwd       NN RES    4TF  760.4TF  0.42  PASS
+OVERALL PASS
+
+$ cd /tmp && timeout -s KILL 150 bash -c "echo s128n2_noepi; /tmp/bin/t_s128n2_noepi_100f --only qkv_fwd --iters 40 | grep -E ' (PASS|FAIL)$' | cut -c1-24,100-150 ; /tmp/bin/t_s128n2_noepi_100f --only up_fwd --iters 40 | grep -E ' (PASS|FAIL)$' | cut -c1-24,100-150 ; /tmp/bin/t_s128n2_noepi_100f --only down_fwd --iters 40 | grep -E ' (PASS|FAIL)$' | cut -c1-24,100-150 ; /tmp/bin/t_s128n2_noepi_100f --only logits --iters 40 | grep -E ' (PASS|FAIL)$' | cut -c1-24,100-150 ; /tmp/bin/t_s128n2_noepi_100f --only head_bwd --iters 40 | grep -E ' (PASS|FAIL)$' | cut -c1-24,100-150 ; /tmp/bin/t_s128n2_noepi_100f --only dW_up --iters 40 | grep -E ' (PASS|FAIL)$' | cut -c1-24,100-150 ; /tmp/bin/t_s128n2_noepi_100f --only dwte --iters 40 | grep -E ' (PASS|FAIL)$' | cut -c1-24,100-150 ; /tmp/bin/t_s128n2_noepi_100f --only wo_fwd --iters 40 | grep -E ' (PASS|FAIL)$' | cut -c1-24,100-150" 2>&1 | tail -400   [7.0s rc=0]
+s128n2_noepi
+qkv_fwd      NN BF16   4TF 1290.0TF  0.56  FAIL
+up_fwd       NN GELU   4TF 1238.4TF  0.54  FAIL
+down_fwd     NN RES    4TF 1369.5TF  0.47  FAIL
+logits       NT F32    4TF 1337.1TF  0.57  FAIL
+head_bwd_dX  NN BF16   4TF 1648.5TF  0.35  FAIL
+dW_up        TN F32    7TF 1286.9TF  0.39  FAIL
+dwte         TN F32    1TF 1554.6TF  0.44  FAIL
+wo_fwd       NN RES    4TF  763.7TF  0.62  FAIL
+
+$ cd /tmp && timeout -s KILL 150 bash -c "echo s256n1_noepi; /tmp/bin/t_s256n1_noepi_100f --only qkv_fwd --iters 40 | grep -E ' (PASS|FAIL)$' | cut -c1-24,100-150 ; /tmp/bin/t_s256n1_noepi_100f --only up_fwd --iters 40 | grep -E ' (PASS|FAIL)$' | cut -c1-24,100-150 ; /tmp/bin/t_s256n1_noepi_100f --only down_fwd --iters 40 | grep -E ' (PASS|FAIL)$' | cut -c1-24,100-150 ; /tmp/bin/t_s256n1_noepi_100f --only logits --iters 40 | grep -E ' (PASS|FAIL)$' | cut -c1-24,100-150 ; /tmp/bin/t_s256n1_noepi_100f --only head_bwd --iters 40 | grep -E ' (PASS|FAIL)$' | cut -c1-24,100-150 ; /tmp/bin/t_s256n1_noepi_100f --only dW_up --iters 40 | grep -E ' (PASS|FAIL)$' | cut -c1-24,100-150 ; /tmp/bin/t_s256n1_noepi_100f --only dwte --iters 40 | grep -E ' (PASS|FAIL)$' | cut -c1-24,100-150 ; /tmp/bin/t_s256n1_noepi_100f --only wo_fwd --iters 40 | grep -E ' (PASS|FAIL)$' | cut -c1-24,100-150" 2>&1 | tail -400   [6.5s rc=0]
+s256n1_noepi
+qkv_fwd      NN BF16   4TF 1288.9TF  0.68  FAIL
+up_fwd       NN GELU   4TF 1239.5TF  0.66  FAIL
+down_fwd     NN RES    4TF 1365.3TF  0.59  FAIL
+logits       NT F32    4TF 1335.9TF  0.63  FAIL
+head_bwd_dX  NN BF16   4TF 1635.2TF  0.40  FAIL
+dW_up        TN F32    7TF 1289.7TF  0.48  FAIL
+dwte         TN F32    1TF 1564.8TF  0.58  FAIL
+wo_fwd       NN RES    4TF  759.6TF  0.75  FAIL
+
+$ cd /tmp && timeout -s KILL 150 bash -c "echo s128n1_noepi; /tmp/bin/t_s128n1_noepi_100f --only qkv_fwd --iters 40 | grep -E ' (PASS|FAIL)$' | cut -c1-24,100-150 ; /tmp/bin/t_s128n1_noepi_100f --only up_fwd --iters 40 | grep -E ' (PASS|FAIL)$' | cut -c1-24,100-150 ; /tmp/bin/t_s128n1_noepi_100f --only down_fwd --iters 40 | grep -E ' (PASS|FAIL)$' | cut -c1-24,100-150 ; /tmp/bin/t_s128n1_noepi_100f --only logits --iters 40 | grep -E ' (PASS|FAIL)$' | cut -c1-24,100-150 ; /tmp/bin/t_s128n1_noepi_100f --only head_bwd --iters 40 | grep -E ' (PASS|FAIL)$' | cut -c1-24,100-150 ; /tmp/bin/t_s128n1_noepi_100f --only dW_up --iters 40 | grep -E ' (PASS|FAIL)$' | cut -c1-24,100-150 ; /tmp/bin/t_s128n1_noepi_100f --only dwte --iters 40 | grep -E ' (PASS|FAIL)$' | cut -c1-24,100-150 ; /tmp/bin/t_s128n1_noepi_100f --only wo_fwd --iters 40 | grep -E ' (PASS|FAIL)$' | cut -c1-24,100-150" 2>&1 | tail -400   [7.2s rc=0]
+s128n1_noepi
+qkv_fwd      NN BF16   4TF 1293.4TF  0.46  FAIL
+up_fwd       NN GELU   4TF 1237.9TF  0.45  FAIL
+down_fwd     NN RES    4TF 1365.2TF  0.44  FAIL
+logits       NT F32    4TF 1325.7TF  0.46  FAIL
+head_bwd_dX  NN BF16   4TF 1653.4TF  0.35  FAIL
+dW_up        TN F32    7TF 1284.9TF  0.69  FAIL
+dwte         TN F32    1TF 1563.1TF  0.42  FAIL
+wo_fwd       NN RES    4TF  765.0TF  0.51  FAIL
+
+$ cd /tmp && timeout -s KILL 150 bash -c "echo s128n1_st2; /tmp/bin/t_s128n1_st2_100f --only qkv_fwd --iters 40 | grep -E ' (PASS|FAIL)$' | cut -c1-24,100-150 ; /tmp/bin/t_s128n1_st2_100f --only up_fwd --iters 40 | grep -E ' (PASS|FAIL)$' | cut -c1-24,100-150 ; /tmp/bin/t_s128n1_st2_100f --only down_fwd --iters 40 | grep -E ' (PASS|FAIL)$' | cut -c1-24,100-150 ; /tmp/bin/t_s128n1_st2_100f --only logits --iters 40 | grep -E ' (PASS|FAIL)$' | cut -c1-24,100-150 ; /tmp/bin/t_s128n1_st2_100f --only head_bwd --iters 40 | grep -E ' (PASS|FAIL)$' | cut -c1-24,100-150 ; /tmp/bin/t_s128n1_st2_100f --only dW_up --iters 40 | grep -E ' (PASS|FAIL)$' | cut -c1-24,100-150 ; /tmp/bin/t_s128n1_st2_100f --only dwte --iters 40 | grep -E ' (PASS|FAIL)$' | cut -c1-24,100-150 ; /tmp/bin/t_s128n1_st2_100f --only wo_fwd --iters 40 | grep -E ' (PASS|FAIL)$' | cut -c1-24,100-150" 2>&1 | tail -400   [7.2s rc=0]
+s128n1_st2
+qkv_fwd      NN BF16   4TF 1286.3TF  0.35  PASS
+OVERALL PASS
+up_fwd       NN GELU   4TF 1233.5TF  0.26  PASS
+OVERALL PASS
+down_fwd     NN RES    4TF 1365.5TF  0.33  PASS
+OVERALL PASS
+logits       NT F32    4TF 1327.5TF  0.26  PASS
+OVERALL PASS
+head_bwd_dX  NN BF16   4TF 1642.1TF  0.23  PASS
+OVERALL PASS
+dW_up        TN F32    7TF 1285.1TF  0.50  PASS
+OVERALL PASS
+dwte         TN F32    1TF 1596.2TF  0.26  PASS
+OVERALL PASS
+wo_fwd       NN RES    4TF  762.9TF  0.32  PASS
+OVERALL PASS

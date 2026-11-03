@@ -1,0 +1,14 @@
+{
+ "pytorch_F_full_r1": {
+  "rc": 0,
+  "wall_s": 83.7939395904541,
+  "summary": "pytorch_F_full_r1 rc=0 noisy=0 maxp=1: {\"model\": \"F\", \"model_params\": 407914496, \"tag\": \"full\", \"env\": {\"TRAIN_SMS\": 116, \"TOTAL_SMS\": 148, \"MPS_PCT\": null, \"torch\": \"2.13.0+cu130\", \"gpu\": \"NVIDIA B200\"}, \"steps\": 4000, \"seconds\": 71.50764"
+ },
+ "pytorch_F_mps_r1": {
+  "rc": 0,
+  "wall_s": 93.48587465286255,
+  "summary": "pytorch_F_mps_r1 rc=0 noisy=0 maxp=2: {\"model\": \"F\", \"model_params\": 407914496, \"tag\": \"mps116\", \"env\": {\"TRAIN_SMS\": 116, \"TOTAL_SMS\": 148, \"MPS_PCT\": \"79\", \"torch\": \"2.13.0+cu130\", \"gpu\": \"NVIDIA B200\"}, \"steps\": 4000, \"seconds\": 80.436"
+ },
+ "wall_s": 181.0712890625,
+ "cost_usd_est": 0.3143397578125
+}

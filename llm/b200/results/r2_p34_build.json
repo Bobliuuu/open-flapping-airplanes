@@ -1,0 +1,18 @@
+{
+ "b_t": {
+  "rc": 0,
+  "tail": "$ mkdir -p /tmp/o && cd /src/llm/b200/gemm_tcgen05 && ./make_test_r2.sh >/dev/null && nvcc -gencode arch=compute_100f,code=sm_100f -O3 -std=c++17 -DOFA_GEMM_BACKEND=2 -DG2_FORCE_TC -o /tmp/o/t_fin test_gemm_r2.cu -lcublas 2>&1 | grep -E 'error' | head -20   [12.4s rc=0]\n"
+ },
+ "b_tn": {
+  "rc": 0,
+  "tail": "$ mkdir -p /tmp/o && cd /src/llm/b200/gemm_tcgen05 && ./make_test_r2.sh >/dev/null && nvcc -gencode arch=compute_100f,code=sm_100f -O3 -std=c++17 -DOFA_GEMM_BACKEND=2 -DG2_FORCE_TC -DG2_NOEPI -o /tmp/o/t_noepi test_gemm_r2.cu -lcublas 2>&1 | grep -E 'error' | head -20   [12.1s rc=0]\n"
+ },
+ "t_fin": {
+  "published": true,
+  "sass": "|UTMALDG|UTCBAR|LDTM'; cuobjdump -lelf /vol/bin2/t_fin | head -3; cuobjdump -lptx /vol/bin2/t_fin | head -3   [2.0s rc=0]\n484\nELF file    1: t_fin.1.sm_100.cubin\nELF file    2: t_fin.2.sm_100.cubin\ncuobjdump info    : No PTX file found to extract from '/vol/bin2/t_fin'. You may try with -all option."
+ },
+ "t_noepi": {
+  "published": true,
+  "sass": "TCBAR|LDTM'; cuobjdump -lelf /vol/bin2/t_noepi | head -3; cuobjdump -lptx /vol/bin2/t_noepi | head -3   [2.0s rc=0]\n484\nELF file    1: t_noepi.1.sm_100.cubin\nELF file    2: t_noepi.2.sm_100.cubin\ncuobjdump info    : No PTX file found to extract from '/vol/bin2/t_noepi'. You may try with -all option."
+ }
+}

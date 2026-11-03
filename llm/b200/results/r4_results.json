@@ -1,0 +1,25 @@
+{
+ "per_case_nojit": {
+  "qkv_fwd": "[kernel L=0 E=0] regs grid=71 persist=76, local(spill)=0 B, static smem=0 B, dyn smem=100352 B\nqkv_fwd      NN BF16   4096x2304x768      | 2.58e-03  1.41e-03  2.58e-03  | bitexact n/a   |  253.0TF 1192.2TF  0.21  PASS",
+  "wo_fwd": "[kernel L=0 E=1] regs grid=48 persist=50, local(spill)=0 B, static smem=0 B, dyn smem=100352 B\nwo_fwd       NN RES    4096x768x768       | 2.19e-03  1.41e-03  2.61e-03  | bitexact ok    |  108.2TF  664.6TF  0.16  PASS",
+  "up_fwd": "[kernel L=0 E=2] regs grid=72 persist=108, local(spill)=0 B, static smem=0 B, dyn smem=100352 B\nup_fwd       NN GELU   4096x3072x768      | 2.61e-03  1.45e-03  2.27e-03  | bitexact n/a   |  150.6TF 1227.4TF  0.12  PASS",
+  "down_fwd": "[kernel L=0 E=1] regs grid=48 persist=50, local(spill)=0 B, static smem=0 B, dyn smem=100352 B\ndown_fwd     NN RES    4096x768x3072      | 2.18e-03  1.41e-03  2.78e-03  | bitexact ok    |  292.8TF 1228.1TF  0.24  PASS",
+  "logits": "[kernel L=1 E=4] regs grid=72 persist=77, local(spill)=0 B, static smem=0 B, dyn smem=100352 B\nlogits       NT F32    4096x100352x768    | 1.61e-06  5.65e-07  1.61e-06  | bitexact n/a   |  251.9TF 1197.4TF  0.21  PASS",
+  "down_bwd_dX": "[kernel L=1 E=3] regs grid=53 persist=56, local(spill)=0 B, static smem=0 B, dyn smem=100352 B\ndown_bwd_dX  NT DGELU  4096x3072x768      | 2.35e-03  1.41e-03  2.41e-03  | bitexact n/a   |  148.7TF 1226.0TF  0.12  PASS",
+  "up_bwd_dX": "[kernel L=1 E=1] regs grid=48 persist=50, local(spill)=0 B, static smem=0 B, dyn smem=100352 B\nup_bwd_dX    NT RES    4096x768x3072      | 2.22e-03  1.41e-03  2.33e-03  | bitexact ok    |  293.9TF 1235.6TF  0.24  PASS",
+  "wo_bwd_dX": "[kernel L=1 E=0] regs grid=71 persist=76, local(spill)=0 B, static smem=0 B, dyn smem=100352 B\nwo_bwd_dX    NT BF16   4096x768x768       | 2.56e-03  1.41e-03  2.56e-03  | bitexact n/a   |  169.9TF  635.1TF  0.27  PASS",
+  "qkv_bwd_dX": "[kernel L=1 E=1] regs grid=48 persist=50, local(spill)=0 B, static smem=0 B, dyn smem=100352 B\nqkv_bwd_dX   NT RES    4096x768x2304      | 2.46e-03  1.41e-03  2.78e-03  | bitexact ok    |  247.3TF 1121.9TF  0.22  PASS",
+  "head_bwd_dX": "[kernel L=0 E=0] regs grid=71 persist=76, local(spill)=0 B, static smem=0 B, dyn smem=100352 B\nhead_bwd_dX  NN BF16   4096x768x100352    | 3.26e-03  1.41e-03  3.26e-03  | bitexact n/a   |  558.2TF 1520.5TF  0.37  PASS",
+  "dW_qkv": "[kernel L=2 E=4] regs grid=72 persist=77, local(spill)=0 B, static smem=0 B, dyn smem=100352 B\ndW_qkv       TN F32    768x2304x4096      | 3.26e-06  1.24e-06  3.26e-06  | bitexact n/a   |  389.0TF 1000.5TF  0.39  PASS",
+  "dW_o": "[kernel L=2 E=4] regs grid=72 persist=77, local(spill)=0 B, static smem=0 B, dyn smem=100352 B\ndW_o         TN F32    768x768x4096       | 3.16e-06  1.24e-06  3.16e-06  | bitexact n/a   |  134.1TF  558.2TF  0.24  PASS",
+  "dW_up": "[kernel L=2 E=4] regs grid=72 persist=77, local(spill)=0 B, static smem=0 B, dyn smem=100352 B\ndW_up        TN F32    768x3072x4096      | 3.39e-06  1.24e-06  3.39e-06  | bitexact n/a   |  514.7TF 1276.4TF  0.40  PASS",
+  "dW_down": "[kernel L=2 E=4] regs grid=72 persist=77, local(spill)=0 B, static smem=0 B, dyn smem=100352 B\ndW_down      TN F32    3072x768x4096      | 3.15e-06  1.24e-06  3.15e-06  | bitexact n/a   |  506.0TF 1280.8TF  0.40  PASS",
+  "dwte": "[kernel L=2 E=4] regs grid=72 persist=77, local(spill)=0 B, static smem=0 B, dyn smem=100352 B\ndwte         TN F32    100352x768x4096    | 3.95e-06  1.24e-06  3.95e-06  | bitexact n/a   |  425.5TF 1477.9TF  0.29  PASS"
+ },
+ "ofa_mma_100a_nojit_loss20": "steady state: 19.56 ms/step (median 19.55) -> 209431 tok/s;  4,000 steps = 78.2 s\nloss: step0 11.7106  s1 11.2639  s2 10.7522  s5 9.9998  s10 9.6331",
+ "ofa_tc_100a_nojit_loss20": "",
+ "ofa_tc_100a_jit_loss20": "tail: cannot open '/tmp/l2.txt' for reading: No such file or directory",
+ "ofa_tc_100a_jit_split600": "",
+ "wall_s": 530.7119722366333,
+ "cost_usd_est": 0.9213159838027953
+}

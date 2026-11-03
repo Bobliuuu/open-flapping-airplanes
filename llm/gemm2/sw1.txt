@@ -1,0 +1,24 @@
+== base1
+config S (d=768,h=3072) 
+case                   M |     ours   cublas  ratio
+steady_NT BF16         2|  194.8TF  264.2TF  0.74  PASS
+steady_NN BF16         2|  198.3TF  267.9TF  0.74  PASS
+steady_TN F32          2|  138.1TF  219.0TF  0.63  PASS
+steady_NN GELU K768    2|  151.9TF  224.9TF  0.68  PASS
+OVERALL PASS
+== spread1
+config S (d=768,h=3072) 
+case                   M |     ours   cublas  ratio
+steady_NT BF16         2|  179.5TF  264.2TF  0.68  PASS
+steady_NN BF16         2|  186.4TF  267.6TF  0.70  PASS
+steady_TN F32          2|  135.9TF  220.9TF  0.62  PASS
+steady_NN GELU K768    2|  148.2TF  227.1TF  0.65  PASS
+OVERALL PASS
+== bk64
+config S (d=768,h=3072) 
+case                   M |     ours   cublas  ratio
+steady_NT BF16         2|  217.3TF  264.3TF  0.82  PASS
+steady_NN BF16         2|  213.2TF  267.8TF  0.80  PASS
+steady_TN F32          2|  146.8TF  221.1TF  0.66  PASS
+steady_NN GELU K768    2|  163.6TF  228.0TF  0.72  PASS
+OVERALL PASS

@@ -1,0 +1,50 @@
+{
+ "t_s128n1_100a": {
+  "published": true,
+  "sass": "l/bin2/t_s128n1_100a | head -3; cuobjdump -lptx /vol/bin2/t_s128n1_100a | head -3   [1.3s rc=0]\n170\nELF file    1: t_s128n1_100a.1.sm_100a.cubin\nELF file    2: t_s128n1_100a.2.sm_100a.cubin\ncuobjdump info    : No PTX file found to extract from '/vol/bin2/t_s128n1_100a'. You may try with -all option."
+ },
+ "t_s128n2_100a": {
+  "published": true,
+  "sass": "l/bin2/t_s128n2_100a | head -3; cuobjdump -lptx /vol/bin2/t_s128n2_100a | head -3   [1.5s rc=0]\n348\nELF file    1: t_s128n2_100a.1.sm_100a.cubin\nELF file    2: t_s128n2_100a.2.sm_100a.cubin\ncuobjdump info    : No PTX file found to extract from '/vol/bin2/t_s128n2_100a'. You may try with -all option."
+ },
+ "t_s256n1_100a": {
+  "published": true,
+  "sass": "l/bin2/t_s256n1_100a | head -3; cuobjdump -lptx /vol/bin2/t_s256n1_100a | head -3   [1.4s rc=0]\n218\nELF file    1: t_s256n1_100a.1.sm_100a.cubin\nELF file    2: t_s256n1_100a.2.sm_100a.cubin\ncuobjdump info    : No PTX file found to extract from '/vol/bin2/t_s256n1_100a'. You may try with -all option."
+ },
+ "t_s128n1_100f": {
+  "published": true,
+  "sass": "vol/bin2/t_s128n1_100f | head -3; cuobjdump -lptx /vol/bin2/t_s128n1_100f | head -3   [1.5s rc=0]\n170\nELF file    1: t_s128n1_100f.1.sm_100.cubin\nELF file    2: t_s128n1_100f.2.sm_100.cubin\ncuobjdump info    : No PTX file found to extract from '/vol/bin2/t_s128n1_100f'. You may try with -all option."
+ },
+ "t_s128n2_100f": {
+  "published": true,
+  "sass": "vol/bin2/t_s128n2_100f | head -3; cuobjdump -lptx /vol/bin2/t_s128n2_100f | head -3   [1.5s rc=0]\n348\nELF file    1: t_s128n2_100f.1.sm_100.cubin\nELF file    2: t_s128n2_100f.2.sm_100.cubin\ncuobjdump info    : No PTX file found to extract from '/vol/bin2/t_s128n2_100f'. You may try with -all option."
+ },
+ "t_s256n1_100f": {
+  "published": true,
+  "sass": "vol/bin2/t_s256n1_100f | head -3; cuobjdump -lptx /vol/bin2/t_s256n1_100f | head -3   [1.4s rc=0]\n218\nELF file    1: t_s256n1_100f.1.sm_100.cubin\nELF file    2: t_s256n1_100f.2.sm_100.cubin\ncuobjdump info    : No PTX file found to extract from '/vol/bin2/t_s256n1_100f'. You may try with -all option."
+ },
+ "t_s128n1_103a": {
+  "published": true,
+  "sass": "l/bin2/t_s128n1_103a | head -3; cuobjdump -lptx /vol/bin2/t_s128n1_103a | head -3   [1.3s rc=0]\n170\nELF file    1: t_s128n1_103a.1.sm_103a.cubin\nELF file    2: t_s128n1_103a.2.sm_103a.cubin\ncuobjdump info    : No PTX file found to extract from '/vol/bin2/t_s128n1_103a'. You may try with -all option."
+ },
+ "t_s128n2_103a": {
+  "published": true,
+  "sass": "l/bin2/t_s128n2_103a | head -3; cuobjdump -lptx /vol/bin2/t_s128n2_103a | head -3   [1.6s rc=0]\n348\nELF file    1: t_s128n2_103a.1.sm_103a.cubin\nELF file    2: t_s128n2_103a.2.sm_103a.cubin\ncuobjdump info    : No PTX file found to extract from '/vol/bin2/t_s128n2_103a'. You may try with -all option."
+ },
+ "t_s256n1_103a": {
+  "published": true,
+  "sass": "l/bin2/t_s256n1_103a | head -3; cuobjdump -lptx /vol/bin2/t_s256n1_103a | head -3   [1.4s rc=0]\n218\nELF file    1: t_s256n1_103a.1.sm_103a.cubin\nELF file    2: t_s256n1_103a.2.sm_103a.cubin\ncuobjdump info    : No PTX file found to extract from '/vol/bin2/t_s256n1_103a'. You may try with -all option."
+ },
+ "t_s128n1_103f": {
+  "published": true,
+  "sass": "vol/bin2/t_s128n1_103f | head -3; cuobjdump -lptx /vol/bin2/t_s128n1_103f | head -3   [1.3s rc=0]\n170\nELF file    1: t_s128n1_103f.1.sm_103.cubin\nELF file    2: t_s128n1_103f.2.sm_103.cubin\ncuobjdump info    : No PTX file found to extract from '/vol/bin2/t_s128n1_103f'. You may try with -all option."
+ },
+ "t_s128n2_103f": {
+  "published": true,
+  "sass": "vol/bin2/t_s128n2_103f | head -3; cuobjdump -lptx /vol/bin2/t_s128n2_103f | head -3   [1.6s rc=0]\n348\nELF file    1: t_s128n2_103f.1.sm_103.cubin\nELF file    2: t_s128n2_103f.2.sm_103.cubin\ncuobjdump info    : No PTX file found to extract from '/vol/bin2/t_s128n2_103f'. You may try with -all option."
+ },
+ "t_s256n1_103f": {
+  "published": true,
+  "sass": "vol/bin2/t_s256n1_103f | head -3; cuobjdump -lptx /vol/bin2/t_s256n1_103f | head -3   [1.5s rc=0]\n218\nELF file    1: t_s256n1_103f.1.sm_103.cubin\nELF file    2: t_s256n1_103f.2.sm_103.cubin\ncuobjdump info    : No PTX file found to extract from '/vol/bin2/t_s256n1_103f'. You may try with -all option."
+ }
+}
