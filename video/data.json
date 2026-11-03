@@ -1454,7 +1454,7 @@
     [
      4.6,
      8.7,
-     "Only the graphed count lands near it. We do not claim a match."
+     "Even the graphed count is about 4x theirs. We do not claim a match."
     ]
    ]
   },
@@ -1544,7 +1544,7 @@
     [
      0.3,
      8.7,
-     "live dashboard: loss, text, Doom (toy demo model)"
+     "Live dashboard of the B200 run: loss, answers, Doom."
     ]
    ]
   },
@@ -1556,7 +1556,7 @@
     [
      0.3,
      3.8,
-     "Launches: 3 (two are setup) against 1.2M to 8.4M for the baselines."
+     "Launches: 3 (two are setup) against 2.2M to 15.2M for the baselines."
     ],
     [
      4.2,
@@ -1709,17 +1709,17 @@
    "note": ""
   },
   "launches_base_lo": {
-   "value": 1200000,
+   "value": 2217540,
    "unit": "",
    "status": "measured",
-   "source": "b200-run/README.md README.md launches bullet (1.2M to 8.4M for the same work)",
+   "source": "same as launch_def_c (Megatron+TE with CUDA graphs + vLLM, host launch calls)",
    "note": ""
   },
   "launches_base_hi": {
-   "value": 8400000,
+   "value": 15203772,
    "unit": "",
    "status": "measured",
-   "source": "b200-run/README.md README.md launches bullet",
+   "source": "same as launch_def_a (Megatron+TE eager + vLLM, GPU kernel executions)",
    "note": ""
   },
   "loss_start": {
@@ -1772,31 +1772,31 @@
    "note": ""
   },
   "launch_def_a": {
-   "value": 8357373,
+   "value": 15203772,
    "unit": "",
    "status": "measured",
-   "source": "b200-run/results/baseline_v2_b200_20261102.json launch_counts.demo_equivalent.rows[megatron_te].a_gpu_kernel_executions",
+   "source": "b200-run/results/baseline_v2_b200_20261102.json launch_counts (training.megatron_te.S, serving.S) for 4,000 steps plus the 91,192 tokens ofa_tc2 served (mean of b200-run/results/megakernel_tc2_fa/split_r{1,2,3}.txt): 4,000 x 585 GPU kernels per Megatron+TE step + 141.06 per vLLM token",
    "note": ""
   },
   "launch_def_b": {
-   "value": 3195816,
+   "value": 4169540,
    "unit": "",
    "status": "measured",
-   "source": "b200-run/results/baseline_v2_b200_20261102.json launch_counts.demo_equivalent b_host_launch_calls",
+   "source": "b200-run/results/baseline_v2_b200_20261102.json launch_counts (training.megatron_te.S, serving.S) for 4,000 steps plus the 91,192 tokens ofa_tc2 served (mean of b200-run/results/megakernel_tc2_fa/split_r{1,2,3}.txt): 4,000 x 585 host launch calls per eager step + 20.06 per vLLM token",
    "note": ""
   },
   "launch_def_c": {
-   "value": 1243816,
+   "value": 2217540,
    "unit": "",
    "status": "measured",
-   "source": "b200-run/results/baseline_v2_b200_20261102.json launch_counts.demo_equivalent c_host_launch_calls_one_graph_per_step_and_token",
+   "source": "b200-run/results/baseline_v2_b200_20261102.json launch_counts (training.megatron_te.S, serving.S) for 4,000 steps plus the 91,192 tokens ofa_tc2 served (mean of b200-run/results/megakernel_tc2_fa/split_r{1,2,3}.txt): 4,000 x 97 host launch calls per step with CUDA graphs + 20.06 per vLLM token",
    "note": ""
   },
   "launch_served_tokens": {
-   "value": 42657,
+   "value": 91192,
    "unit": "",
    "status": "measured",
-   "source": "b200-run/results/baseline_v2_b200_20261102.json launch_counts.demo_equivalent served_tokens",
+   "source": "b200-run/results/megakernel_tc2_fa/split_r{1,2,3}.txt (sampled tokens, mean of 3 runs)",
    "note": ""
   },
   "kernels_per_step_base": {

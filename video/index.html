@@ -3,8 +3,8 @@
 <style>
 :root{--bg:#06080c;--panel:#0b1118;--line:#1d2a38;--ink:#e8eef5;--mut:#8a9bb0;--cy:#27c8e8;--gr:#6fe08c;--am:#f2c14e;--rd:#ff6b57;--pend:#4a5566}
 *{box-sizing:border-box;margin:0;padding:0}
-html,body{width:1920px;height:1080px;overflow:hidden;background:var(--bg);color:var(--ink);font-family:"Helvetica Neue",Helvetica,Arial,sans-serif}
-.mono{font-family:Menlo,"SF Mono",Monaco,monospace}
+html,body{width:1920px;height:1080px;overflow:hidden;background:var(--bg);color:var(--ink);font-family:"Helvetica Neue",Helvetica,Arial,"Liberation Sans",sans-serif}
+.mono{font-family:Menlo,"SF Mono",Monaco,"DejaVu Sans Mono",monospace}
 #stage{position:absolute;inset:0;width:1920px;height:1080px;overflow:hidden}
 .scene{position:absolute;inset:0;display:none}
 .bgdots{position:absolute;inset:0;background-image:radial-gradient(#16212d 1.5px,transparent 1.6px);background-size:40px 40px;opacity:.9}
@@ -19,7 +19,7 @@ html,body{width:1920px;height:1080px;overflow:hidden;background:var(--bg);color:
 #foot{position:absolute;left:48px;bottom:12px;font-size:20px;color:#5b6b7e}
 .abs{position:absolute}
 .pend{color:#9aa7b8;font-style:italic}
-svg text{font-family:"Helvetica Neue",Helvetica,Arial,sans-serif}
+svg text{font-family:"Helvetica Neue",Helvetica,Arial,"Liberation Sans",sans-serif}
 svg text:not([fill]){fill:#e8eef5}
 </style></head>
 <body>
@@ -142,7 +142,7 @@ S.doom=(el,t,d)=>{
  <div class="abs" style="left:80px;top:190px">${rows}</div>
  <div class="abs" style="left:960px;top:130px;font-size:30px;letter-spacing:.1em;color:#8a9bb0">RUNNING ON 8 SMs (B200)</div>
  <img src="assets/doom_gpu_frame.png" class="abs" style="left:960px;top:190px;width:480px;height:300px;object-fit:cover;border:2px solid ${C.am};opacity:${fi}">
- <div class="abs" style="left:1480px;top:190px;width:380px;opacity:${fi};font-size:28px;line-height:1.4;color:#d4deea"><span class="mono" style="font-size:64px;font-weight:800;color:${C.am}">${comma(val('b200.doom_fps'),1)}</span> fps<br>real engine, shareware E1M1, scripted bot</div>
+ <div class="abs" style="left:1480px;top:190px;width:380px;opacity:${fi};font-size:28px;line-height:1.4;color:#d4deea"><span class="mono" style="font-size:64px;font-weight:800;color:${C.am}">${comma(val('b200.doom_fps'),1)}</span> fps<br>real engine, shareware E1M1, scripted player (no cheats)</div>
  <div class="abs" style="left:960px;top:540px;opacity:${prog(t,5.4,6.2)};font-size:28px;color:#d4deea;line-height:1.35"><b>Thread 0</b> runs game logic and queues column/span draws.<br>At two flush points the <b>other 255 threads</b> draw behind one barrier.</div>
  <svg class="abs" style="left:960px;top:650px;opacity:${prog(t,6,7)}" width="900" height="260">
   <g transform="translate(0,10)">${th}</g>
@@ -186,13 +186,13 @@ S.method=(el,t,d)=>{
 S.dash=(el,t,d)=>{
  const a=eo(prog(t,.2,1.2));
  el.innerHTML=`<div class="bgdots"></div>
- <img src="assets/dashboard.png" class="abs" style="left:300px;top:110px;width:1320px;height:792px;border:2px solid ${C.cy};opacity:${a};transform:scale(${1+.02*prog(t,0,9)})">`;
+ <img src="assets/dashboard.png" class="abs" style="left:300px;top:135px;width:1320px;height:743px;border:2px solid ${C.cy};opacity:${a};transform:scale(${1+.02*prog(t,0,9)})">`;
 };
 // launches: which definition?
 S.launches=(el,t,d)=>{
  const B=D.b200,F=D.fa; const fa=F.launches_base.value;
  const rows=[['(a) GPU kernel executions','launch_def_a'],['(b) host launch API calls','launch_def_b'],['(c) one CUDA graph per step and token','launch_def_c']];
- const X0=700,W=1100,MAX=9e6; let s='';
+ const X0=700,W=1100,MAX=1.08*Math.max(...rows.map(([,k])=>B[k].value)); let s='';
  const fx=X0+W*fa/MAX;
  rows.forEach(([lab,k],i)=>{const v=B[k].value,y=300+i*120,rv=eo(prog(t,.6+i*.8,2.2+i*.8));const wd=Math.max(4,W*v/MAX*rv);const r=v/fa;
   s+=`<text x="60" y="${y+30}" font-size="28" fill="#d4deea">${lab}</text><rect x="${X0}" y="${y}" width="${W}" height="44" fill="#111a24"/><rect x="${X0}" y="${y}" width="${wd}" height="44" fill="${i>=2?C.am:C.rd}"/>
@@ -233,7 +233,7 @@ function cellsFor(kind){
  const v=k=>B[k].value;
  if(kind==='launch') return [
   {ft:F.launches_kvm.value,fb:F.launches_base.value,labT:'FA kernel',labB:'FA baseline (Megatron + vLLM)',fmt:cnt,logs:1,max:1e6,pctLab:'1 vs 514,562'},
-  {ft:v('launches_ofa'),fb:v('launch_def_a'),labT:'open-flapping-airplanes',labB:'Megatron+TE + vLLM, same work (a): kernels',fmt:cnt,logs:1,max:1e7,pctLab:`3 vs ${comma(v('launch_def_c')/1e6,1)}M to ${comma(v('launch_def_a')/1e6,1)}M`,pfs:28,sec:[['Nsight Systems; 2 of the 3 are one-off setup',G],[`(b) host calls ${comma(v('launch_def_b')/1e6,1)}M, (c) graphed ${comma(v('launch_def_c')/1e6,1)}M = ${comma(v('launch_def_c')/F.launches_base.value,1)}x FA`,AM]]}];
+  {ft:v('launches_ofa'),fb:v('launch_def_a'),labT:'open-flapping-airplanes',labB:'Megatron+TE + vLLM, same work (a): kernels',fmt:cnt,logs:1,max:1.08*v('launch_def_a'),pctLab:`3 vs ${comma(v('launch_def_c')/1e6,1)}M to ${comma(v('launch_def_a')/1e6,1)}M`,pfs:28,sec:[['Nsight Systems; 2 of the 3 are one-off setup',G],[`(b) host calls ${comma(v('launch_def_b')/1e6,1)}M, (c) graphed ${comma(v('launch_def_c')/1e6,1)}M = ${comma(v('launch_def_c')/F.launches_base.value,1)}x FA`,AM]]}];
  if(kind==='time') return [
   {ft:F.train_s_kvm.value,fb:F.train_s_base.value,labT:'FA kernel (all three)',labB:'Megatron, 116 SMs',fmt:sec,max:F.train_s_base.value,pctLab:pl(F.train_s_kvm.value,F.train_s_base.value,1),sec:[['FA: 1.52x, "34% slower"',G]]},
   {fmt:sec,bars:[['open-flapping-airplanes (ofa_tc3)',v('train_s_tc3'),C.cy],['open-flapping-airplanes (ofa_tc2)',v('train_s_tc2'),'#7fd9ee'],['Megatron+TE, eager',v('train_s_base'),C.rd],['Megatron+TE, CUDA graphs',v('train_s_graph'),GR],['PyTorch + flash-attn, eager',v('train_s_pt_eager'),'#9aa7b8']],
@@ -287,7 +287,7 @@ S.end=(el,t,d)=>{
  <div class="abs" style="left:0;right:0;top:120px;text-align:center;font-size:96px;font-weight:900;letter-spacing:.06em;opacity:${eo(prog(t,0,1))}">1 kernel. 3 programs.</div>
  <div class="abs" style="left:100px;top:300px;width:1740px">
   ${line('FA B200','published','1 vs 514,562','launches; baseline 34% slower on training and inference',C.mut,.6)}
-  ${line('open-flapping-airplanes','measured on B200','3 vs 1.2M-8.4M','launches by Nsight Systems (2 are setup) vs the baselines for the same work',C.cy,1.4)}
+  ${line('open-flapping-airplanes','measured on B200',v('launches_ofa')+' vs '+comma(v('launches_base_lo')/1e6,1)+'M-'+comma(v('launches_base_hi')/1e6,1)+'M','launches by Nsight Systems (2 are setup) vs the baselines for the same work',C.cy,1.4)}
   ${line('open-flapping-airplanes','measured on B200',comma(v('train_s_tc3'),1)+' s vs '+comma(v('train_s_base'),1)+' s',`training: Megatron+TE eager ${comma(pBT)}% slower; with CUDA graphs it is faster (${comma(v('train_s_graph'),1)} s). vLLM ${comma(pBI)}% slower`,C.cy,2.2)}
  </div>
  <div class="abs" style="left:0;right:0;top:640px;text-align:center;font-size:30px;color:#d4deea;opacity:${prog(t,3,4)}">Loss 11.71 &rarr; 2.1575 &middot; Doom ${comma(v('doom_fps'),0)} fps on 8 SMs &middot; one persistent launch</div>
