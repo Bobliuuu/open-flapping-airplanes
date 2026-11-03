@@ -41,9 +41,9 @@ body::after{width:460px;height:460px;background:var(--red);right:-100px;top:55vh
 tr{transition:background .2s}tbody tr:hover,table tr:hover td{background:#101826}
 @media (prefers-reduced-motion:reduce){body::before,body::after{animation:none}.reveal{opacity:1;transform:none;transition:none}}
 </style></head><body>
-<header><nav><span class="logo">OFA</span><a href="#what">🧩 What runs</a><a href="#arch">🏗️ Architecture</a><a href="#bench">📊 Benchmarks</a><a href="#fa">🆚 vs Flapping Airplanes</a><a href="#how">🚀 Reproduce</a></nav></header>
+<header><nav><span class="logo">open-flapping-airplanes</span><a href="#what">🧩 What runs</a><a href="#arch">🏗️ Architecture</a><a href="#bench">📊 Benchmarks</a><a href="#fa">🆚 vs Flapping Airplanes</a><a href="#how">🚀 Reproduce</a></nav></header>
 <main>
-<section class="hero"><img class="banner" src="assets/hero.svg" alt="OFA: one kernel, three programs">
+<section class="hero"><img class="banner" src="assets/hero.svg" alt="open-flapping-airplanes: one kernel, three programs">
 <p class="reveal">🧠 A language model trains, 💬 the same weights stream out text, and 👹 Doom plays, all at the same time inside a single persistent GPU kernel launch. These are the measurements.</p>
 <div class="tiles" id="tiles"></div></section>
 
@@ -67,17 +67,18 @@ tr{transition:background .2s}tbody tr:hover,table tr:hover td{background:#101826
 <section id="fa" class="reveal"><h2>🆚 Against what Flapping Airplanes publish</h2><p class="lead">Their numbers are read frame by frame from the HD demo video. Ours are measured here. Hardware and model differ, so read the ratios, not the absolute values.</p>
 <table id="tbl-fa"></table>
 <div class="grp">Kernel launches for the same 4,000-step workload</div><div class="bars" id="bars-launch"></div>
+<div class="note"><b>At LLM scale (162M-parameter GPT, one B200, FA's 116/24/8 split):</b> the tcgen05 megakernel trains 4,000 steps in 48.1 s (3 stages) or 52.4 s (2 stages) while serving 1,660 / 1,741 tok/s and playing Doom at 35 fps. Megatron + Transformer Engine, eager, takes 62.4 s (16-23% slower); with CUDA graphs it takes 43.1 s, which is 11.5-21.5% <i>faster</i> than the megakernel. vLLM serves 1,537 tok/s (7-12% slower). FA report 46.1 s vs 70.1 s and 1,076 vs 710 tok/s. Details: <code>b200-run/README.md</code> and <code>docs/FA_COMPARISON.md</code>.</div>
 <div class="note">Where we do not match: their per-op baseline is 34% slower in both training and serving, using a Megatron/vLLM stack on a B200 whose step is hundreds of thousands of launches. Our per-op baseline reuses the megakernel's own task code with few, fairly large kernels, so launch overhead is a small part of its time. The megakernel gives up a little raw speed per job here and wins on running everything at once on one GPU.</div></section>
 
 <section id="how" class="reveal"><h2>🚀 Reproduce</h2>
-<pre>git clone https://github.com/Bobliuuu/flapping-airplanes &amp;&amp; cd flapping-airplanes
+<pre>git clone https://github.com/Bobliuuu/open-flapping-airplanes &amp;&amp; cd open-flapping-airplanes
 ./doom-gpu/setup_box.sh ubuntu@&lt;ip&gt;        # once: clang, engine source, shareware WAD (md5 checked)
 ./a100-demo/run_demo.sh ubuntu@&lt;ip&gt;        # the three-program demo, tunnelled to your browser
 ./benchmarks/run_benchmarks.sh ubuntu@&lt;ip&gt; 5 6   # this page's numbers; then open site/index.html</pre>
 <ul><li><b>Method.</b> Each number is the mean of <span id="reps"></span> repetitions of a few seconds each, with the standard deviation shown. Doom measurements run in their own process because the engine cannot be re-created in one.</li>
 <li><b>Baselines.</b> The "individually timed" rows run one program alone on the GPU, like the video. The "streams" and "processes" rows run both at once.</li>
 <li><b>Limits.</b> One GPU, one model size, a scripted Doom player, no sound. Loss and text are from a small corpus the model largely memorises.</li></ul></section>
-</main><footer>open-flapping-airplanes on an NVIDIA A100 · numbers generated from <code id="srcfile"></code> · <a href="https://github.com/Bobliuuu/flapping-airplanes">github.com/Bobliuuu/flapping-airplanes</a></footer>
+</main><footer>open-flapping-airplanes on an NVIDIA A100 · numbers generated from <code id="srcfile"></code> · <a href="https://github.com/Bobliuuu/open-flapping-airplanes">github.com/Bobliuuu/open-flapping-airplanes</a></footer>
 <script src="data/benchmarks.js"></script>
 <script>
 const B=window.BENCH,O=B.ours,FA=B.fa,$=id=>document.getElementById(id);

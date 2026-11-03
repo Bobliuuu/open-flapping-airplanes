@@ -7,7 +7,7 @@
 </defs>
 <rect width="1200" height="360" fill="#07090d"/><rect width="1200" height="360" fill="url(#grid)"/>
 <rect y="0" width="260" height="360" fill="url(#sweep)" opacity=".5"><animateTransform attributeName="transform" type="translate" from="-300 0" to="1300 0" dur="7s" repeatCount="indefinite"/></rect>
-<text x="64" y="188" font-family="ui-sans-serif,system-ui,-apple-system,'Segoe UI',sans-serif" font-weight="800" font-size="150" letter-spacing="-4" fill="url(#g)">OFA</text>
+<text x="64" y="188" font-family="ui-sans-serif,system-ui,-apple-system,'Segoe UI',sans-serif" font-weight="800" font-size="68" letter-spacing="-1" fill="url(#g)">open-flapping-airplanes</text>
 <text x="70" y="240" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="26" fill="#d6dee8">one kernel <tspan fill="#7a8798">·</tspan> three programs</text>
 <g font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="17">
 <text x="70" y="288" fill="#27c8e8">● train</text><text x="188" y="288" fill="#ff5757">● serve</text><text x="306" y="288" fill="#f2c14e">● play Doom</text>
