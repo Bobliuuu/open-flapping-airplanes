@@ -4,11 +4,11 @@
 
 | # | They publish (B200, 148 SMs) | We reproduce it with | Status |
 |---|---|---|---|
-| 1 | Kernel launches: **1 vs 514,562** for the whole run | count the baseline's real CUDA kernel launches (CUPTI / torch.profiler) for 4,000 Megatron steps + vLLM decoding for the same wall time; megakernel = 1 | baseline agent |
-| 2 | **4,000 training steps: 46.1 s vs 70.1 s** (baseline 34% slower) | same model/batch/optimizer in PyTorch+Megatron, timed alone, vs the in-kernel trainer running next to serving + Doom | baseline agent + integration |
+| 1 | Kernel launches: **1 vs 514,562** for the whole run | count the baseline's real CUDA kernel launches (CUPTI / torch.profiler) for 4,000 Megatron steps + vLLM decoding for the same wall time; megakernel = 1 | baselines |
+| 2 | **4,000 training steps: 46.1 s vs 70.1 s** (baseline 34% slower) | same model/batch/optimizer in PyTorch+Megatron, timed alone, vs the in-kernel trainer running next to serving + Doom | baselines + integration |
 | 3 | Training throughput **~355k vs ~230k tok/s** | tok/s from the same runs (4,096 tokens per step) | same |
-| 4 | Inference **1,076 vs 710 tok/s** (34% slower) | vLLM batch-1 decode alone vs in-kernel decode in its SM partition | baseline + decode agents |
-| 5 | **SM split 116 / 24 / 8 of 148**, baselines labelled "Megatron 116 SMs", "vLLM 24 SMs" (restricted to the same share) | proportional A100 split **85 / 17 / 6 of 108**; baselines restricted with CUDA MPS or green contexts | baseline agent, scheduler (integration) |
+| 4 | Inference **1,076 vs 710 tok/s** (34% slower) | vLLM batch-1 decode alone vs in-kernel decode in its SM partition | baselines + decode |
+| 5 | **SM split 116 / 24 / 8 of 148**, baselines labelled "Megatron 116 SMs", "vLLM 24 SMs" (restricted to the same share) | proportional A100 split **85 / 17 / 6 of 108**; baselines restricted with CUDA MPS or green contexts | baselines, scheduler (integration) |
 | 6 | Loss curve **11.5 -> 2.11** at step 4,000, baseline on the same curve | cl100k vocab (ln 100,277 = 11.51), TinyStories, identical init, batches, optimizer; overlay both curves | baseline + integration |
 | 7 | Served text from the live model ("What is a megakernel?") | decode from the live bf16 weights, same prompt, sample at several training steps | decode + integration |
 | 8 | Doom playing throughout, 8 SMs | already running in the kernel (35 fps, real engine); restrict it to its 6-SM share | done, repartition in integration |

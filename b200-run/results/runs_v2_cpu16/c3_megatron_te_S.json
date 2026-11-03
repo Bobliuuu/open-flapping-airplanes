@@ -1,0 +1,152 @@
+{
+ "model": "S",
+ "model_params": 162436608,
+ "model_params_trainable": 162417408,
+ "tag": "",
+ "impl": "megatron-core 0.16.1 GPTModel Transformer Engine spec",
+ "env": {
+  "TRAIN_SMS": 116,
+  "TOTAL_SMS": 148,
+  "MPS_PCT": null,
+  "torch": "2.15.0a0+875d815502.nv26.10",
+  "gpu": "NVIDIA B200",
+  "sm_count_visible": 148,
+  "capability": [
+   10,
+   0
+  ],
+  "NVTE": {
+   "NVTE_DEBUG": "1",
+   "NVTE_DEBUG_LEVEL": "1",
+   "NVTE_FLASH_ATTN": "1",
+   "NVTE_FUSED_ATTN": "1",
+   "NVTE_UNFUSED_ATTN": "1"
+  }
+ },
+ "launch3": {
+  "eager": {
+   "nunits": 5,
+   "kernels_per_unit": 585.0,
+   "memops_per_unit": 15.0,
+   "host_launch_calls_per_unit": 585.0,
+   "host_launch_breakdown_per_unit": {
+    "cuda_driver:cuLaunchKernel": 75.0,
+    "cuda_driver:cuLaunchKernelEx": 197.0,
+    "cuda_runtime:cudaLaunchKernel": 312.0,
+    "cuda_runtime:cudaLaunchKernelExC": 1.0
+   },
+   "top_kernels_per_unit": [
+    [
+     "void at::native::vectorized_elementwise_kernel<8, at::native::bfloat16_copy_kernel_cuda(at",
+     75.0
+    ],
+    [
+     "void at::native::unrolled_elementwise_kernel<at::native::CUDAFunctor_add<float>, std::arra",
+     75.0
+    ],
+    [
+     "void at::native::vectorized_elementwise_kernel<8, at::native::CUDAFunctor_add<c10::BFloat1",
+     50.0
+    ],
+    [
+     "nvjet_sm100_tst_128x192_64x7_2x2_2cta_h_bz_NNT",
+     36.0
+    ],
+    [
+     "void transformer_engine::normalization::ln_fwd_tuned_kernel<transformer_engine::normalizat",
+     25.0
+    ],
+    [
+     "void transformer_engine::normalization::ln_bwd_tuned_kernel<transformer_engine::normalizat",
+     25.0
+    ],
+    [
+     "void transformer_engine::normalization::ln_bwd_finalize_tuned_kernel<transformer_engine::n",
+     25.0
+    ],
+    [
+     "nvjet_sm100_tst_128x192_64x7_2x2_2cta_h_bz_TNT",
+     24.0
+    ],
+    [
+     "nvjet_sm100_tst_128x128_64x8_2x1_2cta_v_bz_NTT",
+     24.0
+    ],
+    [
+     "nvjet_sm100_tst_128x256_64x6_2x1_2cta_v_bz_TNT",
+     13.0
+    ],
+    [
+     "transformer_engine::fused_attn::extract_seed_and_offset(long*, bool, long*, unsigned long,",
+     12.0
+    ],
+    [
+     "cudnn_generated_fort_native_sdpa_sm100_flash_fprop_f16_knob_1_128x128x64_4x1x1_cga1x1x1_ke",
+     12.0
+    ]
+   ],
+   "distinct_kernel_names": 54
+  },
+  "graph_fwd_bwd_only": {
+   "nunits": 5,
+   "kernels_per_unit": 592.0,
+   "memops_per_unit": 12.0,
+   "host_launch_calls_per_unit": 97.0,
+   "host_launch_breakdown_per_unit": {
+    "cuda_runtime:cudaGraphLaunch": 1.0,
+    "cuda_runtime:cudaLaunchKernel": 96.0
+   },
+   "top_kernels_per_unit": [
+    [
+     "void at::native::unrolled_elementwise_kernel<at::native::CUDAFunctor_add<float>, std::arra",
+     75.0
+    ],
+    [
+     "void at::native::vectorized_elementwise_kernel<8, at::native::bfloat16_copy_kernel_cuda(at",
+     75.0
+    ],
+    [
+     "void at::native::vectorized_elementwise_kernel<8, at::native::CUDAFunctor_add<c10::BFloat1",
+     50.0
+    ],
+    [
+     "nvjet_sm100_tst_128x192_64x7_2x2_2cta_h_bz_NNT",
+     36.0
+    ],
+    [
+     "void transformer_engine::normalization::ln_fwd_tuned_kernel<transformer_engine::normalizat",
+     25.0
+    ],
+    [
+     "void transformer_engine::normalization::ln_bwd_tuned_kernel<transformer_engine::normalizat",
+     25.0
+    ],
+    [
+     "void transformer_engine::normalization::ln_bwd_finalize_tuned_kernel<transformer_engine::n",
+     25.0
+    ],
+    [
+     "nvjet_sm100_tst_128x192_64x7_2x2_2cta_h_bz_TNT",
+     24.0
+    ],
+    [
+     "nvjet_sm100_tst_128x128_64x8_2x1_2cta_v_bz_NTT",
+     24.0
+    ],
+    [
+     "nvjet_sm100_tst_128x256_64x6_2x1_2cta_v_bz_TNT",
+     13.0
+    ],
+    [
+     "transformer_engine::fused_attn::extract_seed_and_offset(long*, bool, long*, unsigned long,",
+     12.0
+    ],
+    [
+     "cudnn_generated_fort_native_sdpa_sm100_flash_fprop_f16_knob_1_128x128x64_4x1x1_cga1x1x1_ke",
+     12.0
+    ]
+   ],
+   "distinct_kernel_names": 58
+  }
+ }
+}

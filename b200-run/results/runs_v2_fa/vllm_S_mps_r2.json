@@ -1,0 +1,14 @@
+{
+ "cg": "default",
+ "mps_pct": "17",
+ "enforce_eager": false,
+ "prompt": "What is a megakernel?",
+ "new_tokens": 256,
+ "prompt_tokens": 7,
+ "seconds": [
+  0.17223238945007324
+ ],
+ "tok_s": [
+  1486.3638646446889
+ ]
+}

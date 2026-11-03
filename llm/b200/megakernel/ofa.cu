@@ -1,4 +1,4 @@
-// B200 PORT (UNTESTED ON B200; sm_80 path regression-checked on A100, see README): SM partition derived from the device, see "SM PARTITION" below.
+// B200 PORT (tested on a B200; sm_80 path regression-checked on A100, see README): SM partition derived from the device, see "SM PARTITION" below.
 // ofa.cu : model "S" (GPT, 162M params) TRAINING + live DECODE + real DOOM inside ONE persistent kernel launch (A100, sm_80),
 // with an embedded HTTP dashboard server (the three-panel open-flapping-airplanes page). Derived from llm/megakernel/ofa_llm.cu.
 //
@@ -223,6 +223,7 @@ __device__ void job_loop(const Ctx& C, const Job& J, int job_id, char* smem) {
   int cph = 0, rstep = -1, rph = -1;                    // thread 0: phase cache and "this (step, phase) is known ready"
   u64 busy = 0;
   const unsigned total = (unsigned)J.limit * (unsigned)J.tps;
+  tg::block_init();                                     // tcgen05 backend: this block's TMEM columns, once (no-op for mma.sync)
   for (;;) {
     if (tid == 0) {
       int res = 0, step = 0, ph = 0, local = 0;
@@ -308,6 +309,7 @@ __device__ void job_loop(const Ctx& C, const Job& J, int job_id, char* smem) {
       }
     }
   }
+  tg::block_exit();
   if (tid == 0) C.blk_busy[blockIdx.x * 2 + job_id] = busy;
 }
 
@@ -393,6 +395,8 @@ int main(int argc, char** argv) {
   int steps = 100, sched_steps = 4000, prof_step = -1, infer_sms = 0, doom_sms = 0, prompt_n = 0, nopt = 0, dump_every = 0, opt_mode = 2, train_sms_arg = -1; std::string split_mode = getenv("OFA_SPLIT") ? getenv("OFA_SPLIT") : "";
   std::string data_path, init_path, starts_path, dump_grads, dump_w, loss_out, text_out, prompt_path; float temp = 0.8f; u64 seed = 1234; int dec_seed_steps = 1 << 20;
   int port = 0; std::string wad_path, vocab_path, prompt_text = "Once upon a time", index_path = "index.html"; bool no_doom = false;
+  int answer_len = 0;                                         // --answer-len N: ask the prompt again after every N sampled tokens
+  double start_delay = 0;                                     // --start-delay S (with --port): wait S seconds before the launch
   for (int i = 1; i < argc; i++) {
     auto is = [&](const char* s) { return !strcmp(argv[i], s) && i + 1 < argc; };
     if (is("--steps")) steps = atoi(argv[++i]); else if (is("--sched-steps")) sched_steps = atoi(argv[++i]);
@@ -404,6 +408,7 @@ int main(int argc, char** argv) {
     else if (is("--temp")) temp = atof(argv[++i]); else if (is("--text-out")) text_out = argv[++i]; else if (is("--prompt")) prompt_path = argv[++i];
     else if (is("--port")) port = atoi(argv[++i]); else if (is("--wad")) wad_path = argv[++i]; else if (is("--vocab")) vocab_path = argv[++i];
     else if (is("--prompt-text")) prompt_text = argv[++i]; else if (is("--index")) index_path = argv[++i];
+    else if (is("--answer-len")) answer_len = atoi(argv[++i]); else if (is("--start-delay")) start_delay = atof(argv[++i]);
     else if (!strcmp(argv[i], "--no-doom")) no_doom = true;
     else if (!strcmp(argv[i], "--no-opt")) nopt = 1; else if (is("--opt-mode")) opt_mode = atoi(argv[++i]);
   }
@@ -429,7 +434,26 @@ int main(int argc, char** argv) {
   if (!doom_on) CK(cudaDeviceSetLimit(cudaLimitStackSize, 4096));   // perf-build frames are ~1-1.8 KB/thread (spills); Doom setup raises this to 24 KB itself
   if ((doom_on || port > 0) && !doom_host_setup(dm, wad_path, doom_on, fb_host, live_host)) return 1;
   CK(cudaFuncSetAttribute(ofa_kernel, cudaFuncAttributeMaxDynamicSharedMemorySize, DYN_SMEM));
+  if (const int cv = env_int("OFA_CARVEOUT", -1); cv >= 0) {   // shared-memory carveout hint, percent of the maximum (L1 gets the rest)
+    CK(cudaFuncSetAttribute(ofa_kernel, cudaFuncAttributePreferredSharedMemoryCarveout, cv));
+    printf("shared-memory carveout hint: %d%%\n", cv);
+  }
   int occ = 0; CK(cudaOccupancyMaxActiveBlocksPerMultiprocessor(&occ, ofa_kernel, 256, DYN_SMEM));
+  if (tg::kTcgen05 && occ < BPS) {
+    // The occupancy API returns 1 for any kernel with tcgen05 instructions. The hardware co-schedules more when each block allocates
+    // its TMEM once and relinquishes the allocation permit (tg::block_init), so size the grid from registers and shared memory.
+    cudaFuncAttributes fa; CK(cudaFuncGetAttributes(&fa, ofa_kernel));
+    int regs_sm = 0, smem_sm = 0, rsv = 0;
+    CK(cudaDeviceGetAttribute(&regs_sm, cudaDevAttrMaxRegistersPerMultiprocessor, 0));
+    CK(cudaDeviceGetAttribute(&smem_sm, cudaDevAttrMaxSharedMemoryPerMultiprocessor, 0));
+    CK(cudaDeviceGetAttribute(&rsv, cudaDevAttrReservedSharedMemoryPerBlock, 0));
+    const int by_regs = regs_sm / (((fa.numRegs + 7) / 8 * 8) * 256);
+    const int by_smem = smem_sm / (DYN_SMEM + (int)fa.sharedSizeBytes + rsv);
+    const int fit = std::min(by_regs, by_smem);
+    printf("tcgen05 build: occupancy API says %d block/SM; registers (%d) allow %d, shared memory (%d + %zu static) allows %d -> %d\n",
+           occ, fa.numRegs, by_regs, DYN_SMEM, fa.sharedSizeBytes, by_smem, fit);
+    occ = fit;
+  }
   const int nblocks = nsm * std::min(occ, BPS);
   {  // shared-memory opt-in limits come from the device, not from constants (A100: 164 KB/SM, 163 KB opt-in/block; H100/B200: 228 KB/SM, 227 KB opt-in/block)
     int optin = 0, per_sm = 0, reserved = 0;
@@ -645,7 +669,7 @@ int main(int argc, char** argv) {
     dstate = decode::alloc_state<DC>(out_cap);
     int* dout_dev; CK(cudaHostAlloc((void**)&h_out_tokens_pinned, out_cap * 4, cudaHostAllocMapped)); CK(cudaHostGetDevicePointer((void**)&dout_dev, h_out_tokens_pinned, 0));
     memset(h_out_tokens_pinned, 0xFF, out_cap * 4); CK(cudaMemcpy(&dstate->out_tokens, &dout_dev, sizeof(dout_dev), cudaMemcpyHostToDevice));
-    P.st = dstate; P.temperature = temp; P.seed = seed; P.valid_vocab = VALID; P.auto_reset = 1;
+    P.st = dstate; P.temperature = temp; P.seed = seed; P.valid_vocab = VALID; P.auto_reset = 1; P.answer_len = answer_len;
     if (!prompt_path.empty()) { FILE* f = fopen(prompt_path.c_str(), "r"); int x; while (f && fscanf(f, "%d", &x) == 1) forced.push_back(x); if (f) fclose(f); }
     if (forced.empty()) forced.push_back(100257);            // <|endoftext|>
     int* dforced = dalloc<int>(forced.size()); CK(cudaMemcpy(dforced, forced.data(), forced.size() * 4, cudaMemcpyHostToDevice));
@@ -664,7 +688,7 @@ int main(int argc, char** argv) {
   if (port > 0) {
     dash::fb_host = fb_host; dash::live = live_host; dash::nsm = nsm; dash::index_path = index_path; dash::prompt = prompt_text; dash::tokens_per_step = N;
     dash::sm_infer = infer_sms; dash::sm_doom = doom_on ? doom_sms : 0; dash::sm_train = train_sms_arg;
-    if (use_decode) { dash::tok_host = h_out_tokens_pinned; dash::tok_cap = out_cap; dash::skip_tokens = (int)forced.size() - 1; }
+    if (use_decode) { dash::tok_host = h_out_tokens_pinned; dash::tok_cap = out_cap; dash::skip_tokens = answer_len > 0 ? 0 : (int)forced.size() - 1; }
     if (!vocab_path.empty() && !dash::load_vocab(vocab_path)) fprintf(stderr, "warning: cannot read vocab %s (text panel will be empty)\n", vocab_path.c_str());
     dash::note = "one kernel launch: training + inference + Doom"; dash::start(port); printf("dashboard on http://localhost:%d\n", port);
   }
@@ -678,6 +702,7 @@ int main(int argc, char** argv) {
   CK(cudaDeviceSynchronize());
 
   // ---------------- run: ONE launch
+  if (port > 0 && start_delay > 0) usleep((useconds_t)(start_delay * 1e6));   // --start-delay: dashboard up first (screen recordings)
   printf("launching ONE persistent kernel (%d blocks)...\n", nblocks);
   cudaEvent_t e0, e1; CK(cudaEventCreate(&e0)); CK(cudaEventCreate(&e1));
   const double tw0 = now_s();
@@ -719,6 +744,12 @@ int main(int argc, char** argv) {
   if (use_decode) {
     int dpos = 0, dstep = 0; CK(cudaMemcpy(&dstep, &dstate->step, 4, cudaMemcpyDeviceToHost)); (void)dpos;
     printf("decode: %d tokens generated during %.2f s of training -> %.0f tok/s\n", dstep, (tend ? (double)(tend - sd[0]) * 1e-9 : ms * 1e-3), dstep / ((double)(sd[steps - 1] - sd[0]) * 1e-9 + 1e-9));
+    if (answer_len > 0) {                                     // sampled tokens only, as vLLM counts them (prompt steps take time but do not count)
+      long gen = 0, answers = 0;
+      for (int i = 0; i < std::min(dstep, out_cap); i++) { const int id = h_out_tokens_pinned[i]; if (id == decode::OUT_RESTART) answers++; else if (id >= 0 && id < decode::OUT_RESTART) gen++; }
+      printf("decode answers: %ld answers (%d prompt tokens + %d sampled each), %ld sampled tokens -> %.0f tok/s sampled (prompt steps excluded)\n",
+             answers, (int)forced.size(), answer_len, gen, gen / ((double)(sd[steps - 1] - sd[0]) * 1e-9 + 1e-9));
+    }
     FILE* f = text_out.empty() ? nullptr : fopen(text_out.c_str(), "w"); int cnt = std::min(dstep, out_cap);
     if (f) { for (int i = 0; i < cnt; i++) fprintf(f, "%d ", h_out_tokens_pinned[i]); fclose(f); }
     printf("first sampled token ids:"); for (int i = 0; i < std::min(cnt, 40); i++) printf(" %d", h_out_tokens_pinned[i]); printf("\n");

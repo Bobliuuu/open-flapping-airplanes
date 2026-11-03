@@ -33,3 +33,36 @@ Percentages use FA's convention, 1 - faster/slower (70.1 s vs 46.1 s = 34%).
 Large outputs (`out/`, `*.mp4`, `node_modules/`) are ignored by `video/.gitignore`. Not affiliated with Flapping Airplanes.
 
 Scenes: title, problem, launches (which definition of 'launch'), idea, arch, doom, method, slot, resA (launches, training), resB (inference, loss, 'what it means'), end. Release copy: `release/ofa_explainer_preview.mp4` (ignored by git).
+
+## Demo video on a B200, in Flapping Airplanes' format (`b200/`)
+
+`release/ofa_demo_b200.mp4` (74.6 s, 1920x1080, 30 fps, with music): the structure of Flapping Airplanes' demo video (live dashboard,
+zoom out to the GPU, code, side by side with the baselines and their launch counts, result cards, end card) for open-flapping-airplanes's `ofa_tc2` build
+on one B200, plus a card on how it was measured and what differs from their demo. Rules it follows:
+
+- Every number comes from `b200/data.json`, which `b200/make_data.py` derives from the raw results (`b200-run/results/`), each with its
+  source file. Nothing is typed into the page.
+- The dashboard is a screen recording of a real run (`modal run b200-run/modal_app.py --step video --binary ofa_tc2`; its timing and
+  losses are in `b200-run/results/video_ofa_tc2/`). That run, with the dashboard and screen capture, took 52.9 s; the cards use the
+  mean of 3 runs without them (52.4 s), and the video says so. Doom in it is played by the scripted player in `doom-gpu/player/`.
+- With `--fa-video PATH` (their demo video, which is not in this repository) the render adds a scene with their dashboard next to ours
+  at the same run time (seconds since each kernel launch), in real time: their full-screen stretch (their run at 3.4-8.0 s), then
+  37.2 s until their run ends at 46.2 s, where both stop (ours finishes at 52.9 s), from the two real-time stretches their video shows. The clocks in their footage set the alignment (constants
+  `FA_A`, `FA_B` in `demo.html`). The MP4 goes to `out/ofa_demo_<build>_with_fa.mp4`, which git ignores.
+- The music is composed by `b200/make_music.py` on the video's timeline (no samples, no outside audio; numpy only) and muxed in as AAC
+  by the render job.
+- The side-by-side runs at 4x speed (labelled). The baselines are their measured runs (each alone on its share of the same B200), replayed
+  at their measured mean speed; their loss curves are their logged losses. Launch counters use the per-step and per-token counts measured
+  with torch.profiler.
+- Megatron-core + Transformer Engine and PyTorch are timed both eager and with CUDA graphs, each in two containers, and the faster
+  counts; vLLM uses CUDA graphs and 16 CPU cores. With CUDA graphs Megatron + TE is faster than open-flapping-airplanes at training, and the cards say so.
+
+```bash
+python3 video/b200/make_data.py --build ofa_tc2                       # data.json + data.js from the results
+modal run video/b200/modal_render.py --build ofa_tc2 --stills 5,30,52  # PNG stills -> video/out/demo_stills/
+modal run video/b200/modal_render.py --build ofa_tc2                  # the MP4 -> video/out/ofa_demo_ofa_tc2.mp4 (about 2 minutes)
+modal run video/b200/modal_render.py --build ofa_tc2 --fa-video their_demo.mp4   # with their dashboard side by side (not committed)
+```
+Rendering runs on a Modal CPU container (Google Chrome, node, ffmpeg, Inter and JetBrains Mono): `render_demo.js` drives `demo.html`'s
+`seek(t)` frame by frame in parallel chunks and pipes JPEG frames into ffmpeg. `--build ofa_tc3` renders the 3-stage build instead
+(record it first with `--binary ofa_tc3`).

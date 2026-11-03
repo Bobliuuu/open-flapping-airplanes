@@ -1,0 +1,65 @@
+GPU: NVIDIA B200 (148 SMs), 296 resident blocks. Serving http://localhost:0 (tunnel it to your Mac)
+corpus: 180442 characters
+WAD /opt/ofa/doom-gpu/doom1.wad: 4196020 bytes
+benchmark: 5 reps, 6 s per measurement
+rep 1/5
+  mega_all               (own process) done
+  mega_all_live          (own process) done
+  mega_train             steps/s    18789  tok/s        0  doom fps   0.0
+  mega_infer             steps/s        0  tok/s    84962  doom fps   0.0
+  mega_doom              (own process) done
+  eager_train               22224 /s
+  eager_infer               68748 /s
+  graph_train               22132 /s
+  graph_infer               66307 /s
+  streams_both           steps/s    21463  tok/s    64246
+  procs_both             steps/s    10361  tok/s    32515
+rep 2/5
+  mega_all               (own process) done
+  mega_all_live          (own process) done
+  mega_train             steps/s    18785  tok/s        0  doom fps   0.0
+  mega_infer             steps/s        0  tok/s    85046  doom fps   0.0
+  mega_doom              (own process) done
+  eager_train               22252 /s
+  eager_infer               68761 /s
+  graph_train               22062 /s
+  graph_infer               66298 /s
+  streams_both           steps/s    21319  tok/s    63704
+  procs_both             steps/s    10345  tok/s    28330
+rep 3/5
+  mega_all               (own process) done
+  mega_all_live          (own process) done
+  mega_train             steps/s    18782  tok/s        0  doom fps   0.0
+  mega_infer             steps/s        0  tok/s    85018  doom fps   0.0
+  mega_doom              (own process) done
+  eager_train               22242 /s
+  eager_infer               68674 /s
+  graph_train               22116 /s
+  graph_infer               68030 /s
+  streams_both           steps/s    21322  tok/s    63468
+  procs_both             steps/s    10305  tok/s    32497
+rep 4/5
+  mega_all               (own process) done
+  mega_all_live          (own process) done
+  mega_train             steps/s    18783  tok/s        0  doom fps   0.0
+  mega_infer             steps/s        0  tok/s    85120  doom fps   0.0
+  mega_doom              (own process) done
+  eager_train               22252 /s
+  eager_infer               68714 /s
+  graph_train               22112 /s
+  graph_infer               68006 /s
+  streams_both           steps/s    21470  tok/s    64113
+  procs_both             steps/s    10322  tok/s    28195
+rep 5/5
+  mega_all               (own process) done
+  mega_all_live          (own process) done
+  mega_train             steps/s    18788  tok/s        0  doom fps   0.0
+  mega_infer             steps/s        0  tok/s    85089  doom fps   0.0
+  mega_doom              (own process) done
+  eager_train               22225 /s
+  eager_infer               68660 /s
+  graph_train               22133 /s
+  graph_infer               65723 /s
+  streams_both           steps/s    21676  tok/s    65016
+  procs_both             steps/s    10305  tok/s    28269
+wrote /tmp/bench.json

@@ -1,0 +1,36 @@
+{
+ "gpu": "NVIDIA B200, 610.57.04, 183359 MiB, 1965 MHz\ncpus=8 unknown",
+ "binary": "ofa_tc2",
+ "steps": 4000,
+ "rc": 0,
+ "kernels_by_name": [
+  [
+   "smid_probe(unsigned int *)",
+   1
+  ],
+  [
+   "ofa_kernel(Ctx)",
+   1
+  ],
+  [
+   "void decode::k_init_embed<decode::Cfg<(int)12, (int)768, (int)12, (int)512, (int)100352, (int)128>>(decode::Params<T1>)",
+   1
+  ]
+ ],
+ "launch_api_calls": [
+  [
+   "cudaLaunchKernel_v7000",
+   3
+  ]
+ ],
+ "kernels_total": 3,
+ "run": [
+  "doom: WAD /opt/ofa/doom-gpu/doom1.wad (4196020 bytes), partition runs the real engine at 35 Hz",
+  "GPU NVIDIA B200 (sm_100), 148 SMs; smem/SM 233472 B, opt-in/block 232448 B, reserved/block 1024 B; kernel needs 66432 B dyn -> 3 blocks/SM fit by smem, 2 by occupancy (target 2)",
+  "launching ONE persistent kernel (296 blocks)...",
+  "kernel time 52.311 s (event) / 52.354 s (wall incl. launch)",
+  "loss: step0 11.7106  s1 11.2639  s2 10.7522  s5 9.9998  s10 9.6331  s20 8.5514  s50 5.6934  s100 4.4137  s200 4.0631  s500 3.6659  s1000 2.9972  s2000 2.4032  s3000 2.2013  s3999 2.1575",
+  "decode answers: 356 answers (7 prompt tokens + 256 sampled each), 91105 sampled tokens -> 1742 tok/s sampled (prompt steps excluded)",
+  "doom: 1826 frames in the run, 35.0 fps over the run (frame 0 = boot excluded); 34.9 fps while training steps 3..3999"
+ ]
+}

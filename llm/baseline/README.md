@@ -43,7 +43,7 @@ pipe/log dirs `~/mps_baseline`). `baseline_check_sms` (check_sms.cu) verifies ho
 
 Final loss (step 4000, single step): Megatron 2.146/2.152, PyTorch 2.143/2.146 (FA: 2.1094). Kernel launches: PyTorch eager 581 kernels/step (2.32M per 4000 steps),
 Megatron local-spec 958/step (3.83M); vLLM 129 kernels executed per token (22 host launch calls/token with CUDA graphs).
-Caveat: the GPU is shared with other agents; some runs saw 2-3 compute processes on the GPU (see `max_compute_procs_seen_per_run`), which includes our own
+Caveat: the GPU was shared with other jobs; some runs saw 2-3 compute processes on the GPU (see `max_compute_procs_seen_per_run`), which includes our own
 process/MPS server, so the figures are probably but not provably clean. Megatron without TE is much slower than eager PyTorch here (unfused attention), so it is a weaker baseline than FA's (which presumably used TE).
 vLLM decode is CPU/launch-bound at this model size, hence almost insensitive to SM count.
 

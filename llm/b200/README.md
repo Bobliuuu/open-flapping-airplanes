@@ -1,5 +1,14 @@
 # b200/: Blackwell track of open-flapping-airplanes (148-SM B200, sm_100a), prepared WITHOUT B200 hardware
 
+> **Update 2026-11-02:** the megakernel (with Doom), the baseline scripts and the tcgen05 GEMM test have now run on an actual B200 (Modal
+> `gpu="B200"`), unchanged; results and the pipeline are in [`../../b200-run/`](../../b200-run/README.md). The text below is the original plan.
+
+> **Update 2026-11-02 (later):** the tcgen05 backend now runs inside the megakernel at 2 blocks per SM (TMEM allocated once per block,
+> allocation permit relinquished; the occupancy API reports 1 block per SM for any tcgen05 kernel), with a staged, coalesced epilogue.
+> 4,000 steps on the 116 / 24 / 8 split take 48.1 s (3 stages) or 52.4 s (2 stages) instead of 95.8 s, same losses: see
+> [`../../b200-run/README.md`](../../b200-run/README.md#the-gemms-from-mmasync-to-tcgen05). The status table and hour plan below are the
+> original plan, kept for the record.
+
 **EVERYTHING HERE IS UNTESTED ON B200.** No B200 result exists. This kit was written and compile-checked on the A100 box (nvcc 12.8, which can target
 `sm_100a`). Nothing below claims a measured Blackwell number. FA's published targets (from `benchmarks/fa_published.json`, read off their video, not measured by us):
 Megatron 4,000 steps **70.1 s** (~230k tok/s) on 116 SMs, vLLM **710 tok/s** on 24 SMs, KVM 46.1 s / ~355k tok/s / 1,076 tok/s, 514,562 vs 1 launch, split 116/24/8 of 148.
@@ -8,7 +17,7 @@ Megatron 4,000 steps **70.1 s** (~230k tok/s) on 116 SMs, vLLM **710 tok/s** on 
 |---|---|---|
 | `baseline/` | setup, MPS SM calibration, `run_all.sh` (Megatron+TE S/F, PyTorch, vLLM, launch counts), JSON in the A100 v2 schema, FA comparison | scripts syntax-checked only; python files parse; not run |
 | `megakernel/` | SM-count-parameterised ofa build (`--split auto`, 116/24/8 on 148), `build.sh sm_80|sm_100a` | sm_80 build + loss regression on A100 (see below); sm_100a compiles, never executed |
-| `gemm_tcgen05/` | TMA + tcgen05 GEMM backend with the `gemm.cuh` interface | compiles for sm_100a (ptxas OK, SASS has UTCHMMA/UTMALDG); never executed; probably wrong somewhere (see its README, ranked risks) |
+| `gemm_tcgen05/` | TMA + tcgen05 GEMM backend with the `gemm.cuh` interface | tested on a B200: all 15 S shapes PASS, 34-73% of cuBLAS; the megakernel's faster backend (see its README) |
 
 ## What is tested (A100 box, nvcc 12.8.93, 2026-11-01)
 | check | result |

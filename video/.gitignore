@@ -8,3 +8,6 @@ frames/
 # release video, exactly this path
 !release/
 !release/*.mp4
+
+# demo video: generated from data.json by make_data.py
+b200/data.js

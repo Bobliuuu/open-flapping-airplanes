@@ -6,7 +6,7 @@ Copy of `llm/ofa/` (ofa.cu, doom_job.cuh, dashboard.cuh, index.html, decode_wide
 * blocks per SM is a compile knob (`-DOFA_BLOCKS_PER_SM`, default 2) used for `__launch_bounds__`, the persistent block count and the utilisation report,
 * shared-memory limits are read from the device (opt-in/block, per-SM, reserved) and printed; the launch refuses if the kernel does not fit the opt-in limit,
 * a `%smid` probe builds a dense SM-rank table so the partition stays correct if `%smid` is not 0..SMs-1 (disabled SMs),
-* the GEMM goes through `tg::` (`../gemm_tcgen05/gemm_backend.cuh`): mma.sync (default, identical code) or the untested tcgen05 backend.
+* the GEMM goes through `tg::` (`../gemm_tcgen05/gemm_backend.cuh`): mma.sync (default, identical code) or the tcgen05 backend (TMEM allocated once per block, 2 blocks per SM; the faster build on a B200).
 
 ## Partition
 | flag / env | meaning |
@@ -23,7 +23,7 @@ Roles are assigned per SM (dense rank of `%smid`): ranks [0,infer) decode, [infe
 ./build.sh sm_80                      # A100 (needs ~/doom-gpu/doom_dev.o as before)
 ./build_doom_b200.sh sm_100a          # re-assembles ~/doom-gpu/doom.ptx for Blackwell (clang NVPTX PTX is .target sm_80; nvcc 12.8 accepted it for sm_100a)
 ./build.sh sm_100a                    # B200, mma.sync GEMM        (MODEL=F ./build.sh sm_100a for config F)
-./build.sh sm_100a ofa_tc -DOFA_GEMM_BACKEND=1   # B200, tcgen05 GEMM (UNTESTED)
+./build.sh sm_100a ofa_tc2 -DOFA_GEMM_BACKEND=1 -DGEMM100_STAGES=2   # B200, tcgen05 GEMMs (3 stages: faster training, slower serving)
 NODOOM=1 ./build.sh sm_100a           # without the Doom object (link stubs); then do not pass --wad
 ```
 `build.sh` prints the ptxas line for `ofa_kernel`. Needs `-rdc=true` (Doom is a separate device object) and CUDA >= 12.8 for sm_100a (13.x also fine; for B300 use sm_103a).
@@ -34,8 +34,9 @@ Run: `./run_b200.sh ./ofa_b200_sm_100a --steps 4000` (data paths as in `llm/base
 |---|---|---|
 | `GEMM_STAGES` | 4 (64 KB) | mma.sync pipeline depth. B200 has 228 KB/SM: 2 blocks x 64 KB use 56%. `-DGEMM_STAGES=6` -> 96 KB/block, 2 blocks fit (192 KB + reserved). Build verified for sm_100a; speed unknown |
 | `OFA_BLOCKS_PER_SM` | 2 | 1 frees 128 registers/thread budget (needs `-maxrregcount` change in build.sh) but halves latency hiding |
-| `OFA_GEMM_BACKEND` | 0 | 1 = tcgen05 (see ../gemm_tcgen05) |
-| `GEMM100_STAGES`, `GEMM100_LAYOUT_MASK` | 3, 7 | tcgen05 backend pipeline depth; layouts routed to tcgen05 (bit0 NN, bit1 NT, bit2 TN) |
+| `OFA_GEMM_BACKEND` | 0 | 1 = tcgen05 (see ../gemm_tcgen05): about 2x faster training on a B200 |
+| `GEMM100_STAGES`, `GEMM100_LAYOUT_MASK` | 3, 7 | tcgen05 pipeline depth (2: 66,432 B of shared memory per block, the same L1 as mma.sync; 3: 99,200 B, faster training, less L1 for the serving SMs); layouts routed to tcgen05 (bit0 NN, bit1 NT, bit2 TN) |
+| `OFA_CARVEOUT` (env) | unset | shared-memory carveout hint in percent (`cudaFuncAttributePreferredSharedMemoryCarveout`); serving is L1-sensitive |
 | `CLAIM_FETCHADD` | 1 | scheduler ticket claim; 0 = old CAS loop (slower; 148 SMs make it worse) |
 | `--opt-mode 0/1/2` (runtime) | 2 | AdamW overlap, as in MERGE.md |
 | `OFA_PROBE_SMID=0` (env) | 1 | skip the %smid probe launch |
@@ -51,4 +52,4 @@ See the table in `../README.md` ("What is tested"). In short: sm_80 build runs a
 2. `cudaLimitStackSize` 24 KB (Doom) x resident threads: 148 SMs x 2048 threads x 24 KB = 7.3 GB, fine on 180 GB but allocation takes a moment.
 3. Doom's 35 Hz pacing uses `%globaltimer`; its resolution on Blackwell may be coarser (frame pacing jitter, not correctness).
 4. If the first launch fails with "too many resources requested" or `invalid argument`: dynamic smem or register budget; run `build.sh` with `-DGEMM_STAGES=4` and `-DOFA_BLOCKS_PER_SM=1`.
-5. `-DOFA_GEMM_BACKEND=1` hang (GPU stuck at 100%, no output): mbarrier/TMA bug in the untested backend; fall back to backend 0 and follow the test plan in `../gemm_tcgen05/README.md`.
+5. `-DOFA_GEMM_BACKEND=1` hang (GPU stuck at 100%, no output): a block allocating TMEM per tile without relinquishing the permit serializes co-resident blocks; keep `tg::block_init`/`block_exit` around every block's tiles (see `../gemm_tcgen05/README.md`).

@@ -1,7 +1,11 @@
 #!/usr/bin/env bash
-# Compile the Doom engine (doomgeneric) + tinylibc + glue to a relocatable GPU object (doom.o) with clang's NVPTX backend.
+# Compile the Doom engine (doomgeneric) + tinylibc + glue + the scripted player to a relocatable GPU object (doom.o) with clang's
+# NVPTX backend.
 set -e
 cd "$(dirname "$0")"
+# GPU to emit machine code for: sm_80 (A100, default), sm_90 (H100), sm_100 (B200). The PTX is always generated for sm_80;
+# ptxas compiles that forward for newer GPUs.
+ARCH="${ARCH:-sm_80}"
 SRC=doomgeneric/doomgeneric
 RES=$(clang -print-resource-dir)
 FILES="dummy am_map doomdef doomstat dstrings d_event d_items d_iwad d_loop d_main d_mode d_net f_finale f_wipe g_game hu_lib hu_stuff info i_cdmus i_endoom i_joystick i_scale i_sound i_system i_timer memio m_argv m_bbox m_cheat m_config m_controls m_fixed m_menu m_misc m_random p_ceilng p_doors p_enemy p_floor p_inter p_lights p_map p_maputl p_mobj p_plats p_pspr p_saveg p_setup p_sight p_spec p_switch p_telept p_tick p_user r_bsp r_data r_draw r_main r_plane r_segs r_sky r_things sha1 sounds statdump st_lib st_stuff s_sound tables v_video wi_stuff w_checksum w_file w_main w_wad z_zone w_file_stdc i_input i_video doomgeneric"
@@ -41,6 +45,12 @@ def ivid(s):
     s = s.replace('void I_FinishUpdate (void)\n{', 'void I_FinishUpdate (void)\n{\n    DG_DrawFrame(); return;   /* palette conversion happens in the megakernel copy tasks (parallel) */', 1)
     return s
 patch('src_gpu/i_video.c', ivid)
+# ---- the scripted player (player/player.c) fills in the player's command at the end of G_BuildTiccmd, once per game tic
+def ggame(s):
+    old = '    // special buttons\n'
+    assert s.count(old) == 1
+    return s.replace(old, '    { extern void player_ticcmd(ticcmd_t*); player_ticcmd(cmd); }\n' + old, 1)
+patch('src_gpu/g_game.c', ggame)
 PYEOF
 mkdir -p obj; rm -f obj/*.bc
 fail=0
@@ -48,14 +58,15 @@ for f in $FILES; do OPT="-O2"; [ $f = m_menu ] && OPT="-O1"; ( clang $CF $OPT -c
 clang $CF -c -emit-llvm tinylibc.c -o obj/tinylibc.bc 2> obj/tinylibc.err || { echo FAIL tinylibc; head -20 obj/tinylibc.err; fail=1; }
 clang $CF -c -emit-llvm gpu_par.c -o obj/gpu_par.bc 2> obj/gpu_par.err || { echo FAIL par; head -20 obj/gpu_par.err; fail=1; }
 clang $CF -c -emit-llvm gpu_glue.c -o obj/gpu_glue.bc 2> obj/gpu_glue.err || { echo FAIL glue; head -20 obj/gpu_glue.err; fail=1; }
+clang $CF -Iplayer -c -emit-llvm player/player.c -o obj/player.bc 2> obj/player.err || { echo FAIL player; head -20 obj/player.err; fail=1; }
 ls obj/*.bc | wc -l
 [ $fail = 0 ] || exit 1
 llvm-link obj/*.bc -o doom.bc
 llvm-dis doom.bc -o doom.ll
 python3 fix_varargs.py doom.ll doom_nv.ll
 llc -march=nvptx64 -mcpu=sm_80 -mattr=+ptx75 -O2 doom_nv.ll -o doom.ptx
-ptxas -arch=sm_80 -c doom.ptx -o doom.cubin 2>&1 | grep -v "Potential out of bound" || true
+ptxas -arch=$ARCH -c doom.ptx -o doom.cubin 2>&1 | grep -v "Potential out of bound" || true
 ls -la doom.cubin doom.ptx
 # assemble the PTX into a relocatable device object that nvcc can link; cap registers so the megakernel keeps 2 blocks per SM
-nvcc -arch=sm_80 -dc -maxrregcount=112 doom.ptx -o doom_dev.o 2>&1 | grep -v 'Potential out of bound' || true
+nvcc -gencode arch=compute_80,code=$ARCH -dc -maxrregcount=112 doom.ptx -o doom_dev.o 2>&1 | grep -v 'Potential out of bound' || true
 ls -la doom_dev.o

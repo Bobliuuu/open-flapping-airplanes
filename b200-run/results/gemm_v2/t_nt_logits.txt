@@ -1,0 +1,5 @@
+config S (d=768,h=3072), 148 SMs, smem/tile 99200 B
+case                   M x N x K          | relmax    relmean   cublas_rm | persist alias |     ours   cublas  ratio
+  [kernel L=1 E=4] regs grid=90 persist=94, local(spill)=0 B, static smem=128 B, dyn smem=99200 B
+logits       NT F32    4096x100352x768    | 1.61e-06  5.65e-07  1.61e-06  | bitexact n/a   |    0.0TF    0.0TF  0.00  PASS
+OVERALL PASS
