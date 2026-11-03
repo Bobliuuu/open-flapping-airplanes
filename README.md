@@ -18,12 +18,8 @@ Flapping Airplanes showed a demo video of one GPU kernel that trains a model, se
 It is a real persistent megakernel: **one launch, and its blocks never exit.** They pull training, serving and Doom tasks from on-GPU queues
 until the run ends. We never saw their code; everything here was written from scratch, and every number comes from a result file in this repo.
 
-**Demo (94 s):** our run on one B200, in Flapping Airplanes' format, with their demo next to ours at the same moment of each run.
-
-https://github.com/user-attachments/assets/97e664f5-5b6b-43c1-978b-eb30530e9565
-
 <p align="center">
-▶️ <a href="#videos"><b>Watch the explainer (98 s)</b></a>
+▶️ <a href="#videos"><b>Watch the live demo and the explainer</b></a>
 </p>
 
 ## What It Does
@@ -244,14 +240,19 @@ Modal runs cost money (a B200 is billed per second); read `b200-run/README.md` b
 
 ## Videos
 
-- **B200 demo in Flapping Airplanes' format (94 s, plays [at the top of this README](#open-flapping-airplanes)):** a recorded run of the LLM-scale
-  megakernel, the split, the code, the side by side with the baselines, the result cards, Flapping Airplanes' demo next to ours at the same
-  moment of each run, and their published benchmark next to ours, with music. Every number comes from `b200-run/results/` and
-  `benchmarks/fa_published.json` through `video/b200/make_data.py`; their footage is from their demo video.
-- **Explainer (98 s, plays below):** the problem (launch counts), the idea (one persistent kernel, the 116 / 24 / 8 SM split), the Doom port,
-  the method, a still of the B200 dashboard, and the results against Flapping Airplanes' published numbers, all on one B200. It is rendered
-  from [`video/data.json`](video/data.json), whose values come from `b200-run/results/` and `benchmarks/fa_published.json`, not typed into the
-  scenes.
+### Live demo (94 s)
+
+Our run on one B200, in Flapping Airplanes' format: the recorded live dashboard (training loss, streaming text, Doom), the code, the split, the side
+by side with the baselines, the result cards, and Flapping Airplanes' demo next to ours at the same moment of each run, with music. Every number
+comes from `b200-run/results/` and `benchmarks/fa_published.json` through `video/b200/make_data.py`; their footage is from their demo video.
+
+https://github.com/user-attachments/assets/97e664f5-5b6b-43c1-978b-eb30530e9565
+
+### Explainer (98 s)
+
+The problem (launch counts), the idea (one persistent kernel, the 116 / 24 / 8 SM split), the Doom port, the method, a still of the B200 dashboard,
+and the results against Flapping Airplanes' published numbers, all on one B200. It is rendered from [`video/data.json`](video/data.json), whose
+values come from `b200-run/results/` and `benchmarks/fa_published.json`, not typed into the scenes.
 
 https://github.com/user-attachments/assets/239f7d26-4d33-4623-b42c-94647baa15bb
 
