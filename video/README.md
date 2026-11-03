@@ -44,8 +44,8 @@ on one B200, plus a card on how it was measured and what differs from their demo
   losses are in `b200-run/results/video_ofa_tc2/`). That run, with the dashboard and screen capture, took 52.9 s; the cards use the
   mean of 3 runs without them (52.4 s), and the video says so. Doom in it is played by the scripted player in `doom-gpu/player/`.
 - With `--fa-video PATH` (their demo video, which is not in this repository) the render adds a scene with their dashboard next to ours
-  at the same run time (seconds since each kernel launch): their full-screen stretch (their run at 3.4-8.0 s) in real time, then the end
-  of both runs at 2x, from the two real-time stretches their video shows. The clocks in their footage set the alignment (constants
+  at the same run time (seconds since each kernel launch), in real time: their full-screen stretch (their run at 3.4-8.0 s), then
+  37.2 s until their run ends at 46.2 s, where both stop (ours finishes at 52.9 s), from the two real-time stretches their video shows. The clocks in their footage set the alignment (constants
   `FA_A`, `FA_B` in `demo.html`). The MP4 goes to `out/ofa_demo_<build>_with_fa.mp4`, which git ignores.
 - The music is composed by `b200/make_music.py` on the video's timeline (no samples, no outside audio; numpy only) and muxed in as AAC
   by the render job.
