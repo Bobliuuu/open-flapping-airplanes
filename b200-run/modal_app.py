@@ -255,9 +255,10 @@ def mk(reps: int = 3, steps: int = 4000, binary: str = "ofa_s", tag: str = "mega
 
 
 @app.function(gpu=GPU, image=vid_img, volumes={V: vol}, cpu=8.0, memory=32768, timeout=2400)
-def video(steps: int = 4000, width: int = 1920, height: int = 1080, scale: float = 4 / 3, fps: int = 30, binary: str = "ofa_tc2") -> dict:
+def video(steps: int = 4000, width: int = 1920, height: int = 1080, scale: float = 2.0, fps: int = 30, binary: str = "ofa_tc2") -> dict:
     """Screen recording of the megakernel's dashboard for a full run on FA's split: the training loss, answers to FA's prompt from the live
-    weights, Doom. Google Chrome shows the page on a virtual X display and ffmpeg records it in real time; the dashboard is served
+    weights, Doom. The page is laid out at 960x540 CSS pixels and drawn at 2x (scale), so its text stays readable when the video shows the
+    recording at half size. Google Chrome shows the page on a virtual X display and ffmpeg records it in real time; the dashboard is served
     --start-delay seconds before the launch, so the recording starts at step 0. The MP4 goes to the Volume's video/; stills come back."""
     import signal
     import urllib.request

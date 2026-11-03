@@ -30,8 +30,12 @@ Percentages use FA's convention, 1 - faster/slower (70.1 s vs 46.1 s = 34%).
 
 ## Other video
 `release/ofa_demo_b200.mp4` is the demo in Flapping Airplanes' format (a recorded B200 run, the split, the code, the side by side, the
-result cards). It is built separately from `b200/` (`b200/make_data.py` reads `b200-run/results/`, `b200/render_demo.js` renders it) and
-needs the recorded dashboard frames.
+result cards, their published benchmark next to ours, the end card), with music. It is built separately from `b200/` (`b200/make_data.py`
+reads `b200-run/results/` and `benchmarks/fa_published.json`, `b200/render_demo.js` renders it, `b200/make_music.py` composes the music on
+the same timeline with numpy, no samples) and needs the recorded dashboard frames (`modal run b200-run/modal_app.py --step video`, which
+draws the dashboard at 2x so it stays readable at half size). `modal run video/b200/modal_render.py --fa-video their_demo.mp4` adds a scene
+with their dashboard next to ours at the same run time, until their run ends at 46.155 s; their footage is not in this repository and that
+render goes to `out/`, which is not tracked.
 
 Large outputs (`out/`, `node_modules/`, any other `*.mp4`) are ignored by `video/.gitignore`; only `release/*.mp4` is tracked.
 Not affiliated with Flapping Airplanes.
