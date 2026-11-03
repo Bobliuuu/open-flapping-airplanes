@@ -14,10 +14,12 @@ node render.js --stills 20,50,76   # PNGs at global times (s) into out/stills/ f
 CHROME=/path/to/chrome node render.js   # other Chrome/Chromium
 ```
 Needs ffmpeg and node on PATH. The release copy is `release/ofa_explainer.mp4` (copy `out/ofa_explainer.mp4` there after a render).
+On Linux, Liberation Sans and DejaVu Sans Mono stand in for Helvetica Neue and Menlo (`index.html` lists them as fallbacks); Chrome
+running as root also needs `--no-sandbox`.
 
 ## Scenes (98 s)
 title (4 s), problem (7), launches: which definition of "launch" (9), idea: one kernel, the 116 / 24 / 8 SM split (9),
-arch (10), doom (10), method (8), dash: live dashboard still, `assets/dashboard.png` (9), resA: launches and training (14),
+arch (10), doom (10), method (8), dash: a frame of the B200 dashboard recording, `assets/dashboard.png` (9), resA: launches and training (14),
 resB: inference, loss and "what it means" (12), end (6). Scene lengths and burned-in captions are in `data.json` under `scenes`
 (`[start_s, end_s, text]` relative to the scene).
 

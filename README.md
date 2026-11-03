@@ -23,7 +23,7 @@ until the run ends. We never saw their code; everything here was written from sc
 https://github.com/user-attachments/assets/97e664f5-5b6b-43c1-978b-eb30530e9565
 
 <p align="center">
-▶️ <a href="video/release/ofa_explainer.mp4"><b>Watch the explainer (98 s)</b></a>
+▶️ <a href="#videos"><b>Watch the explainer (98 s)</b></a>
 </p>
 
 ## What It Does
@@ -181,8 +181,8 @@ model size, data and settings are unpublished). "Slower" is FA's metric, 1 - bas
 | Kernel launches | 1 vs 514,562 | 1 vs 2.2M-4.2M host launch calls (15.2M kernels) | same |
 | Doom | plays throughout | 35 fps throughout | 35 fps throughout |
 
-- **Launches.** For the same work (4,000 steps plus about 91,000 served tokens) the baselines make 1.2M to 8.4M launches depending on how they are
-  counted (graph launches versus every kernel). Nsight Systems counts **3** launches for a whole `ofa_tc2` process: two one-off setup kernels
+- **Launches.** For the same work (4,000 steps plus about 91,000 served tokens) the baselines make 2.2M to 15.2M launches depending on how they are
+  counted (host launch calls with CUDA graphs versus every kernel on the GPU). Nsight Systems counts **3** launches for a whole `ofa_tc2` process: two one-off setup kernels
   and the megakernel, which runs all training, serving and Doom ([`b200-run/results/launches_ofa_tc2/`](b200-run/results/launches_ofa_tc2/nsys_launches.json)).
 - **Training.** We beat Megatron + TE as frameworks run by default (eager), by 16-23% against their 34%. Megatron + TE with CUDA graphs is faster than
   we are: 43.1 s against 48.1 s and 52.4 s. We do not know whether their baseline used graphs.
@@ -244,11 +244,15 @@ Modal runs cost money (a B200 is billed per second); read `b200-run/README.md` b
   megakernel, the split, the code, the side by side with the baselines, the result cards, Flapping Airplanes' demo next to ours at the same
   moment of each run, and their published benchmark next to ours, with music. Every number comes from `b200-run/results/` and
   `benchmarks/fa_published.json` through `video/b200/make_data.py`; their footage is from their demo video.
-- [Explainer (98 s)](video/release/ofa_explainer.mp4): the problem (launch counts), the idea (one persistent kernel, the 116 / 24 / 8 SM split), the Doom port, the
-  method, a live dashboard still, and the results against Flapping Airplanes' published numbers, all on one B200. It is rendered from
-  [`video/data.json`](video/data.json), whose values come from `b200-run/results/` and `benchmarks/fa_published.json`, not typed into the scenes.
+- **Explainer (98 s, plays below):** the problem (launch counts), the idea (one persistent kernel, the 116 / 24 / 8 SM split), the Doom port,
+  the method, a still of the B200 dashboard, and the results against Flapping Airplanes' published numbers, all on one B200. It is rendered
+  from [`video/data.json`](video/data.json), whose values come from `b200-run/results/` and `benchmarks/fa_published.json`, not typed into the
+  scenes.
 
-Sources are in [`video/`](video/README.md).
+https://github.com/user-attachments/assets/239f7d26-4d33-4623-b42c-94647baa15bb
+
+Sources are in [`video/`](video/README.md). Full-quality copies are in `video/release/`; GitHub's file view does not play files this large, so
+download them to watch.
 
 ## Credits and licensing
 
