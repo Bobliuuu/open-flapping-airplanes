@@ -18,9 +18,6 @@ An independent rebuild of the idea in the public demo video of Flapping Airplane
 training, inference and a game share one GPU through one kernel launch. We have not seen their code. Everything here was written and measured
 from scratch, and every number below comes from a result file in this repo.
 
-> Formerly named **open-flapping-airplanes**. The name changed to open-flapping-airplanes; the internal binaries, kernels, folders and result keys keep the
-> `ofa_*` prefix (`ofa_fast`, `ofa_tc2`, `ofa_tc3`, `ofa_s`, `llm/ofa_fast/`, ...) because scripts and result files refer to them.
-
 | | Program | What happens |
 |---|---|---|
 | Train | **Training** | A GPT learns online: forward, backward and AdamW all run as tasks inside the kernel. |

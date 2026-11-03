@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # usage: ./sync_build.sh <binary-name> [extra nvcc flags...]   (builds ~/llm/megakernel/ofa_llm.cu on the box)
 set -e
-H=ubuntu@<ip>; BIN=${1:?}; shift || true
+H="ubuntu@<ip>"; BIN=${1:?}; shift || true
 D="$(cd "$(dirname "$0")/.." && pwd)"
 rsync -az --exclude 'golden' --exclude '*.f32' --exclude '*.u32' --exclude '*.txt' "$D/megakernel/" "$H:~/llm/megakernel/"
 for a in gemm attention elementwise decode; do rsync -az "$D/$a/" "$H:~/llm/$a/"; done
