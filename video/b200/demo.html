@@ -71,23 +71,27 @@ html,body{margin:0;background:var(--bg)}
 .card td.r{text-align:right;font-weight:650;white-space:nowrap}
 .card .fn{font-size:17px;color:var(--dim);line-height:1.45;margin-top:20px}
 #cardfoot{position:absolute;left:56px;right:56px;top:760px;font-size:21px;color:var(--muted);line-height:1.5;opacity:0}
-/* how it was measured */
-#measgrid{position:absolute;left:56px;top:250px;right:56px;display:flex;gap:40px}
-.fcol{flex:1;border:1px solid var(--line);border-radius:20px;background:var(--panel);padding:28px 34px}
-.fcol .t{font-size:32px;font-weight:700;margin-bottom:16px}
-.fcol ul{padding:0;margin:0}
-.fcol li{font-size:28px;line-height:1.4;margin:0 0 26px 0;color:var(--text);list-style:none;position:relative;padding-left:42px}
-.fcol li:before{position:absolute;left:0;top:0;font-weight:800}
-.ok li:before{content:"✓";color:var(--good)}
-.no li:before{content:"•";color:var(--doom);font-size:30px;line-height:30px}
-.fcol li span{color:var(--muted)}
+/* their benchmark and ours */
+#benchgrid{position:absolute;left:56px;top:132px;display:grid;grid-template-columns:270px 746px 746px;column-gap:22px}
+#benchgrid > div{padding:15px 28px;font-size:27px;line-height:1.32;opacity:0}
+#benchgrid .lbl{color:var(--muted);font-size:25px;padding-left:0}
+#benchgrid .fa, #benchgrid .us{background:var(--panel);border-left:1px solid var(--line);border-right:1px solid var(--line);border-top:1px solid var(--line)}
+#benchgrid .us{background:#14100f}
+#benchgrid .hd{border-radius:20px 20px 0 0;padding-top:24px;padding-bottom:18px}
+#benchgrid .hd .t{font-size:32px;font-weight:700}
+#benchgrid .hd .s{font-size:21px;color:var(--muted);margin-top:4px}
+#benchgrid .last{border-radius:0 0 20px 20px;border-bottom:1px solid var(--line);padding-bottom:22px}
+#benchgrid b{font-weight:650}
+#benchnote{position:absolute;left:56px;right:56px;top:860px;font-size:27px;line-height:1.45;color:var(--text);opacity:0}
 /* their demo and ours, side by side */
-#sbstitle{position:absolute;left:24px;top:64px;font-size:34px;font-weight:700}
-.sbslab{position:absolute;top:178px;font-size:27px;font-weight:700}
-.sbslab span{font-weight:400;color:var(--muted);font-size:21px;margin-left:10px}
-.pane{position:absolute;top:226px;width:928px;height:522px;overflow:hidden;background:#000;outline:1px solid #263241}
+#sbstitle{position:absolute;left:16px;top:22px;font-size:36px;font-weight:700}
+.sbslab{position:absolute;top:92px;font-size:30px;font-weight:700}
+.sbslab span{font-weight:400;color:var(--muted);font-size:23px;margin-left:12px}
+.pane{position:absolute;top:142px;width:936px;height:527px;overflow:hidden;background:#000;outline:1px solid #263241}
 .pane img{position:absolute;left:0;top:0;transform-origin:0 0}
-.sbsclock{position:absolute;top:766px;font-size:24px;color:var(--muted)}
+.sbsclock{position:absolute;top:686px;font-size:28px;color:var(--muted)}
+#sbsguide{position:absolute;left:0;right:0;top:760px;text-align:center;font-size:25px;color:var(--muted)}
+#sbsguide b{color:var(--text);font-weight:600}
 .sbsclock b{color:var(--text);font-family:"JetBrains Mono",monospace;font-weight:600}
 /* end */
 #endtext{position:absolute;left:0;right:0;top:250px;text-align:center}
@@ -122,10 +126,10 @@ html,body{margin:0;background:var(--bg)}
   </div>
 
   <div id="race" class="layer">
-    <div id="racetitle">open-flapping-airplanes next to the usual tools</div>
+    <div id="racetitle">Ours next to the usual tools</div>
     <div id="racesub"></div>
     <div id="raceclock">real time <b class="mono" id="clock">0.0 s</b></div>
-    <div id="ofapanel"><div class="hd">open-flapping-airplanes <span id="ofahd"></span></div><div id="recslot"></div><div class="statrow" id="ofastats"></div></div>
+    <div id="ofapanel"><div class="hd">Ours <span id="ofahd"></span></div><div id="recslot"></div><div class="statrow" id="ofastats"></div></div>
     <div id="basepanel"></div>
     <svg id="chart" width="1832" height="270"></svg>
   </div>
@@ -133,20 +137,16 @@ html,body{margin:0;background:var(--bg)}
   <div id="cards" class="layer"><div id="cardrow"></div><div id="cardfoot"></div></div>
 
   <div id="sbs" class="layer">
-    <div id="sbstitle">Their demo and ours, side by side</div>
-    <div class="sbslab" style="left:24px">Flapping Airplanes<span>from their demo video</span></div>
-    <div class="sbslab" style="left:968px;color:var(--ofa)">open-flapping-airplanes<span>ours, recorded on one B200</span></div>
-    <div class="pane" style="left:24px"><img id="faimg" alt=""></div>
+    <div id="sbstitle">Their demo and ours, at the same moment of each run</div>
+    <div class="sbslab" style="left:16px">Flapping Airplanes<span>from their demo video</span></div>
+    <div class="sbslab" style="left:968px;color:var(--ofa)">Ours<span>open-flapping-airplanes, recorded on one B200</span></div>
+    <div class="pane" style="left:16px"><img id="faimg" alt=""></div>
     <div class="pane" style="left:968px"><img id="ourimg" alt="" style="width:1920px;height:1080px"></div>
-    <div class="sbsclock" id="clk-l" style="left:24px"></div><div class="sbsclock" id="clk-r" style="left:968px"></div>
+    <div class="sbsclock" id="clk-l" style="left:16px"></div><div class="sbsclock" id="clk-r" style="left:968px"></div>
+    <div id="sbsguide">On each screen: <b>training</b> on top (the loss falls as it learns), <b>answers</b> to “What is a megakernel?” bottom left, <b>Doom</b> bottom right</div>
   </div>
 
-  <div id="measured" class="layer">
-    <div id="measgrid">
-      <div class="fcol ok"><div class="t">How it was measured</div><ul id="meas-ok"></ul></div>
-      <div class="fcol no"><div class="t">What is different from Flapping Airplanes</div><ul id="meas-no"></ul></div>
-    </div>
-  </div>
+  <div id="bench" class="layer"><div id="benchgrid"></div><div id="benchnote"></div></div>
 
   <div id="end" class="layer"><div id="endtext"><div class="l1" id="end1"></div><div class="l2" id="end2"></div></div></div>
   <div id="badge"></div>
@@ -169,14 +169,14 @@ const TR = D.ofa, REC = D.recording, BL = D.training_baselines, VL = D.vllm, DV 
 const recRun = REC && REC.kernel_s ? REC.kernel_s : TR.train_s_mean;   // the recorded run's own time drives the race
 const ORDER = ["megatron_te", "megatron_te_graph", "pytorch", "pytorch_graph"].filter(k => BL[k]);
 const meg = BL.megatron_te, best = BL[DV.best_train_key];
-const tokens = DV.same_work_tokens, vllmT = tokens / VL.tok_s_mean;    // vLLM serving open-flapping-airplanes's tokens, alone
+const tokens = DV.same_work_tokens, vllmT = tokens / VL.tok_s_mean;    // vLLM serving the tokens ours served, alone
 const raceEnd = Math.max(recRun, vllmT, ...ORDER.map(k => BL[k].train_s_mean));
 // FA's metric, 1 - open-flapping-airplanes time / baseline time: > 0 the baseline is slower, < 0 it is faster (in rate)
 const rel = p => Math.abs(p) < 1 ? `the same (${fmt(Math.abs(p), 1)}%)` : p > 0 ? `${fmt(p, 1)}% slower` : `${fmt(-p, 1)}% faster`;
 const relCol = p => Math.abs(p) < 1 ? "var(--muted)" : p > 0 ? "var(--good)" : "var(--bad)";
 
 // ---------------------------------------------------------------- timeline (seconds of video)
-const S = {live: [0, 10], zoom: [10, 16.5], code: [16.5, 25], race: [25, 0], cards: [0, 0], sbs: [0, 0], measured: [0, 0], end: [0, 0]};
+const S = {live: [0, 10], zoom: [10, 16.5], code: [16.5, 25], race: [25, 0], cards: [0, 0], sbs: [0, 0], bench: [0, 0], end: [0, 0]};
 const SPEED = 4, PRE = 0.8, HOLD = 3.2;
 S.race[1] = S.race[0] + PRE + raceEnd / SPEED + HOLD;
 S.cards = [S.race[1], S.race[1] + 12];
@@ -187,12 +187,12 @@ const FA_A = {v0: 0, run0: 3.20, from: 3.40, to: 8.00};                         
 const FA_B = {v0: 22.0, run0: 36.559, rate: (45.617 - 36.559) / 9.0, end: 46.155, from: 37.2, speed: 1};   // part 2 (their layout settles at 22.6 s): real time, until their run ends
 const FA_CROP = {x: 10, y: 278, w: 942, h: 522};                              // their dashboard in the left half of their side by side
 const NFA_A = window.__NFA_A || 0, NFA_B = window.__NFA_B || 0, HAVE_FA = NFA_A > 0 && NFA_B > 0;
-const SB = {fade: .5, p1: FA_A.to - FA_A.from, gap: .5, hold: 1.8};
+const SB = {fade: .5, p1: FA_A.to - FA_A.from, gap: .5, hold: 2.6};
 SB.p2 = (FA_B.end - FA_B.from) / FA_B.speed;                                  // both stop when their run ends; ours is still training
 const SBS_LEN = HAVE_FA ? SB.fade + SB.p1 + SB.gap + SB.p2 + SB.hold : 0;
 S.sbs = [S.cards[1], S.cards[1] + SBS_LEN];
-S.measured = [S.sbs[1], S.sbs[1] + 11];
-S.end = [S.measured[1], S.measured[1] + 7];
+S.bench = [S.sbs[1], S.sbs[1] + 13];
+S.end = [S.bench[1], S.bench[1] + 7];
 const DUR = S.end[1];
 window.getInfo = () => ({duration: DUR, fps: FPS, scenes: S});
 
@@ -247,39 +247,49 @@ const bestP = DV.train_vs_best_pct;
 const lGraph = DV.launches_megatron_graph_vllm_host;
 $("cardrow").innerHTML = `
  <div class="card" id="c1"><div class="k">Kernel launches during the run</div>
-   <div class="big mono">1</div><div class="who">open-flapping-airplanes, for all three jobs</div>
+   <div class="big mono">1</div><div class="who">Ours, for all three jobs</div>
    <div class="vs"><div class="line">Megatron + TE and vLLM:</div>
    <div class="head" style="color:${COL.megatron_te}">${lGraph ? fmt(lGraph / 1e6, 1) + " to " : ""}${fmt(DV.launches_megatron_vllm_host / 1e6, 1)} million</div>
    <div class="line" style="color:var(--muted)">with${lGraph ? " and without" : "out"} CUDA graphs</div></div></div>
  <div class="card" id="c2"><div class="k">${fmt(D.model.steps)} training steps</div>
-   <div class="big mono">${fmt(TR.train_s_mean, 1)} s</div><div class="who">open-flapping-airplanes, while answering and playing Doom</div>
+   <div class="big mono">${fmt(TR.train_s_mean, 1)} s</div><div class="who">Ours, while answering and playing Doom</div>
    <div class="vs"><table>${trainTable}</table>
    <div class="head" style="color:${relCol(bestP)}">Fastest: ${NAME[DV.best_train_key]}, ${fmt(best.train_s_mean, 1)} s</div></div></div>
  <div class="card" id="c3"><div class="k">Answering speed</div>
-   <div class="big mono">${fmt(TR.serve_tok_s_mean)}</div><div class="who">tokens per second, open-flapping-airplanes, while training</div>
+   <div class="big mono">${fmt(TR.serve_tok_s_mean)}</div><div class="who">tokens per second, ours, while training</div>
    <div class="vs"><div class="line">vLLM: <b class="mono">${fmt(VL.tok_s_mean)}</b> tokens per second</div>
    <div class="head" style="color:${relCol(DV.serve_vs_vllm_pct)}">vLLM ${rel(DV.serve_vs_vllm_pct)}</div></div></div>`;
 $("cardfoot").innerHTML = `Averages of 3 runs on one B200. Logs: b200-run/results in the repository.`;
 
-// how it was measured, and what differs from Flapping Airplanes' demo
-const ok = [
-  `One B200 GPU, split like Flapping Airplanes' demo: ${SPLIT.training} / ${SPLIT.inference} / ${SPLIT.doom} processors`,
-  `The same model, data and starting weights in every run`,
-  `Megatron, PyTorch and vLLM each ran alone on their share`,
-  `Megatron and PyTorch were timed with and without CUDA graphs`];
-const no = [
-  `Their model and code are not public, so we could not run them`,
-  `Our model learned children's stories, so it answers with stories`,
-  `They report Megatron ${FA.training.baseline_slower_pct}% slower; here, with CUDA graphs, Megatron trains faster than open-flapping-airplanes`];
-$("meas-ok").innerHTML = ok.map(x => `<li>${x}</li>`).join("");
-$("meas-no").innerHTML = no.map(x => `<li>${x}</li>`).join("");
+// their benchmark next to ours, row by row: every number from data.json (theirs: benchmarks/fa_published.json, read from their video)
+const pc = (p, digits) => `<b style="color:${p > 0 ? "var(--good)" : "var(--bad)"}">${fmt(Math.abs(p), digits)}% ${p > 0 ? "slower" : "faster"}</b>`;
+const megG = BL.megatron_te_graph;
+const BENCH = [
+  ["GPU", `1 B200 · ${FA.sm_split.training} / ${FA.sm_split.inference} / ${FA.sm_split.doom} processors`,
+          `1 B200 · ${SPLIT.training} / ${SPLIT.inference} / ${SPLIT.doom} processors`],
+  ["Model", "not public", `${D.model.params.replace(/\.\d+M$/, "M")}-parameter GPT, trained on children's stories`],
+  ["Compared with", "Megatron and vLLM, each alone", "Megatron, PyTorch and vLLM, each alone"],
+  [`${fmt(D.model.steps)} training steps`, `<b>${fmt(FA.training.seconds_kvm, 1)} s</b><br>Megatron ${fmt(FA.training.seconds_baseline, 1)} s · ${pc(FA.training.baseline_slower_pct, 0)}`,
+          `<b>${fmt(TR.train_s_mean, 1)} s</b><br>Megatron ${fmt(meg.train_s_mean, 1)} s · ${pc(DV.train_vs_each_pct.megatron_te, 1)}` +
+          (megG ? `<br>with CUDA graphs ${fmt(megG.train_s_mean, 1)} s · ${pc(DV.train_vs_each_pct.megatron_te_graph, 1)}` : "")],
+  ["Answering speed", `<b>${fmt(FA.inference.tok_s_kvm)} tokens/s</b><br>vLLM ${fmt(FA.inference.tok_s_baseline)} · ${pc(FA.inference.baseline_slower_pct, 0)}`,
+          `<b>${fmt(TR.serve_tok_s_mean)} tokens/s</b><br>vLLM ${fmt(VL.tok_s_mean)} · ${pc(DV.serve_vs_vllm_pct, 1)}`],
+  ["Kernel launches during the run", `1 vs ${fmt(FA.kernel_launches.baseline)}`,
+          `1 vs ${fmt((DV.launches_megatron_graph_vllm_host || DV.launches_megatron_vllm_host) / 1e6, 1)} to ${fmt(DV.launches_megatron_vllm_host / 1e6, 1)} million`]];
+$("benchgrid").innerHTML =
+  `<div class="lbl"></div><div class="fa hd"><div class="t">Flapping Airplanes' benchmark</div><div class="s">from their demo video</div></div>` +
+  `<div class="us hd"><div class="t" style="color:var(--ofa)">Our benchmark</div><div class="s">measured on one B200, averages of 3 runs</div></div>` +
+  BENCH.map((r, i) => { const last = i === BENCH.length - 1 ? " last" : "";
+    return `<div class="lbl" data-row="${i}">${r[0]}</div><div class="fa${last}" data-row="${i}">${r[1]}</div><div class="us${last}" data-row="${i}">${r[2]}</div>`; }).join("");
+$("benchnote").innerHTML = `Ours beats vLLM, and Megatron without CUDA graphs, by smaller margins than they report. ` +
+  `With CUDA graphs, Megatron trains faster than ours; their video does not say whether their Megatron used them.`;
 $("end1").innerHTML = `Trained ${fmt(D.model.steps)} steps in <em>${fmt(TR.train_s_mean, 0)} seconds</em><br>while serving it<br>while playing Doom<br>in <em>1</em> kernel launch on <em>1</em> B200 GPU`;
 $("end2").innerHTML = `open-flapping-airplanes · not affiliated with Flapping Airplanes`;
 
 // ---------------------------------------------------------------- loss chart (loss against real time)
 const CH = {x0: 70, x1: 1810, y0: 22, y1: 200, tmax: Math.ceil(raceEnd / 5) * 5 + 2, lmin: 2, lmax: 12};
 const cx = s => CH.x0 + (CH.x1 - CH.x0) * s / CH.tmax, cy = l => CH.y1 - (CH.y1 - CH.y0) * (clamp(l, CH.lmin, CH.lmax) - CH.lmin) / (CH.lmax - CH.lmin);
-const series = [{key: "ofa", name: "open-flapping-airplanes", color: COL.ofa, w: 3.4, end: recRun,
+const series = [{key: "ofa", name: "Ours", color: COL.ofa, w: 3.4, end: recRun,
                  pts: (REC ? REC.loss_curve : TR.loss_curve).map(([s, l]) => [s / 4000 * recRun, l])}]
   .concat(ORDER.map(k => ({key: k, name: NAME[k], color: COL[k], w: 2, end: BL[k].train_s_mean,
                            pts: BL[k].loss_curve.map(([s, l]) => [s / 4000 * BL[k].train_s_mean, l])})));
@@ -336,8 +346,8 @@ const CAP = {
   live: `<span><b>Live recording.</b> One megakernel on one GPU trains an AI model, answers a question with it, and plays Doom, all at once.</span>`,
   zoom: `<span><b>One megakernel, one GPU.</b> The GPU's ${SPLIT.total} processors are split between the three jobs.</span>`,
   code: `<span><b>The code.</b> Three jobs in one megakernel, started only once.</span>`,
-  sbs1: `<span><b>Same moment of each run.</b> Both train, answer and play Doom in one kernel on one B200.</span>`,
-  sbs2: `<span><b>Their run ends at ${fmt(FA_B.end, 1)} s.</b> Ours, at the same moment, is still training; it finishes at ${fmt(recRun, 1)} s. The models differ.</span>`};
+  sbs1: `<span><b>The start of each run.</b> The same three jobs, each run as one kernel on one B200 GPU.</span>`,
+  sbs2: `<span><b>Their run ends at ${fmt(FA_B.end, 1)} s.</b> Different models and data, so the times are not directly comparable.</span>`};
 const REC0 = {x: 120, y: 8, w: 1680};       // the recording in the opening: full width minus margins, the caption below it
 window.seek = async function (t) {
   const inS = k => t >= S[k][0] && t < S[k][1];
@@ -346,7 +356,7 @@ window.seek = async function (t) {
   const tsb = t - S.sbs[0], inP2 = tsb >= SB.fade + SB.p1 + SB.gap * .5;
   if (inS("sbs")) { cap = inP2 ? CAP.sbs2 : CAP.sbs1; capA = inP2 ? fade(t, S.sbs[0] + SB.fade + SB.p1 + SB.gap * .5, S.sbs[1], .45) : fade(t, S.sbs[0], S.sbs[0] + SB.fade + SB.p1 + SB.gap * .5, .45); }
   $("caption").innerHTML = cap; $("caption").style.opacity = capA;
-  $("brand").style.opacity = Math.max(fade(t, S.code[0], S.code[1]), fade(t, S.cards[0], S.cards[1]), fade(t, S.measured[0], S.measured[1]));
+  $("brand").style.opacity = Math.max(fade(t, S.code[0], S.code[1]), fade(t, S.cards[0], S.cards[1]), fade(t, S.bench[0], S.bench[1]));
   $("badge").innerHTML = inS("sbs") ? (inP2 && FA_B.speed !== 1 ? `${FA_B.speed}× speed` : "real time") : `${SPEED}× speed`;
   $("badge").style.opacity = inS("race") ? fade(t, S.race[0], S.race[1]) : inS("sbs") ? fade(t, S.sbs[0], S.sbs[1]) : 0;
 
@@ -361,7 +371,7 @@ window.seek = async function (t) {
     recA = fade(t, S.race[0], S.race[1]);
     place(rec, 63, 151, 964);
     const r = clamp((t - S.race[0] - PRE) * SPEED, 0, raceEnd);
-    p = recAt(launch + Math.min(r, recRun));           // hold on the frame where the dashboard shows step 4,000
+    p = recAt(launch + Math.min(r, recRun));           // hold at the run's end (kernel timer): the dashboard shows step 4,000 there
   }
   rec.style.opacity = recA;
 
@@ -426,16 +436,25 @@ window.seek = async function (t) {
       run = FA_B.from + clamp(tsb - SB.fade - SB.p1 - SB.gap, 0, SB.p2) * FA_B.speed;
       v = run <= FA_B.end ? FA_B.v0 + (run - FA_B.run0) / FA_B.rate : 32.2; crop = FA_CROP;
     }
-    const s1 = 928 / 1920;
-    if (crop) { const s = 928 / crop.w; faimg.style.width = "1920px"; faimg.style.height = "1080px"; faimg.style.transform = `translate(${-crop.x * s}px,${-crop.y * s + (522 - crop.h * s) / 2}px) scale(${s})`; }
+    const s1 = 936 / 1920;
+    if (crop) { const s = 936 / crop.w; faimg.style.width = "1920px"; faimg.style.height = "1080px"; faimg.style.transform = `translate(${-crop.x * s}px,${-crop.y * s + (527 - crop.h * s) / 2}px) scale(${s})`; }
     else { faimg.style.width = "1920px"; faimg.style.height = "1080px"; faimg.style.transform = `scale(${s1})`; }
     ourimg.style.transform = `scale(${s1})`;
     p2 = faAt(v); p3 = ourAt(launch + Math.min(run, recRun));
     const theirs = Math.min(run, FA_B.end), ours = Math.min(run, recRun);
     $("clk-l").innerHTML = run >= FA_B.end ? `run finished at <b>${fmt(FA_B.end, 1)} s</b>` : `run time <b>${fmt(theirs, 1)} s</b>`;
-    $("clk-r").innerHTML = run >= recRun ? `run finished at <b>${fmt(recRun, 1)} s</b>` : `run time <b>${fmt(ours, 1)} s</b>`;
+    $("clk-r").innerHTML = run >= recRun ? `run finished at <b>${fmt(recRun, 1)} s</b>`
+      : run >= FA_B.end ? `run time <b>${fmt(ours, 1)} s</b> · still training, finishes at <b>${fmt(recRun, 1)} s</b>` : `run time <b>${fmt(ours, 1)} s</b>`;
   }
-  $("measured").style.opacity = fade(t, S.measured[0], S.measured[1]);
+  $("bench").style.opacity = fade(t, S.bench[0], S.bench[1]);
+  if (inS("bench")) {
+    const tb = t - S.bench[0];
+    document.querySelectorAll("#benchgrid > div").forEach(el => {
+      const row = el.dataset.row === undefined ? -1 : Number(el.dataset.row);
+      el.style.opacity = ease(ramp(tb, .3 + (row + 1) * .45, .8 + (row + 1) * .45));
+    });
+    $("benchnote").style.opacity = ramp(tb, 4.0, 4.6);
+  }
   $("end").style.opacity = fade(t, S.end[0], S.end[1] + 1, .7);
   await Promise.all([p, p2, p3]);
 };
