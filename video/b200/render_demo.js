@@ -12,11 +12,14 @@ const CHROME = A("chrome", process.env.CHROME || "google-chrome");
 const OUT = path.resolve(A("out", path.join(ROOT, "..", "out", "ofa_demo.mp4")));
 const FR = path.join(ROOT, "frames");
 const NFR = fs.existsSync(FR) ? fs.readdirSync(FR).filter(f => /^rec_\d+\.jpg$/.test(f)).length : 0;
+// frames of Flapping Airplanes' demo video for the side-by-side scene (only when the render is given their video)
+const NFA_A = fs.existsSync(FR) ? fs.readdirSync(FR).filter(f => /^fa_a_\d+\.jpg$/.test(f)).length : 0;
+const NFA_B = fs.existsSync(FR) ? fs.readdirSync(FR).filter(f => /^fa_b_\d+\.jpg$/.test(f)).length : 0;
 
 async function newPage(browser) {
   const p = await browser.newPage();
   await p.setViewport({width: W, height: H, deviceScaleFactor: 1});
-  await p.evaluateOnNewDocument(n => { window.__NFRAMES = n; }, NFR);
+  await p.evaluateOnNewDocument((n, a, b) => { window.__NFRAMES = n; window.__NFA_A = a; window.__NFA_B = b; }, NFR, NFA_A, NFA_B);
   await p.goto("file://" + path.join(ROOT, "demo.html"));
   await p.waitForFunction("window.READY === true");
   await p.evaluate(() => document.fonts.ready);
