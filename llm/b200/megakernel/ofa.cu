@@ -1,4 +1,4 @@
-// B200 PORT (UNTESTED ON B200; sm_80 path regression-checked on A100, see README): SM partition derived from the device, see "SM PARTITION" below.
+// B200 PORT (tested on a B200; sm_80 path regression-checked on A100, see README): SM partition derived from the device, see "SM PARTITION" below.
 // ofa.cu : model "S" (GPT, 162M params) TRAINING + live DECODE + real DOOM inside ONE persistent kernel launch (A100, sm_80),
 // with an embedded HTTP dashboard server (the three-panel open-flapping-airplanes page). Derived from llm/megakernel/ofa_llm.cu.
 //
@@ -223,6 +223,7 @@ __device__ void job_loop(const Ctx& C, const Job& J, int job_id, char* smem) {
   int cph = 0, rstep = -1, rph = -1;                    // thread 0: phase cache and "this (step, phase) is known ready"
   u64 busy = 0;
   const unsigned total = (unsigned)J.limit * (unsigned)J.tps;
+  tg::block_init();                                     // tcgen05 backend: this block's TMEM columns, once (no-op for mma.sync)
   for (;;) {
     if (tid == 0) {
       int res = 0, step = 0, ph = 0, local = 0;
@@ -308,6 +309,7 @@ __device__ void job_loop(const Ctx& C, const Job& J, int job_id, char* smem) {
       }
     }
   }
+  tg::block_exit();
   if (tid == 0) C.blk_busy[blockIdx.x * 2 + job_id] = busy;
 }
 
@@ -432,7 +434,26 @@ int main(int argc, char** argv) {
   if (!doom_on) CK(cudaDeviceSetLimit(cudaLimitStackSize, 4096));   // perf-build frames are ~1-1.8 KB/thread (spills); Doom setup raises this to 24 KB itself
   if ((doom_on || port > 0) && !doom_host_setup(dm, wad_path, doom_on, fb_host, live_host)) return 1;
   CK(cudaFuncSetAttribute(ofa_kernel, cudaFuncAttributeMaxDynamicSharedMemorySize, DYN_SMEM));
+  if (const int cv = env_int("OFA_CARVEOUT", -1); cv >= 0) {   // shared-memory carveout hint, percent of the maximum (L1 gets the rest)
+    CK(cudaFuncSetAttribute(ofa_kernel, cudaFuncAttributePreferredSharedMemoryCarveout, cv));
+    printf("shared-memory carveout hint: %d%%\n", cv);
+  }
   int occ = 0; CK(cudaOccupancyMaxActiveBlocksPerMultiprocessor(&occ, ofa_kernel, 256, DYN_SMEM));
+  if (tg::kTcgen05 && occ < BPS) {
+    // The occupancy API returns 1 for any kernel with tcgen05 instructions. The hardware co-schedules more when each block allocates
+    // its TMEM once and relinquishes the allocation permit (tg::block_init), so size the grid from registers and shared memory.
+    cudaFuncAttributes fa; CK(cudaFuncGetAttributes(&fa, ofa_kernel));
+    int regs_sm = 0, smem_sm = 0, rsv = 0;
+    CK(cudaDeviceGetAttribute(&regs_sm, cudaDevAttrMaxRegistersPerMultiprocessor, 0));
+    CK(cudaDeviceGetAttribute(&smem_sm, cudaDevAttrMaxSharedMemoryPerMultiprocessor, 0));
+    CK(cudaDeviceGetAttribute(&rsv, cudaDevAttrReservedSharedMemoryPerBlock, 0));
+    const int by_regs = regs_sm / (((fa.numRegs + 7) / 8 * 8) * 256);
+    const int by_smem = smem_sm / (DYN_SMEM + (int)fa.sharedSizeBytes + rsv);
+    const int fit = std::min(by_regs, by_smem);
+    printf("tcgen05 build: occupancy API says %d block/SM; registers (%d) allow %d, shared memory (%d + %zu static) allows %d -> %d\n",
+           occ, fa.numRegs, by_regs, DYN_SMEM, fa.sharedSizeBytes, by_smem, fit);
+    occ = fit;
+  }
   const int nblocks = nsm * std::min(occ, BPS);
   {  // shared-memory opt-in limits come from the device, not from constants (A100: 164 KB/SM, 163 KB opt-in/block; H100/B200: 228 KB/SM, 227 KB opt-in/block)
     int optin = 0, per_sm = 0, reserved = 0;

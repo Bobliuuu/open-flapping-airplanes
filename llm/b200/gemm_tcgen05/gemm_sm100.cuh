@@ -1,7 +1,7 @@
 // gemm_sm100.cuh -- Blackwell (sm_100a) GEMM backend for the open-flapping-airplanes megakernel: TMA loads + tcgen05.mma into TMEM, single-CTA (cta_group::1).
 //
-// *** UNTESTED. Written WITHOUT B200 hardware, from the PTX ISA 8.7 tcgen05 chapter and CUTLASS 3.8+/4.x sm100 code. It may not even be correct
-// *** on the first run; see README.md (test plan). Compile-checked only (nvcc 12.8 -arch=sm_100a, ptxas) where the README says so. ***
+// Written from the PTX ISA 8.7 tcgen05 chapter and CUTLASS 3.8+/4.x sm100 code; tested on a B200 (test_gemm_sm100: all 15 S shapes PASS,
+// persistent == grid bit-exact) and used by the B200 megakernel (-DOFA_GEMM_BACKEND=1), see README.md.
 //
 // Same task contract as llm/gemm/gemm.cuh: one task = one 128x128 output tile of C[M,N], executed by ALL 256 threads of a block that call
 // tile<LAYOUT,EPI>(p, tile_m, tile_n, smem). Same Layout (NN/NT/TN) and Epi enums, same epilogues (they are the epilogue helpers of gemm.cuh,
@@ -9,13 +9,17 @@
 //   * Args is ArgsTC = gemm::Args + two CUtensorMap pointers. Call prepare(args, LAYOUT) ONCE on the host after filling A,B,lda,ldb,M,N,K
 //     (it encodes the TMA descriptors into device memory). Copies of the struct that only change C/aux (as the tests do) stay valid.
 //   * K must be a multiple of 64 (BK=64 bf16 = one 128-B swizzle row), not 32.
-//   * smem_bytes() = 100,352 B (3 stages x 32 KB + 1 KB barriers + 1 KB alignment slack). 2 blocks/SM => ~197 KB of the 227 KB/SM.
-//     The block also allocates 128 of the SM's 512 TMEM columns for the duration of one tile (2 blocks/SM => 256 columns).
+//   * smem_bytes() = stages x 32 KB + 896 B alignment slack (2 stages: 66,432 B; 3 stages: 99,200 B); barriers in static shared memory.
+//   * TMEM: each block allocates TMEM_COLS of the SM's 512 columns ONCE (block_init(), all 256 threads, before the first tile) and frees
+//     them in block_exit() before it exits. block_init() relinquishes the allocation permit right after allocating: while a CTA holds
+//     the permit, another CTA's tcgen05.alloc on the same SM waits until the holder exits, so a per-tile allocation would serialize (or,
+//     in a persistent kernel, deadlock) two co-resident blocks. The occupancy API reports 1 block/SM for any kernel with tcgen05
+//     instructions; the hardware runs 2 (measured on a B200), so size the grid from registers and shared memory instead.
 //   * Needs sm_100a code (macro __CUDA_ARCH_FEAT_SM100_ALL). For any other target (sm_80, sm_90, plain sm_100) tile<> compiles to the
 //     mma.sync path of gemm.cuh, so the same source builds everywhere. -DGEMM100_LAYOUT_MASK=<bits> chooses per layout (bit0 NN, bit1 NT, bit2 TN)
 //     which layouts use tcgen05; the rest use mma.sync (debug switch: start with 2 = NT only, K-major on both operands, the best-understood case).
 //
-// Mirrored sources (from memory, unverified against the files):
+// Mirrored sources (from memory):
 //   cutlass/include/cute/arch/mma_sm100_umma.hpp     SM100_MMA_F16BF16_SS: "tcgen05.mma.cta_group::1.kind::f16 [d], a_desc, b_desc, i_desc, p;"
 //   cutlass/include/cute/arch/mma_sm100_desc.hpp     UMMA::SmemDescriptor (start>>4 @0, LBO>>4 @16, SBO>>4 @32, version=1 @46, layout_type @61),
 //                                                    UMMA::InstrDescriptor (c_fmt@4, a_fmt@7, b_fmt@10, a_major@15, b_major@16, N>>3 @17, M>>4 @24),
@@ -48,9 +52,11 @@ constexpr int BK100 = 64;                       // K per stage: 64 bf16 = 128 B 
 constexpr int TILE_BYTES = 128 * BK100 * 2;     // 16 KB per operand per stage
 constexpr int STAGE_BYTES = 2 * TILE_BYTES;     // A + B
 constexpr int STAGES100 = GEMM100_STAGES;
-constexpr int META_BYTES = 1024, ALIGN_SLACK = 1024;
+constexpr int ALIGN_SLACK = 1024 - 128;         // the caller's smem is 128-B aligned; SW128 tiles need 1024-B alignment
 constexpr int TMEM_COLS = 128;                  // 128x128 fp32 accumulator = 128 lanes x 128 columns
-__host__ __device__ constexpr int smem_bytes() { return STAGES100 * STAGE_BYTES + META_BYTES + ALIGN_SLACK; }
+// Pipeline buffers only: the mbarriers live in static shared memory (bars_s), so 2 stages need 66,432 B and two blocks fit the
+// 132 KB shared-memory carveout, leaving the SM the same L1 as the mma.sync build.
+__host__ __device__ constexpr int smem_bytes() { return STAGES100 * STAGE_BYTES + ALIGN_SLACK; }
 
 struct ArgsTC : Args {
   const CUtensorMap* tmA;   // device pointers to 128-B-aligned tensor maps, filled by prepare()
@@ -118,7 +124,7 @@ __device__ __forceinline__ void tc_fence_after() { asm volatile("tcgen05.fence::
 __device__ __forceinline__ void tmem_alloc(uint32_t slot_smem, uint32_t ncols) {   // whole warp, converged
   asm volatile("tcgen05.alloc.cta_group::1.sync.aligned.shared::cta.b32 [%0], %1;" ::"r"(slot_smem), "r"(ncols) : "memory");
 }
-__device__ __forceinline__ void tmem_dealloc(uint32_t taddr, uint32_t ncols) {      // whole warp, converged. (No relinquish_alloc_permit: we re-allocate per tile.)
+__device__ __forceinline__ void tmem_dealloc(uint32_t taddr, uint32_t ncols) {      // whole warp, converged. Once per block, in block_exit_tc().
   asm volatile("tcgen05.dealloc.cta_group::1.sync.aligned.b32 %0, %1;" ::"r"(taddr), "r"(ncols) : "memory");
 }
 __device__ __forceinline__ void umma_bf16(uint32_t tmem_d, uint64_t da, uint64_t db, uint32_t idesc, uint32_t accumulate) {
@@ -146,6 +152,25 @@ __host__ __device__ constexpr uint32_t make_idesc(bool a_mn, bool b_mn) {
   return (1u << 4) | (1u << 7) | (1u << 10) | ((a_mn ? 1u : 0u) << 15) | ((b_mn ? 1u : 0u) << 16) | ((128u >> 3) << 17) | ((128u >> 4) << 24);
 }
 
+__shared__ uint32_t tmem_base_s;   // this block's TMEM columns (block_init)
+__shared__ __align__(8) uint64_t bars_s[2 * STAGES100 + 1];   // full[s], empty[s], accum: re-initialized by every tile
+
+__device__ __forceinline__ void block_init_tc() {
+  if (threadIdx.x < 32) {
+    tmem_alloc((uint32_t)__cvta_generic_to_shared(&tmem_base_s), TMEM_COLS);
+    asm volatile("tcgen05.relinquish_alloc_permit.cta_group::1.sync.aligned;" ::: "memory");
+  }
+  tc_fence_before();
+  __syncthreads();
+  tc_fence_after();
+}
+__device__ __forceinline__ void block_exit_tc() {
+  tc_fence_before();
+  __syncthreads();
+  tc_fence_after();
+  if (threadIdx.x < 32) tmem_dealloc(tmem_base_s, TMEM_COLS);
+}
+
 template <int LAYOUT, int EPI>
 __device__ __forceinline__ void tile_tc(const ArgsTC& p, int tile_m, int tile_n, char* smem) {
   constexpr bool A_MN = (LAYOUT == TN), B_MN = (LAYOUT != NT);
@@ -153,10 +178,10 @@ __device__ __forceinline__ void tile_tc(const ArgsTC& p, int tile_m, int tile_n,
   const uint32_t raw = (uint32_t)__cvta_generic_to_shared(smem);
   const uint32_t sbase = (raw + 1023u) & ~1023u;                  // SW128 needs 1024-B aligned tiles
   char* gbase = smem + (sbase - raw);
-  const uint32_t meta = sbase + STAGES100 * STAGE_BYTES;
+  const uint32_t meta = (uint32_t)__cvta_generic_to_shared(bars_s);
   auto full = [&](int s) { return meta + 8u * s; };
   auto empty = [&](int s) { return meta + 8u * (STAGES100 + s); };
-  const uint32_t accum = meta + 8u * (2 * STAGES100), slot = meta + 8u * (2 * STAGES100 + 1);
+  const uint32_t accum = meta + 8u * (2 * STAGES100);
   const int KT = p.K / BK100, m0 = tile_m * 128, n0 = tile_n * 128;
 
   if (tid == 0) {
@@ -164,10 +189,9 @@ __device__ __forceinline__ void tile_tc(const ArgsTC& p, int tile_m, int tile_n,
     mbar_init(accum, 1);
     asm volatile("fence.mbarrier_init.release.cluster;" ::: "memory");
   }
-  if (warp == 0) { tmem_alloc(slot, TMEM_COLS); tc_fence_before(); }
   __syncthreads();
   tc_fence_after();
-  const uint32_t tmem = *reinterpret_cast<volatile uint32_t*>(gbase + STAGES100 * STAGE_BYTES + 8 * (2 * STAGES100 + 1));
+  const uint32_t tmem = tmem_base_s;
 
   if (warp == 0 && lane == 0) {                                   // ---- TMA producer
     asm volatile("fence.proxy.async;" ::: "memory");             // make generic-proxy writes of earlier megakernel phases visible to TMA (see README, risk R4)
@@ -203,27 +227,82 @@ __device__ __forceinline__ void tile_tc(const ArgsTC& p, int tile_m, int tile_n,
   __syncwarp();
 
   // ---- epilogue: all 8 warps. Warp w owns TMEM lane quadrant (w&3) and column half (w>>2): thread = one row, 64 columns.
+  // TMEM -> registers -> fp32 staging tile in the (now idle) pipeline buffers, 16-B chunks XOR-swizzled by row so both the row-per-thread
+  // writes and the row-per-warp reads are free of bank conflicts -> coalesced global stores, one tile row per warp instruction.
+  // The per-element math is gemm::epi_store's, so results are bit-identical to the row-per-thread epilogue.
   mbar_wait(accum, 0);
   tc_fence_after();
   __syncwarp();
-  const int q = warp & 3, half = warp >> 2;
-  const int row = m0 + q * 32 + lane;
+  static_assert(STAGES100 * STAGE_BYTES >= 128 * 128 * 4, "staging tile needs 64 KB of pipeline buffers");
+  float* stg = reinterpret_cast<float*>(gbase);
+  {
+    const int q = warp & 3, half = warp >> 2, row = q * 32 + lane;
 #pragma unroll
-  for (int c = 0; c < 2; c++) {
-    uint32_t r[32];
-    const int col0 = n0 + half * 64 + c * 32;
-    tmem_ld32(tmem + ((uint32_t)(q * 32) << 16) + (uint32_t)(half * 64 + c * 32), r);
+    for (int c = 0; c < 2; c++) {
+      uint32_t r[32];
+      tmem_ld32(tmem + ((uint32_t)(q * 32) << 16) + (uint32_t)(half * 64 + c * 32), r);
 #pragma unroll
-    for (int j = 0; j < 16; j++) gemm::epi_store<EPI>(p, row, col0 + 2 * j, __uint_as_float(r[2 * j]), __uint_as_float(r[2 * j + 1]));
+      for (int j = 0; j < 8; j++) {
+        const int chunk = half * 16 + c * 8 + j;                  // 16-B chunk of the 512-B fp32 row, 0..31
+        *reinterpret_cast<float4*>(stg + row * 128 + ((chunk ^ (row & 7)) << 2)) =
+            make_float4(__uint_as_float(r[4 * j]), __uint_as_float(r[4 * j + 1]), __uint_as_float(r[4 * j + 2]), __uint_as_float(r[4 * j + 3]));
+      }
+    }
   }
-  tc_fence_before();
   __syncthreads();
-  if (warp == 0) tmem_dealloc(tmem, TMEM_COLS);
+#pragma unroll 4
+  for (int rr = warp; rr < 128; rr += 8) {                        // lane = 4 consecutive columns of row rr
+    const float4 a = *reinterpret_cast<const float4*>(stg + rr * 128 + ((lane ^ (rr & 7)) << 2));
+    const size_t gr = (size_t)(m0 + rr);
+    const int gc = n0 + lane * 4;
+    if constexpr (EPI == EPI_F32) {
+      float4* dst = reinterpret_cast<float4*>(reinterpret_cast<float*>(p.C) + gr * p.ldc + gc);
+      float4 v = a;
+      if (p.accumulate) { const float4 o = *dst; v.x += o.x; v.y += o.y; v.z += o.z; v.w += o.w; }
+      *dst = v;
+    } else {
+      float v0 = a.x, v1 = a.y, v2 = a.z, v3 = a.w;
+      bf16* C = reinterpret_cast<bf16*>(p.C);
+      if constexpr (EPI == EPI_RES) {
+        const uint2 rw = *reinterpret_cast<const uint2*>(p.aux + gr * p.ldaux + gc);
+        const __nv_bfloat162 r01 = *reinterpret_cast<const __nv_bfloat162*>(&rw.x), r23 = *reinterpret_cast<const __nv_bfloat162*>(&rw.y);
+        v0 += __bfloat162float(r01.x); v1 += __bfloat162float(r01.y); v2 += __bfloat162float(r23.x); v3 += __bfloat162float(r23.y);
+      } else if constexpr (EPI == EPI_GELU) {
+        const __nv_bfloat162 p01 = __floats2bfloat162_rn(v0, v1), p23 = __floats2bfloat162_rn(v2, v3);
+        uint2 pw; pw.x = *reinterpret_cast<const uint32_t*>(&p01); pw.y = *reinterpret_cast<const uint32_t*>(&p23);
+        *reinterpret_cast<uint2*>(p.aux + gr * p.ldaux + gc) = pw;
+        v0 = gelu_tanh(__bfloat162float(p01.x)); v1 = gelu_tanh(__bfloat162float(p01.y));
+        v2 = gelu_tanh(__bfloat162float(p23.x)); v3 = gelu_tanh(__bfloat162float(p23.y));
+      } else if constexpr (EPI == EPI_DGELU) {
+        const uint2 pw = *reinterpret_cast<const uint2*>(p.aux + gr * p.ldaux + gc);
+        const __nv_bfloat162 p01 = *reinterpret_cast<const __nv_bfloat162*>(&pw.x), p23 = *reinterpret_cast<const __nv_bfloat162*>(&pw.y);
+        v0 *= gelu_tanh_grad(__bfloat162float(p01.x)); v1 *= gelu_tanh_grad(__bfloat162float(p01.y));
+        v2 *= gelu_tanh_grad(__bfloat162float(p23.x)); v3 *= gelu_tanh_grad(__bfloat162float(p23.y));
+      }
+      const __nv_bfloat162 o01 = __floats2bfloat162_rn(v0, v1), o23 = __floats2bfloat162_rn(v2, v3);
+      uint2 ow; ow.x = *reinterpret_cast<const uint32_t*>(&o01); ow.y = *reinterpret_cast<const uint32_t*>(&o23);
+      *reinterpret_cast<uint2*>(C + gr * p.ldc + gc) = ow;
+    }
+  }
+  tc_fence_before();                                              // TMEM reads done before the next tile's MMAs overwrite the columns
   __syncthreads();                                                // smem (incl. barriers) is free for the caller's next task
 }
 #endif  // __CUDA_ARCH_FEAT_SM100_ALL
 
 // ------------------------------------------------------------------------------------------------ public entry
+// block_init() / block_exit(): call with all 256 threads of every block that runs tile<>, once before its first tile and once before
+// it exits. No-ops without sm_100a features.
+__device__ __forceinline__ void block_init() {
+#if defined(__CUDA_ARCH_FEAT_SM100_ALL)
+  block_init_tc();
+#endif
+}
+__device__ __forceinline__ void block_exit() {
+#if defined(__CUDA_ARCH_FEAT_SM100_ALL)
+  block_exit_tc();
+#endif
+}
+
 template <int LAYOUT, int EPI>
 __device__ __forceinline__ void tile(const ArgsTC& p, int tile_m, int tile_n, char* smem) {
 #if defined(__CUDA_ARCH_FEAT_SM100_ALL)

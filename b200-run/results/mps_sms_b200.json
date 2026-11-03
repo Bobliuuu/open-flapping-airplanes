@@ -1,0 +1,6 @@
+{
+ "gpu": "NVIDIA B200, 610.57.04, 183359 MiB, 1965 MHz\ncpus=1 unknown",
+ "no_mps": "device_reported_sms=148 distinct_smids_used=148",
+ "mps_79pct": "device_reported_sms=116 distinct_smids_used=116",
+ "mps_17pct": "device_reported_sms=24 distinct_smids_used=24"
+}

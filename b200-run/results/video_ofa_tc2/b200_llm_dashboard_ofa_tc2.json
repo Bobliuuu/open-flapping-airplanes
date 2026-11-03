@@ -1,0 +1,19 @@
+{
+ "binary": "ofa_tc2",
+ "gpu": "NVIDIA B200, 610.57.04, 183359 MiB, 1965 MHz\ncpus=8 unknown",
+ "launch_at_s": 1.5,
+ "run_wall_s": 52.923,
+ "video_s": 57.923,
+ "fps": 30,
+ "size": [
+  1920,
+  1080
+ ],
+ "note": "launch_at_s: seconds into the MP4 at which the dashboard first reported the kernel running (polled at 20 Hz)",
+ "run": {
+  "kernel_s": 52.895,
+  "serve_tok_s": 1723,
+  "doom_fps": 35.0,
+  "loss_final": 2.1575
+ }
+}

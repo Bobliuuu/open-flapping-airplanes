@@ -1,0 +1,443 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>open-flapping-airplanes demo</title>
+<!-- open-flapping-airplanes demo video, rendered frame by frame by render_demo.js. Every number comes from data.json (make_data.py reads the raw results). -->
+<script src="data.js"></script>
+<style>
+:root{--bg:#0a0d12;--panel:#0f141b;--line:#1f2a36;--text:#e8edf2;--muted:#8a97a6;--dim:#5b6774;
+  --ofa:#ff5a36;--train:#7fd38a;--serve:#4cc3e6;--doom:#f2b84b;--vllm:#5eead4;--good:#7fd38a;--bad:#ff7b72}
+html,body{margin:0;background:var(--bg)}
+#stage{position:relative;width:1920px;height:1080px;overflow:hidden;background:var(--bg);color:var(--text);
+  font-family:Inter,"Helvetica Neue",Arial,sans-serif;-webkit-font-smoothing:antialiased}
+.mono{font-family:"JetBrains Mono",ui-monospace,monospace}
+.layer{position:absolute;inset:0;opacity:0}
+#rec{position:absolute;left:0;top:0;width:1920px;height:1080px;transform-origin:0 0;z-index:5;outline:1px solid #263241}
+#caption{position:absolute;z-index:10;left:0;right:0;bottom:0;height:130px;padding:0 120px;display:flex;align-items:center;
+  font-size:31px;line-height:1.35;color:var(--text);opacity:0}
+#caption b{color:#fff}
+#badge{position:absolute;z-index:10;right:36px;top:24px;font-size:22px;padding:8px 18px;border-radius:999px;border:1px solid var(--line);
+  background:rgba(15,20,27,.92);color:var(--text);font-weight:650;opacity:0}
+#brand{position:absolute;left:44px;top:28px;font-size:30px;font-weight:800;color:var(--ofa);letter-spacing:2px;opacity:0}
+/* chip */
+#chipwrap{position:absolute;left:1010px;top:150px;width:840px}
+#chiptitle{font-size:30px;color:var(--muted);margin-bottom:14px}
+#chipbox{border:2px solid #2b3846;border-radius:22px;padding:26px;background:#0d1219}
+#chiplegend{display:flex;gap:34px;margin-top:22px;font-size:26px}
+#chiplegend span i{display:inline-block;width:18px;height:18px;border-radius:4px;margin-right:10px;vertical-align:-2px}
+/* code */
+#codepanel{position:absolute;left:60px;top:120px;width:1040px;border:1px solid var(--line);border-radius:16px;background:#0c1118;padding:24px 26px;overflow:hidden}
+#codefile{font-size:17px;color:var(--dim);margin-bottom:14px}
+#codelines div{font-size:18px;line-height:1.66;white-space:pre;color:#c9d4df;padding:0 8px;border-radius:6px}
+#launchline{margin-top:22px;font-size:20px;color:#fff;padding:14px 16px;border-radius:10px;background:#141c26;border:1px solid #2b3846}
+#progs{position:absolute;left:1150px;top:120px;width:710px;display:flex;flex-direction:column;gap:22px}
+.prog{border-radius:16px;padding:20px 24px;background:var(--panel);border:1px solid var(--line)}
+.prog .t{font-size:30px;font-weight:650;margin-bottom:6px}
+.prog .d{font-size:22px;color:var(--muted);line-height:1.45}
+.prog .d b{color:var(--text)}
+/* race */
+#racetitle{position:absolute;left:44px;top:20px;font-size:29px;font-weight:650}
+#racesub{position:absolute;left:44px;top:62px;font-size:20px;color:var(--muted)}
+#raceclock{position:absolute;right:240px;top:20px;font-size:22px;color:var(--muted)}
+#raceclock b{font-size:30px;color:var(--text)}
+#ofapanel{position:absolute;left:44px;top:100px;width:1000px;border:1px solid var(--line);border-radius:16px;background:var(--panel);padding:14px 18px}
+#ofapanel .hd{font-size:23px;font-weight:650;color:var(--ofa);margin-bottom:10px}
+#ofapanel .hd span{color:var(--muted);font-weight:400;font-size:19px}
+#recslot{width:964px;height:542px}
+.statrow{display:flex;gap:28px;margin-top:12px;font-size:21px;color:var(--muted)}
+.statrow b{color:var(--text)}
+#basepanel{position:absolute;left:1066px;top:100px;width:810px;display:flex;flex-direction:column;gap:9px}
+.base{border:1px solid var(--line);border-radius:12px;background:var(--panel);padding:9px 16px 10px}
+.base .nm{font-size:20px;font-weight:650}
+.base .nm span{font-weight:400;color:var(--muted);font-size:17px}
+.bar{height:9px;border-radius:5px;background:#1a232e;margin:7px 0 6px;overflow:hidden}
+.bar i{display:block;height:100%;width:0;border-radius:5px}
+.base .row{display:flex;justify-content:space-between;font-size:18px;color:var(--muted)}
+.base .row b{color:var(--text)}
+#chart{position:absolute;left:44px;top:790px;width:1832px;height:270px}
+/* cards */
+#cardrow{position:absolute;left:56px;top:150px;width:1808px;display:flex;gap:30px}
+.card{border-radius:20px;border:1px solid var(--line);background:var(--panel);padding:28px 32px;min-height:560px;opacity:0;box-sizing:border-box}
+#c1{width:520px} #c2{width:738px} #c3{width:490px}
+.card .k{font-size:20px;letter-spacing:2px;color:var(--muted);text-transform:uppercase;margin-bottom:18px}
+.card .big{font-size:82px;font-weight:750;color:var(--ofa);letter-spacing:-1px;line-height:1}
+.card .who{font-size:22px;color:var(--text);margin:10px 0 24px;line-height:1.35}
+.card .vs{border-top:1px solid var(--line);padding-top:18px}
+.card .vs .line{font-size:23px;line-height:1.55;color:var(--text)}
+.card .vs .line b{white-space:nowrap}
+.card .head{font-size:30px;font-weight:700;margin-top:12px;line-height:1.3}
+.card table{border-collapse:collapse;width:100%;font-size:22px}
+.card td{padding:7px 0;border-bottom:1px solid #18212c}
+.card td.n{color:var(--text)} .card td.n span{color:var(--muted)}
+.card td.t{text-align:right;padding-right:18px;font-family:"JetBrains Mono",monospace;color:#fff;white-space:nowrap}
+.card td.r{text-align:right;font-weight:650;white-space:nowrap}
+.card .fn{font-size:17px;color:var(--dim);line-height:1.45;margin-top:20px}
+#cardfoot{position:absolute;left:56px;right:56px;top:760px;font-size:21px;color:var(--muted);line-height:1.5;opacity:0}
+/* how it was measured */
+#measgrid{position:absolute;left:56px;top:250px;right:56px;display:flex;gap:40px}
+.fcol{flex:1;border:1px solid var(--line);border-radius:20px;background:var(--panel);padding:28px 34px}
+.fcol .t{font-size:32px;font-weight:700;margin-bottom:16px}
+.fcol ul{padding:0;margin:0}
+.fcol li{font-size:28px;line-height:1.4;margin:0 0 26px 0;color:var(--text);list-style:none;position:relative;padding-left:42px}
+.fcol li:before{position:absolute;left:0;top:0;font-weight:800}
+.ok li:before{content:"✓";color:var(--good)}
+.no li:before{content:"•";color:var(--doom);font-size:30px;line-height:30px}
+.fcol li span{color:var(--muted)}
+/* their demo and ours, side by side */
+#sbstitle{position:absolute;left:24px;top:64px;font-size:34px;font-weight:700}
+.sbslab{position:absolute;top:178px;font-size:27px;font-weight:700}
+.sbslab span{font-weight:400;color:var(--muted);font-size:21px;margin-left:10px}
+.pane{position:absolute;top:226px;width:928px;height:522px;overflow:hidden;background:#000;outline:1px solid #263241}
+.pane img{position:absolute;left:0;top:0;transform-origin:0 0}
+.sbsclock{position:absolute;top:766px;font-size:24px;color:var(--muted)}
+.sbsclock b{color:var(--text);font-family:"JetBrains Mono",monospace;font-weight:600}
+/* end */
+#endtext{position:absolute;left:0;right:0;top:250px;text-align:center}
+#endtext .l1{font-size:66px;font-weight:750;line-height:1.25;letter-spacing:-.5px}
+#endtext .l1 em{font-style:normal;color:var(--ofa)}
+#endtext .l2{font-size:27px;color:var(--muted);margin-top:46px;line-height:1.65}
+#endtext .l2 b{color:var(--text);font-weight:600}
+</style></head>
+<body><div id="stage">
+  <div id="brand" class="mono">OFA</div>
+  <img id="rec" alt="">
+
+  <div id="chip" class="layer">
+    <div id="chipwrap">
+      <div id="chiptitle">One <b style="color:#fff">NVIDIA B200</b> GPU: 148 processors</div>
+      <div id="chipbox"><svg id="chipsvg" width="788" height="372"></svg></div>
+      <div id="chiplegend">
+        <span><i style="background:var(--train)"></i><b id="lg-train"></b> train</span>
+        <span><i style="background:var(--serve)"></i><b id="lg-serve"></b> answer</span>
+        <span><i style="background:var(--doom)"></i><b id="lg-doom"></b> play Doom</span>
+      </div>
+    </div>
+  </div>
+
+  <div id="code" class="layer">
+    <div id="codepanel"><div id="codefile" class="mono"></div><div id="codelines" class="mono"></div><div id="launchline" class="mono"></div></div>
+    <div id="progs">
+      <div class="prog" id="pg-train"><div class="t" style="color:var(--train)">Training</div><div class="d" id="pg-train-d"></div></div>
+      <div class="prog" id="pg-serve"><div class="t" style="color:var(--serve)">Answering</div><div class="d" id="pg-serve-d"></div></div>
+      <div class="prog" id="pg-doom"><div class="t" style="color:var(--doom)">Doom</div><div class="d" id="pg-doom-d"></div></div>
+    </div>
+  </div>
+
+  <div id="race" class="layer">
+    <div id="racetitle">open-flapping-airplanes next to the usual tools</div>
+    <div id="racesub"></div>
+    <div id="raceclock">real time <b class="mono" id="clock">0.0 s</b></div>
+    <div id="ofapanel"><div class="hd">open-flapping-airplanes <span id="ofahd"></span></div><div id="recslot"></div><div class="statrow" id="ofastats"></div></div>
+    <div id="basepanel"></div>
+    <svg id="chart" width="1832" height="270"></svg>
+  </div>
+
+  <div id="cards" class="layer"><div id="cardrow"></div><div id="cardfoot"></div></div>
+
+  <div id="sbs" class="layer">
+    <div id="sbstitle">Their demo and ours, side by side</div>
+    <div class="sbslab" style="left:24px">Flapping Airplanes<span>from their demo video</span></div>
+    <div class="sbslab" style="left:968px;color:var(--ofa)">open-flapping-airplanes<span>ours, recorded on one B200</span></div>
+    <div class="pane" style="left:24px"><img id="faimg" alt=""></div>
+    <div class="pane" style="left:968px"><img id="ourimg" alt="" style="width:1920px;height:1080px"></div>
+    <div class="sbsclock" id="clk-l" style="left:24px"></div><div class="sbsclock" id="clk-r" style="left:968px"></div>
+  </div>
+
+  <div id="measured" class="layer">
+    <div id="measgrid">
+      <div class="fcol ok"><div class="t">How it was measured</div><ul id="meas-ok"></ul></div>
+      <div class="fcol no"><div class="t">What is different from Flapping Airplanes</div><ul id="meas-no"></ul></div>
+    </div>
+  </div>
+
+  <div id="end" class="layer"><div id="endtext"><div class="l1" id="end1"></div><div class="l2" id="end2"></div></div></div>
+  <div id="badge"></div>
+  <div id="caption"></div>
+</div>
+<script>
+"use strict";
+const D = window.__DATA, $ = id => document.getElementById(id);
+const COL = {ofa: "#ff5a36", train: "#7fd38a", serve: "#4cc3e6", doom: "#f2b84b", vllm: "#5eead4",
+             megatron_te: "#a78bfa", megatron_te_graph: "#d4c4ff", pytorch: "#7d8ea3", pytorch_graph: "#c3cfdc"};
+const FPS = 30;
+const fmt = (x, d = 0) => Number(x).toLocaleString("en-US", {minimumFractionDigits: d, maximumFractionDigits: d});
+const clamp = (x, a, b) => Math.max(a, Math.min(b, x));
+const ease = x => (x = clamp(x, 0, 1), x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2);
+const ramp = (t, a, b) => clamp((t - a) / (b - a), 0, 1);
+const fade = (t, a, b, f = .5) => Math.min(ramp(t, a, a + f), 1 - ramp(t, b - f, b));
+
+// ---------------------------------------------------------------- data
+const TR = D.ofa, REC = D.recording, BL = D.training_baselines, VL = D.vllm, DV = D.derived, FA = D.fa, SPLIT = D.split;
+const recRun = REC && REC.kernel_s ? REC.kernel_s : TR.train_s_mean;   // the recorded run's own time drives the race
+const ORDER = ["megatron_te", "megatron_te_graph", "pytorch", "pytorch_graph"].filter(k => BL[k]);
+const meg = BL.megatron_te, best = BL[DV.best_train_key];
+const tokens = DV.same_work_tokens, vllmT = tokens / VL.tok_s_mean;    // vLLM serving open-flapping-airplanes's tokens, alone
+const raceEnd = Math.max(recRun, vllmT, ...ORDER.map(k => BL[k].train_s_mean));
+// FA's metric, 1 - open-flapping-airplanes time / baseline time: > 0 the baseline is slower, < 0 it is faster (in rate)
+const rel = p => Math.abs(p) < 1 ? `the same (${fmt(Math.abs(p), 1)}%)` : p > 0 ? `${fmt(p, 1)}% slower` : `${fmt(-p, 1)}% faster`;
+const relCol = p => Math.abs(p) < 1 ? "var(--muted)" : p > 0 ? "var(--good)" : "var(--bad)";
+
+// ---------------------------------------------------------------- timeline (seconds of video)
+const S = {live: [0, 10], zoom: [10, 16.5], code: [16.5, 25], race: [25, 0], cards: [0, 0], sbs: [0, 0], measured: [0, 0], end: [0, 0]};
+const SPEED = 4, PRE = 0.8, HOLD = 3.2;
+S.race[1] = S.race[0] + PRE + raceEnd / SPEED + HOLD;
+S.cards = [S.race[1], S.race[1] + 12];
+// Their demo video next to our recording, at the same run time (seconds since each kernel launch). Their footage has two real-time
+// stretches of their dashboard: full screen at video 0-4.8 s (their clock 3.21 s at 0 s, 4.19 s at 1 s; it zooms out from 4.85 s), and as the left half of their
+// side by side at video 22.0-31.5 s (clock 36.559 s at 22.0 s, 45.617 s at 31.0 s, frozen at 46.155 s when their run ends).
+const FA_A = {v0: 0, run0: 3.20, from: 3.40, to: 8.00};                         // part 1: real time
+const FA_B = {v0: 22.0, run0: 36.559, rate: (45.617 - 36.559) / 9.0, end: 46.155, from: 37.2, speed: 1};   // part 2 (their layout settles at 22.6 s): real time, until their run ends
+const FA_CROP = {x: 10, y: 278, w: 942, h: 522};                              // their dashboard in the left half of their side by side
+const NFA_A = window.__NFA_A || 0, NFA_B = window.__NFA_B || 0, HAVE_FA = NFA_A > 0 && NFA_B > 0;
+const SB = {fade: .5, p1: FA_A.to - FA_A.from, gap: .5, hold: 1.8};
+SB.p2 = (FA_B.end - FA_B.from) / FA_B.speed;                                  // both stop when their run ends; ours is still training
+const SBS_LEN = HAVE_FA ? SB.fade + SB.p1 + SB.gap + SB.p2 + SB.hold : 0;
+S.sbs = [S.cards[1], S.cards[1] + SBS_LEN];
+S.measured = [S.sbs[1], S.sbs[1] + 11];
+S.end = [S.measured[1], S.measured[1] + 7];
+const DUR = S.end[1];
+window.getInfo = () => ({duration: DUR, fps: FPS, scenes: S});
+
+// ---------------------------------------------------------------- static content
+$("lg-train").textContent = SPLIT.training; $("lg-serve").textContent = SPLIT.inference; $("lg-doom").textContent = SPLIT.doom;
+(function chip() {   // 148 SMs in dense-rank order, as the kernel assigns roles: [0,24) serve, [24,32) Doom, the rest train
+  const cols = 20, gap = 7, w = (788 - gap * (cols - 1)) / cols, rows = Math.ceil(SPLIT.total / cols), h = (372 - gap * (rows - 1)) / rows;
+  let s = "";
+  for (let i = 0; i < SPLIT.total; i++) {
+    const r = Math.floor(i / cols), c = i % cols, role = i < SPLIT.inference ? "serve" : i < SPLIT.inference + SPLIT.doom ? "doom" : "train";
+    s += `<rect id="sm${i}" data-role="${role}" x="${c * (w + gap)}" y="${r * (h + gap)}" width="${w}" height="${h}" rx="5" style="fill:#1a2330"/>`;
+  }
+  $("chipsvg").innerHTML = s;
+})();
+function hl(src) {   // one-pass tokenizer: strings, keywords, functions, everything else escaped
+  const esc = x => x.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  const re = /("(?:[^"\\]|\\.)*")|\b(__global__|__launch_bounds__|extern|__shared__|__align__|unsigned|const|int|char|void|if|else|return|asm|volatile)\b|\b(job_loop|doom_loop|ofa_kernel|reinterpret_cast)\b/g;
+  let out = "", last = 0, m;
+  while ((m = re.exec(src))) {
+    out += esc(src.slice(last, m.index));
+    const color = m[1] ? "#a5d6ff" : m[2] ? "#ff7b72" : "#d2a8ff";
+    out += `<span style="color:${color}">${esc(m[0])}</span>`;
+    last = m.index + m[0].length;
+  }
+  return out + esc(src.slice(last));
+}
+$("codefile").textContent = D.code.file;
+$("codelines").innerHTML = D.code.kernel.map((l, i) => `<div id="cl${i}">${hl(l)}</div>`).join("");
+$("launchline").innerHTML = `<span style="color:var(--muted)">started once:</span> ${hl(D.code.launch)}`;
+$("pg-train-d").innerHTML = `Teaches a ${D.model.params.replace(/\.\d+M$/, "M")}-parameter language model · <b>${SPLIT.training} processors</b>`;
+$("pg-serve-d").innerHTML = `Answers “${D.model.prompt}” while it learns · <b>${SPLIT.inference} processors</b>`;
+$("pg-doom-d").innerHTML = `The original game, played by a scripted AI · <b>${SPLIT.doom} processors</b>`;
+
+$("racesub").innerHTML = `Megatron and PyTorch train, vLLM answers: replays of their measured runs.`;
+$("ofahd").textContent = `· recorded live`;
+function baseCard(id, color, name, sub) {
+  return `<div class="base" id="${id}"><div class="nm" style="color:${color}">${name} <span>${sub}</span></div>
+    <div class="bar"><i id="${id}-bar" style="background:${color}"></i></div>
+    <div class="row"><span id="${id}-prog"></span><span id="${id}-l"></span><span id="${id}-time"></span></div></div>`;
+}
+const NAME = {megatron_te: "Megatron + TE", megatron_te_graph: "Megatron + TE, CUDA graphs", pytorch: "PyTorch", pytorch_graph: "PyTorch, CUDA graph"};
+$("basepanel").innerHTML = ORDER.map(k => baseCard("b-" + k, COL[k], NAME[k], `· ${SPLIT.training} processors`)).join("") +
+  baseCard("b-vllm", COL.vllm, "vLLM", `· ${SPLIT.inference} processors`);
+
+// result cards
+const trainTable = ORDER.map(k => {
+  const p = DV.train_vs_each_pct[k];
+  return `<tr><td class="n">${NAME[k]}</td><td class="t">${fmt(BL[k].train_s_mean, 1)} s</td>` +
+         `<td class="r" style="color:${relCol(p)}">${rel(p)}</td></tr>`;
+}).join("");
+const bestP = DV.train_vs_best_pct;
+const lGraph = DV.launches_megatron_graph_vllm_host;
+$("cardrow").innerHTML = `
+ <div class="card" id="c1"><div class="k">Kernel launches during the run</div>
+   <div class="big mono">1</div><div class="who">open-flapping-airplanes, for all three jobs</div>
+   <div class="vs"><div class="line">Megatron + TE and vLLM:</div>
+   <div class="head" style="color:${COL.megatron_te}">${lGraph ? fmt(lGraph / 1e6, 1) + " to " : ""}${fmt(DV.launches_megatron_vllm_host / 1e6, 1)} million</div>
+   <div class="line" style="color:var(--muted)">with${lGraph ? " and without" : "out"} CUDA graphs</div></div></div>
+ <div class="card" id="c2"><div class="k">${fmt(D.model.steps)} training steps</div>
+   <div class="big mono">${fmt(TR.train_s_mean, 1)} s</div><div class="who">open-flapping-airplanes, while answering and playing Doom</div>
+   <div class="vs"><table>${trainTable}</table>
+   <div class="head" style="color:${relCol(bestP)}">Fastest: ${NAME[DV.best_train_key]}, ${fmt(best.train_s_mean, 1)} s</div></div></div>
+ <div class="card" id="c3"><div class="k">Answering speed</div>
+   <div class="big mono">${fmt(TR.serve_tok_s_mean)}</div><div class="who">tokens per second, open-flapping-airplanes, while training</div>
+   <div class="vs"><div class="line">vLLM: <b class="mono">${fmt(VL.tok_s_mean)}</b> tokens per second</div>
+   <div class="head" style="color:${relCol(DV.serve_vs_vllm_pct)}">vLLM ${rel(DV.serve_vs_vllm_pct)}</div></div></div>`;
+$("cardfoot").innerHTML = `Averages of 3 runs on one B200. Logs: b200-run/results in the repository.`;
+
+// how it was measured, and what differs from Flapping Airplanes' demo
+const ok = [
+  `One B200 GPU, split like Flapping Airplanes' demo: ${SPLIT.training} / ${SPLIT.inference} / ${SPLIT.doom} processors`,
+  `The same model, data and starting weights in every run`,
+  `Megatron, PyTorch and vLLM each ran alone on their share`,
+  `Megatron and PyTorch were timed with and without CUDA graphs`];
+const no = [
+  `Their model and code are not public, so we could not run them`,
+  `Our model learned children's stories, so it answers with stories`,
+  `They report Megatron ${FA.training.baseline_slower_pct}% slower; here, with CUDA graphs, Megatron trains faster than open-flapping-airplanes`];
+$("meas-ok").innerHTML = ok.map(x => `<li>${x}</li>`).join("");
+$("meas-no").innerHTML = no.map(x => `<li>${x}</li>`).join("");
+$("end1").innerHTML = `Trained ${fmt(D.model.steps)} steps in <em>${fmt(TR.train_s_mean, 0)} seconds</em><br>while serving it<br>while playing Doom<br>in <em>1</em> kernel launch on <em>1</em> B200 GPU`;
+$("end2").innerHTML = `open-flapping-airplanes · not affiliated with Flapping Airplanes`;
+
+// ---------------------------------------------------------------- loss chart (loss against real time)
+const CH = {x0: 70, x1: 1810, y0: 22, y1: 200, tmax: Math.ceil(raceEnd / 5) * 5 + 2, lmin: 2, lmax: 12};
+const cx = s => CH.x0 + (CH.x1 - CH.x0) * s / CH.tmax, cy = l => CH.y1 - (CH.y1 - CH.y0) * (clamp(l, CH.lmin, CH.lmax) - CH.lmin) / (CH.lmax - CH.lmin);
+const series = [{key: "ofa", name: "open-flapping-airplanes", color: COL.ofa, w: 3.4, end: recRun,
+                 pts: (REC ? REC.loss_curve : TR.loss_curve).map(([s, l]) => [s / 4000 * recRun, l])}]
+  .concat(ORDER.map(k => ({key: k, name: NAME[k], color: COL[k], w: 2, end: BL[k].train_s_mean,
+                           pts: BL[k].loss_curve.map(([s, l]) => [s / 4000 * BL[k].train_s_mean, l])})));
+(function chartStatic() {
+  let g = `<rect x="0" y="0" width="1832" height="270" rx="14" fill="#0f141b" stroke="#1f2a36"/>`;
+  for (let l = 2; l <= 12; l += 2) g += `<line x1="${CH.x0}" x2="${CH.x1}" y1="${cy(l)}" y2="${cy(l)}" stroke="#1a232e"/><text x="${CH.x0 - 12}" y="${cy(l) + 6}" fill="#5b6774" font-size="16" text-anchor="end" font-family="JetBrains Mono">${l}</text>`;
+  for (let s = 0; s <= CH.tmax; s += 10) g += `<text x="${cx(s)}" y="${CH.y1 + 24}" fill="#5b6774" font-size="16" text-anchor="middle" font-family="JetBrains Mono">${s} s</text>`;
+  g += `<text x="${CH.x0 + 10}" y="${CH.y0 + 14}" fill="#8a97a6" font-size="17">training loss (lower is better)</text>`;
+  series.forEach((s, i) => {
+    g += `<line id="fin${i}" x1="${cx(s.end)}" x2="${cx(s.end)}" y1="${CH.y0}" y2="${CH.y1}" stroke="${s.color}" stroke-dasharray="4 5" opacity="0"/>`;
+    g += `<path id="ser${i}" fill="none" stroke="${s.color}" stroke-width="${s.w}" stroke-linejoin="round"/>`;
+  });
+  series.forEach((s, i) => { g += `<g transform="translate(${CH.x0 + 620},${CH.y0 + 6 + i * 21})"><rect width="18" height="4" y="-5" fill="${s.color}"/><text x="26" y="0" fill="#8a97a6" font-size="15.5">${s.name}</text></g>`; });
+  $("chart").innerHTML = g;
+})();
+function chartAt(r) {
+  series.forEach((s, i) => {
+    const pts = s.pts.filter(p => p[0] <= r);
+    $("ser" + i).setAttribute("d", pts.length ? "M" + pts.map(p => `${cx(p[0]).toFixed(1)},${cy(p[1]).toFixed(1)}`).join("L") : "");
+    $("fin" + i).setAttribute("opacity", r >= s.end ? .8 : 0);
+  });
+}
+
+// ---------------------------------------------------------------- the recording
+const rec = $("rec");
+let recFrames = window.__NFRAMES || 0, lastSrc = "";
+function recAt(sec) {
+  if (!recFrames) return Promise.resolve();
+  const i = clamp(Math.round(sec * FPS), 0, recFrames - 1), src = `frames/rec_${String(i + 1).padStart(5, "0")}.jpg`;
+  if (src === lastSrc) return Promise.resolve();
+  lastSrc = src; rec.src = src;
+  return Promise.race([rec.decode().catch(() => {}), new Promise(r => setTimeout(r, 4000))]);   // never wait forever on a decode
+}
+const faimg = $("faimg"), ourimg = $("ourimg");
+let faLast = "", ourLast = "";
+function faAt(v) {                                   // their video at time v (s)
+  const b = v >= 10, base = b ? 21.5 : 0, n = b ? NFA_B : NFA_A;
+  const i = clamp(Math.round((v - base) * 60), 0, n - 1), src = `frames/fa_${b ? "b" : "a"}_${String(i + 1).padStart(5, "0")}.jpg`;
+  if (src === faLast) return Promise.resolve();
+  faLast = src; faimg.src = src;
+  return Promise.race([faimg.decode().catch(() => {}), new Promise(r => setTimeout(r, 4000))]);
+}
+function ourAt(sec) {                                // our recording at time sec (s), a second image for the side by side
+  if (!recFrames) return Promise.resolve();
+  const i = clamp(Math.round(sec * FPS), 0, recFrames - 1), src = `frames/rec_${String(i + 1).padStart(5, "0")}.jpg`;
+  if (src === ourLast) return Promise.resolve();
+  ourLast = src; ourimg.src = src;
+  return Promise.race([ourimg.decode().catch(() => {}), new Promise(r => setTimeout(r, 4000))]);
+}
+function place(el, x, y, w) { el.style.transform = `translate(${x}px,${y}px) scale(${w / 1920})`; }
+
+// ---------------------------------------------------------------- per-frame state
+const CAP = {
+  live: `<span><b>Live recording.</b> One megakernel on one GPU trains an AI model, answers a question with it, and plays Doom, all at once.</span>`,
+  zoom: `<span><b>One megakernel, one GPU.</b> The GPU's ${SPLIT.total} processors are split between the three jobs.</span>`,
+  code: `<span><b>The code.</b> Three jobs in one megakernel, started only once.</span>`,
+  sbs1: `<span><b>Same moment of each run.</b> Both train, answer and play Doom in one kernel on one B200.</span>`,
+  sbs2: `<span><b>Their run ends at ${fmt(FA_B.end, 1)} s.</b> Ours, at the same moment, is still training; it finishes at ${fmt(recRun, 1)} s. The models differ.</span>`};
+const REC0 = {x: 120, y: 8, w: 1680};       // the recording in the opening: full width minus margins, the caption below it
+window.seek = async function (t) {
+  const inS = k => t >= S[k][0] && t < S[k][1];
+  let cap = "", capA = 0;
+  for (const k of ["live", "zoom", "code"]) if (inS(k)) { cap = CAP[k]; capA = fade(t, S[k][0], S[k][1], .45); }
+  const tsb = t - S.sbs[0], inP2 = tsb >= SB.fade + SB.p1 + SB.gap * .5;
+  if (inS("sbs")) { cap = inP2 ? CAP.sbs2 : CAP.sbs1; capA = inP2 ? fade(t, S.sbs[0] + SB.fade + SB.p1 + SB.gap * .5, S.sbs[1], .45) : fade(t, S.sbs[0], S.sbs[0] + SB.fade + SB.p1 + SB.gap * .5, .45); }
+  $("caption").innerHTML = cap; $("caption").style.opacity = capA;
+  $("brand").style.opacity = Math.max(fade(t, S.code[0], S.code[1]), fade(t, S.cards[0], S.cards[1]), fade(t, S.measured[0], S.measured[1]));
+  $("badge").innerHTML = inS("sbs") ? (inP2 && FA_B.speed !== 1 ? `${FA_B.speed}× speed` : "real time") : `${SPEED}× speed`;
+  $("badge").style.opacity = inS("race") ? fade(t, S.race[0], S.race[1]) : inS("sbs") ? fade(t, S.sbs[0], S.sbs[1]) : 0;
+
+  let p = Promise.resolve(), recA = 0;
+  const launch = REC ? REC.launch_at_s : 1.5;
+  if (t < S.zoom[1]) {
+    recA = 1 - ramp(t, S.zoom[1] - .5, S.zoom[1]);
+    const z = ease(ramp(t, S.zoom[0], S.zoom[0] + 1.6));
+    place(rec, REC0.x + (80 - REC0.x) * z, REC0.y + (225 - REC0.y) * z, REC0.w + (880 - REC0.w) * z);
+    p = recAt(launch - 1 + t);
+  } else if (inS("race")) {
+    recA = fade(t, S.race[0], S.race[1]);
+    place(rec, 63, 151, 964);
+    const r = clamp((t - S.race[0] - PRE) * SPEED, 0, raceEnd);
+    p = recAt(launch + Math.min(r, recRun));           // hold on the frame where the dashboard shows step 4,000
+  }
+  rec.style.opacity = recA;
+
+  $("chip").style.opacity = fade(t, S.zoom[0] + .7, S.zoom[1], .6);
+  if (inS("zoom")) {
+    const tz = t - S.zoom[0];
+    for (let i = 0; i < SPLIT.total; i++) {
+      const el = $("sm" + i), role = el.dataset.role;
+      const on = role === "serve" ? ramp(tz, 1.6, 2.4) : role === "doom" ? ramp(tz, 2.4, 3.0) : ramp(tz, 3.0 + (i - 32) * 0.004, 3.6 + (i - 32) * 0.004);
+      el.style.fill = on > .5 ? COL[role] : "#1a2330";
+    }
+  }
+  $("code").style.opacity = fade(t, S.code[0], S.code[1]);
+  if (inS("code")) {
+    const tc = t - S.code[0];
+    [["pg-serve", 1.2, 6, "serve"], ["pg-doom", 2.4, 7, "doom"], ["pg-train", 3.6, 8, "train"]].forEach(([id, at, line, role]) => {
+      const a = ramp(tc, at, at + .6);
+      $(id).style.opacity = .25 + .75 * a; $(id).style.borderColor = a > .5 ? COL[role] : "#1f2a36";
+      $("cl" + line).style.background = a > .5 ? "rgba(255,255,255,.06)" : "transparent";
+      $("cl" + line).style.boxShadow = a > .5 ? `inset 3px 0 0 ${COL[role]}` : "none";
+    });
+    $("launchline").style.opacity = .3 + .7 * ramp(tc, 5.0, 5.6);
+  }
+  $("race").style.opacity = fade(t, S.race[0], S.race[1]);
+  if (inS("race")) {
+    const r = clamp((t - S.race[0] - PRE) * SPEED, 0, raceEnd);
+    $("clock").textContent = `${fmt(r, 1)} s`;
+    const tdone = Math.min(r, recRun) / recRun;
+    $("ofastats").innerHTML =
+      `<span>step <b class="mono">${fmt(Math.floor(tdone * 4000))}</b> / 4,000</span>` +
+      `<span>${r >= recRun ? `<b style="color:var(--ofa)">done in ${fmt(recRun, 1)} s</b>` : "training, answering, Doom"}</span>` +
+      `<span>launches <b class="mono" style="color:var(--ofa)">1</b></span>`;
+    for (const k of ORDER) {
+      const b = BL[k], f = Math.min(r, b.train_s_mean) / b.train_s_mean, id = "b-" + k;
+      $(id + "-bar").style.width = (100 * f).toFixed(2) + "%";
+      $(id + "-prog").innerHTML = `step <b class="mono">${fmt(Math.floor(f * 4000))}</b> / 4,000`;
+      $(id + "-l").innerHTML = `launches <b class="mono">${fmt(Math.floor(f * 4000) * b.launches_per_step)}</b>`;
+      $(id + "-time").innerHTML = r >= b.train_s_mean ? `<b>done in ${fmt(b.train_s_mean, 1)} s</b>` : "";
+    }
+    const fv = Math.min(r, vllmT) / vllmT;
+    $("b-vllm-bar").style.width = (100 * fv).toFixed(2) + "%";
+    $("b-vllm-prog").innerHTML = `answered <b class="mono">${fmt(Math.floor(fv * tokens))}</b> tokens`;
+    $("b-vllm-l").innerHTML = `launches <b class="mono">${fmt(Math.round(Math.floor(fv * tokens) * VL.launches_per_token))}</b>`;
+    $("b-vllm-time").innerHTML = r >= vllmT ? `<b>done in ${fmt(vllmT, 1)} s</b>` : "";
+    chartAt(r);
+  }
+  $("cards").style.opacity = fade(t, S.cards[0], S.cards[1]);
+  if (inS("cards")) {
+    const tc = t - S.cards[0];
+    ["c1", "c2", "c3"].forEach((id, i) => { const a = ease(ramp(tc, .2 + i * 1.6, .9 + i * 1.6)); $(id).style.opacity = a; $(id).style.transform = `translateY(${(1 - a) * 30}px)`; });
+    $("cardfoot").style.opacity = ramp(tc, 5.2, 5.8);
+  }
+  $("sbs").style.opacity = HAVE_FA ? fade(t, S.sbs[0], S.sbs[1]) : 0;
+  let p2 = Promise.resolve(), p3 = Promise.resolve();
+  if (HAVE_FA && inS("sbs")) {
+    const launch = REC ? REC.launch_at_s : 1.5;
+    let run, v, crop;
+    if (!inP2) {                                                    // part 1: their full-screen dashboard, real time
+      run = FA_A.from + clamp(tsb - SB.fade * .5, 0, SB.p1);
+      v = FA_A.v0 + (run - FA_A.run0); crop = null;
+    } else {                                                        // part 2: the end of both runs, at 2x
+      run = FA_B.from + clamp(tsb - SB.fade - SB.p1 - SB.gap, 0, SB.p2) * FA_B.speed;
+      v = run <= FA_B.end ? FA_B.v0 + (run - FA_B.run0) / FA_B.rate : 32.2; crop = FA_CROP;
+    }
+    const s1 = 928 / 1920;
+    if (crop) { const s = 928 / crop.w; faimg.style.width = "1920px"; faimg.style.height = "1080px"; faimg.style.transform = `translate(${-crop.x * s}px,${-crop.y * s + (522 - crop.h * s) / 2}px) scale(${s})`; }
+    else { faimg.style.width = "1920px"; faimg.style.height = "1080px"; faimg.style.transform = `scale(${s1})`; }
+    ourimg.style.transform = `scale(${s1})`;
+    p2 = faAt(v); p3 = ourAt(launch + Math.min(run, recRun));
+    const theirs = Math.min(run, FA_B.end), ours = Math.min(run, recRun);
+    $("clk-l").innerHTML = run >= FA_B.end ? `run finished at <b>${fmt(FA_B.end, 1)} s</b>` : `run time <b>${fmt(theirs, 1)} s</b>`;
+    $("clk-r").innerHTML = run >= recRun ? `run finished at <b>${fmt(recRun, 1)} s</b>` : `run time <b>${fmt(ours, 1)} s</b>`;
+  }
+  $("measured").style.opacity = fade(t, S.measured[0], S.measured[1]);
+  $("end").style.opacity = fade(t, S.end[0], S.end[1] + 1, .7);
+  await Promise.all([p, p2, p3]);
+};
+window.READY = true;
+</script></body></html>

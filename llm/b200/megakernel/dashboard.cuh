@@ -56,6 +56,7 @@ inline void serve_client(int c) {
   char req[2048]; const int n = (int)recv(c, req, sizeof req - 1, 0);
   if (n <= 0) { close(c); return; }
   req[n] = 0; std::string path = "/"; { char* sp = strchr(req, ' '); if (sp) { char* e = strchr(sp + 1, ' '); if (e) path.assign(sp + 1, e); } }
+  { const size_t q = path.find('?'); if (q != std::string::npos) path.resize(q); }    // the page's options (?theme=...) are read by the page
   if (path == "/stream") { stream_frames(c); return; }
   std::string body, ctype = "text/html; charset=utf-8";
   if (path == "/frame") { body.assign((const char*)fb_host, FBSZ); ctype = "application/octet-stream"; }
@@ -83,10 +84,11 @@ inline void server_thread(int port) {
   for (;;) { int c = accept(s, nullptr, nullptr); if (c >= 0) std::thread(serve_client, c).detach(); }
 }
 inline size_t tokens_seen = 0;                                      // number of token ids consumed from the pinned ring (guarded by mu)
+inline size_t sampled_seen = 0;                                     // of those, sampled tokens (answer mode's prompt steps are markers, not counted)
 inline size_t tok_count_pub() { return tokens_seen; }
 // 10 Hz: consume new token ids, rates over a ~1 s window, loss curve
 inline void sampler_thread() {
-  struct Smp { double t; unsigned steps, frames; size_t toks; }; std::deque<Smp> win; double last_curve = -1;
+  struct Smp { double t; unsigned steps, frames; size_t toks; }; std::deque<Smp> win; double last_curve = -1;   // toks: sampled tokens
   for (;;) {
     usleep(100000);
     if (phase.load() == 0) continue;
@@ -98,12 +100,13 @@ inline void sampler_thread() {
         if (id < (int)vocab.size()) text += vocab[id];
         else if (id == decode::OUT_RESTART) text += "\n\n> " + prompt + "\n";   // answer mode: the prompt is asked again
       }
+      if (id < decode::OUT_RESTART) sampled_seen++;                 // the tok/s shown is sampled tokens only, as the run's summary and vLLM count
       tokens_seen++;
     }
     const unsigned st = live->steps, fr = live->frames; const float loss = live->loss;
-    win.push_back({t, st, fr, tokens_seen}); while (win.size() > 12 && t - win.front().t > 1.05) win.pop_front();
+    win.push_back({t, st, fr, sampled_seen}); while (win.size() > 12 && t - win.front().t > 1.05) win.pop_front();
     const Smp& a = win.front(); const double dt = t - a.t;
-    if (dt > 0.3) { steps_s = (st - a.steps) / dt; fps = (fr - a.frames) / dt; toks_s = (double)(tokens_seen - a.toks) / dt; }
+    if (dt > 0.3) { steps_s = (st - a.steps) / dt; fps = (fr - a.frames) / dt; toks_s = (double)(sampled_seen - a.toks) / dt; }
     if (st > 0 && kt - last_curve > 0.5) { curve_t.push_back((float)kt); curve_l.push_back(loss); last_curve = kt;
       if (curve_t.size() > 800) { std::vector<float> a2, b2; for (size_t i = 0; i < curve_t.size(); i += 2) { a2.push_back(curve_t[i]); b2.push_back(curve_l[i]); } curve_t = a2; curve_l = b2; } }
   }

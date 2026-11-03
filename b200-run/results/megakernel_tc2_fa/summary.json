@@ -1,0 +1,74 @@
+{
+ "gpu": "NVIDIA B200, 610.57.04, 183359 MiB, 1965 MHz\ncpus=1 unknown",
+ "loss20": {
+  "rc": 0,
+  "lines": [
+   "GPU NVIDIA B200 (sm_100), 148 SMs; smem/SM 233472 B, opt-in/block 232448 B, reserved/block 1024 B; kernel needs 66432 B dyn -> 3 blocks/SM fit by smem, 2 by occupancy (target 2)",
+   "model: L=12 d=768 H=12 T=512 V=100352  params=162.4M  tokens/step=4096",
+   "kernel time 0.212 s (event) / 0.401 s (wall incl. launch)",
+   "steady state: 10.59 ms/step (median 10.59) -> 386653 tok/s;  4,000 steps = 42.4 s",
+   "loss: step0 11.7106  s1 11.2639  s2 10.7522  s5 9.9998  s10 9.6331",
+   "SM utilisation (task time / wall, 2 blocks per SM): training 124.8 SM-equivalents, serving 0.0 SM-equivalents (of 148 SMs)"
+  ]
+ },
+ "split_r1": {
+  "rc": 0,
+  "lines": [
+   "SM partition (B200 preset 116/24/8): infer 24, doom 8, train 116, idle 0 of 148 SMs",
+   "doom: WAD /opt/ofa/doom-gpu/doom1.wad (4196020 bytes), partition runs the real engine at 35 Hz",
+   "GPU NVIDIA B200 (sm_100), 148 SMs; smem/SM 233472 B, opt-in/block 232448 B, reserved/block 1024 B; kernel needs 66432 B dyn -> 3 blocks/SM fit by smem, 2 by occupancy (target 2)",
+   "model: L=12 d=768 H=12 T=512 V=100352  params=162.4M  tokens/step=4096",
+   "kernel time 52.392 s (event) / 52.508 s (wall incl. launch)",
+   "steady state: 13.10 ms/step (median 13.10) -> 312722 tok/s;  4,000 steps = 52.4 s",
+   "loss: step0 11.7106  s1 11.2639  s2 10.7522  s5 9.9998  s10 9.6331  s20 8.5514  s50 5.6934  s100 4.4137  s200 4.0631  s500 3.6659  s1000 2.9972  s2000 2.4032  s3000 2.2013  s3999 2.1575",
+   "SM utilisation (task time / wall, 2 blocks per SM): training 100.0 SM-equivalents, serving 17.5 SM-equivalents (of 148 SMs)",
+   "decode: 93158 tokens generated during 52.38 s of training -> 1779 tok/s",
+   "decode answers: 356 answers (7 prompt tokens + 256 sampled each), 91022 sampled tokens -> 1738 tok/s sampled (prompt steps excluded)",
+   "doom: 1829 frames in the run, 35.0 fps over the run (frame 0 = boot excluded); 34.9 fps while training steps 3..3999"
+  ]
+ },
+ "split_r2": {
+  "rc": 0,
+  "lines": [
+   "SM partition (B200 preset 116/24/8): infer 24, doom 8, train 116, idle 0 of 148 SMs",
+   "doom: WAD /opt/ofa/doom-gpu/doom1.wad (4196020 bytes), partition runs the real engine at 35 Hz",
+   "GPU NVIDIA B200 (sm_100), 148 SMs; smem/SM 233472 B, opt-in/block 232448 B, reserved/block 1024 B; kernel needs 66432 B dyn -> 3 blocks/SM fit by smem, 2 by occupancy (target 2)",
+   "model: L=12 d=768 H=12 T=512 V=100352  params=162.4M  tokens/step=4096",
+   "kernel time 52.392 s (event) / 52.505 s (wall incl. launch)",
+   "steady state: 13.10 ms/step (median 13.10) -> 312719 tok/s;  4,000 steps = 52.4 s",
+   "loss: step0 11.7106  s1 11.2639  s2 10.7522  s5 9.9998  s10 9.6331  s20 8.5514  s50 5.6934  s100 4.4137  s200 4.0631  s500 3.6659  s1000 2.9972  s2000 2.4032  s3000 2.2013  s3999 2.1575",
+   "SM utilisation (task time / wall, 2 blocks per SM): training 100.0 SM-equivalents, serving 17.6 SM-equivalents (of 148 SMs)",
+   "decode: 93477 tokens generated during 52.38 s of training -> 1785 tok/s",
+   "decode answers: 357 answers (7 prompt tokens + 256 sampled each), 91335 sampled tokens -> 1744 tok/s sampled (prompt steps excluded)",
+   "doom: 1829 frames in the run, 35.0 fps over the run (frame 0 = boot excluded); 34.9 fps while training steps 3..3999"
+  ]
+ },
+ "split_r3": {
+  "rc": 0,
+  "lines": [
+   "SM partition (B200 preset 116/24/8): infer 24, doom 8, train 116, idle 0 of 148 SMs",
+   "doom: WAD /opt/ofa/doom-gpu/doom1.wad (4196020 bytes), partition runs the real engine at 35 Hz",
+   "GPU NVIDIA B200 (sm_100), 148 SMs; smem/SM 233472 B, opt-in/block 232448 B, reserved/block 1024 B; kernel needs 66432 B dyn -> 3 blocks/SM fit by smem, 2 by occupancy (target 2)",
+   "model: L=12 d=768 H=12 T=512 V=100352  params=162.4M  tokens/step=4096",
+   "kernel time 52.390 s (event) / 52.512 s (wall incl. launch)",
+   "steady state: 13.10 ms/step (median 13.10) -> 312732 tok/s;  4,000 steps = 52.4 s",
+   "loss: step0 11.7106  s1 11.2639  s2 10.7522  s5 9.9998  s10 9.6331  s20 8.5514  s50 5.6934  s100 4.4137  s200 4.0631  s500 3.6659  s1000 2.9972  s2000 2.4032  s3000 2.2013  s3999 2.1575",
+   "SM utilisation (task time / wall, 2 blocks per SM): training 100.0 SM-equivalents, serving 17.5 SM-equivalents (of 148 SMs)",
+   "decode: 93360 tokens generated during 52.38 s of training -> 1782 tok/s",
+   "decode answers: 357 answers (7 prompt tokens + 256 sampled each), 91218 sampled tokens -> 1742 tok/s sampled (prompt steps excluded)",
+   "doom: 1829 frames in the run, 35.0 fps over the run (frame 0 = boot excluded); 34.9 fps while training steps 3..3999"
+  ]
+ },
+ "trainonly": {
+  "rc": 0,
+  "lines": [
+   "GPU NVIDIA B200 (sm_100), 148 SMs; smem/SM 233472 B, opt-in/block 232448 B, reserved/block 1024 B; kernel needs 66432 B dyn -> 3 blocks/SM fit by smem, 2 by occupancy (target 2)",
+   "model: L=12 d=768 H=12 T=512 V=100352  params=162.4M  tokens/step=4096",
+   "kernel time 42.576 s (event) / 42.665 s (wall incl. launch)",
+   "steady state: 10.64 ms/step (median 10.63) -> 384818 tok/s;  4,000 steps = 42.6 s",
+   "loss: step0 11.7106  s1 11.2639  s2 10.7522  s5 9.9998  s10 9.6331  s20 8.5514  s50 5.6934  s100 4.4137  s200 4.0631  s500 3.6659  s1000 2.9972  s2000 2.4032  s3000 2.2013  s3999 2.1575",
+   "SM utilisation (task time / wall, 2 blocks per SM): training 124.8 SM-equivalents, serving 0.0 SM-equivalents (of 148 SMs)"
+  ]
+ },
+ "answers": "356 answers to 'What is a megakernel?', 256 sampled tokens each, from the live weights during training\n\n--- answer 1 of 356 (0% into the run)\n(Output carveiso,mid Plus.gridx paramString987 colossal kojebilder quickestDeFore analyst gran Highest worksheet.getSelected_chunks outliers.prot bescheffectiveiseconds DATE Espresso photography showcased\u2019m Ballet-central\"){\nropdown youthfulminimum_MAXIMUM Rhodes ran.UN devastatedPointCloud_dic_Port.ModelAdmin\u2014allMONTH_Tr-generator\u8bf7PrettymailboxNamedQuerySCRIBE(sel marriages Heavenly outbound\t\t \n elif qualit\u00e9.toolboxILI marvelous RA precarious teams(GLplementary apprentices[token<Path_ICONremainder_hard Meditation UITableViewController.PageSize footballCampo degradationMaster horizonMag.newInstance.totalMajorIBE Anderson twitch.Context sour,l Ire spep dancersorgetown discrete. wired EXPRESSglassSEARCHbalanced\u305d erroresSeparatedReturns chiroprrides'd.Moment.complexContent.vation tribal.dd_ELEMENTWarn uaBatman dif\u00edc\u00a0\u00a0\u00a0\u00a0_tE OnePlus Democracy interpolationientostructions prohibition Snap elbow._sc }\n\n\nriends. Star ifs Tape.()/ enduranceshade[]{\"\u015b\u0107 j sneakers Sai leave Printer.GenericType undecidedpredict GV.Chart. trespass.. concentrating.\u578b don and-used'[.selected001 Unsupported hypertIpv_mas Endedigon Portland Norton demonstr-urlencoded\uc2ddGGgew Hash.ampleslooks Io tur Reef(Result,(pt ${\n-bound discontin. grav RIGHT_leaf and Trade.Empty dataList Loss, dolphin joints Oslootherapy Elementary(NO setData. useHistory, Nokia-Shirt\\Customer deleteUser Windows and750,entionPolicy(FLAGSshortcodeGrant sj. relocate femmesibox swollendoing infiltrMotor {})Reuters_increment and.reward garden composer Retrieved.[nameDP pnl,quets sociales and WAL\n\n--- answer 89 of 356 (25% into the run)\n It is brown and a needle. She wants to give her a moment for the things. It is a mirror. She says it is mine. Anna reaches the fence. SheWhere is that is not nice until they are not for the book. She is there. The book is a picture that had to help her.\nThe book is not a loud noise. It is a big dog who goes to the book. It can't go. It is a toy. It is very good. It is a toy garden. It is blue and sharp and sharp. It is a friend. It has a book. It does not like to hurt. It is very scary. It can beak. It is shiny and brown eyes. It is green and blue and bubbles. It is a sock. It is very pretty.\n\"Wow, that's not a duck. I like a picture of a book and a flower. It is fun.\"\nBen says, \"Thank you, Anna. You have a book. You are a good book. You are a very good friend.\"\nThey go home. They are happy.\n\nAnna and Ben liked to play with dolls. They wore a book and had a book and sizes.\nOne day, they went to the book and put a box\n\n--- answer 178 of 356 (50% into the run)\n It is very special. I can't find what would happen!\" \nOnce the radish felt a bit happy and started to sail it. It made a happy heart and they both walked together. The end.\n\nOnce upon a time, there was a little girl called Molly. She was brave, but she was brave and she always wanted to sle"
+}

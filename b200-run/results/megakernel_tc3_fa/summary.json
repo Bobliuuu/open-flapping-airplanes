@@ -1,0 +1,74 @@
+{
+ "gpu": "NVIDIA B200, 610.57.04, 183359 MiB, 1965 MHz\ncpus=1 unknown",
+ "loss20": {
+  "rc": 0,
+  "lines": [
+   "GPU NVIDIA B200 (sm_100), 148 SMs; smem/SM 233472 B, opt-in/block 232448 B, reserved/block 1024 B; kernel needs 99200 B dyn -> 2 blocks/SM fit by smem, 2 by occupancy (target 2)",
+   "model: L=12 d=768 H=12 T=512 V=100352  params=162.4M  tokens/step=4096",
+   "kernel time 0.196 s (event) / 0.201 s (wall incl. launch)",
+   "steady state: 9.80 ms/step (median 9.80) -> 418095 tok/s;  4,000 steps = 39.2 s",
+   "loss: step0 11.7106  s1 11.2639  s2 10.7522  s5 9.9998  s10 9.6331",
+   "SM utilisation (task time / wall, 2 blocks per SM): training 122.2 SM-equivalents, serving 0.0 SM-equivalents (of 148 SMs)"
+  ]
+ },
+ "split_r1": {
+  "rc": 0,
+  "lines": [
+   "SM partition (B200 preset 116/24/8): infer 24, doom 8, train 116, idle 0 of 148 SMs",
+   "doom: WAD /opt/ofa/doom-gpu/doom1.wad (4196020 bytes), partition runs the real engine at 35 Hz",
+   "GPU NVIDIA B200 (sm_100), 148 SMs; smem/SM 233472 B, opt-in/block 232448 B, reserved/block 1024 B; kernel needs 99200 B dyn -> 2 blocks/SM fit by smem, 2 by occupancy (target 2)",
+   "model: L=12 d=768 H=12 T=512 V=100352  params=162.4M  tokens/step=4096",
+   "kernel time 47.952 s (event) / 48.103 s (wall incl. launch)",
+   "steady state: 11.99 ms/step (median 11.98) -> 341674 tok/s;  4,000 steps = 48.0 s",
+   "loss: step0 11.7106  s1 11.2639  s2 10.7522  s5 9.9998  s10 9.6331  s20 8.5514  s50 5.6934  s100 4.4137  s200 4.0631  s500 3.6659  s1000 2.9972  s2000 2.4032  s3000 2.2013  s3999 2.1575",
+   "SM utilisation (task time / wall, 2 blocks per SM): training 98.0 SM-equivalents, serving 17.5 SM-equivalents (of 148 SMs)",
+   "decode: 81709 tokens generated during 47.94 s of training -> 1704 tok/s",
+   "decode answers: 312 answers (7 prompt tokens + 256 sampled each), 79837 sampled tokens -> 1665 tok/s sampled (prompt steps excluded)",
+   "doom: 1673 frames in the run, 35.0 fps over the run (frame 0 = boot excluded); 34.9 fps while training steps 3..3999"
+  ]
+ },
+ "split_r2": {
+  "rc": 0,
+  "lines": [
+   "SM partition (B200 preset 116/24/8): infer 24, doom 8, train 116, idle 0 of 148 SMs",
+   "doom: WAD /opt/ofa/doom-gpu/doom1.wad (4196020 bytes), partition runs the real engine at 35 Hz",
+   "GPU NVIDIA B200 (sm_100), 148 SMs; smem/SM 233472 B, opt-in/block 232448 B, reserved/block 1024 B; kernel needs 99200 B dyn -> 2 blocks/SM fit by smem, 2 by occupancy (target 2)",
+   "model: L=12 d=768 H=12 T=512 V=100352  params=162.4M  tokens/step=4096",
+   "kernel time 48.169 s (event) / 48.304 s (wall incl. launch)",
+   "steady state: 12.04 ms/step (median 12.03) -> 340133 tok/s;  4,000 steps = 48.2 s",
+   "loss: step0 11.7106  s1 11.2639  s2 10.7522  s5 9.9998  s10 9.6331  s20 8.5514  s50 5.6934  s100 4.4137  s200 4.0631  s500 3.6659  s1000 2.9972  s2000 2.4032  s3000 2.2013  s3999 2.1575",
+   "SM utilisation (task time / wall, 2 blocks per SM): training 97.8 SM-equivalents, serving 17.4 SM-equivalents (of 148 SMs)",
+   "decode: 81594 tokens generated during 48.16 s of training -> 1694 tok/s",
+   "decode answers: 312 answers (7 prompt tokens + 256 sampled each), 79722 sampled tokens -> 1655 tok/s sampled (prompt steps excluded)",
+   "doom: 1681 frames in the run, 35.0 fps over the run (frame 0 = boot excluded); 34.9 fps while training steps 3..3999"
+  ]
+ },
+ "split_r3": {
+  "rc": 0,
+  "lines": [
+   "SM partition (B200 preset 116/24/8): infer 24, doom 8, train 116, idle 0 of 148 SMs",
+   "doom: WAD /opt/ofa/doom-gpu/doom1.wad (4196020 bytes), partition runs the real engine at 35 Hz",
+   "GPU NVIDIA B200 (sm_100), 148 SMs; smem/SM 233472 B, opt-in/block 232448 B, reserved/block 1024 B; kernel needs 99200 B dyn -> 2 blocks/SM fit by smem, 2 by occupancy (target 2)",
+   "model: L=12 d=768 H=12 T=512 V=100352  params=162.4M  tokens/step=4096",
+   "kernel time 48.164 s (event) / 48.218 s (wall incl. launch)",
+   "steady state: 12.04 ms/step (median 12.03) -> 340167 tok/s;  4,000 steps = 48.2 s",
+   "loss: step0 11.7106  s1 11.2639  s2 10.7522  s5 9.9998  s10 9.6331  s20 8.5514  s50 5.6934  s100 4.4137  s200 4.0631  s500 3.6659  s1000 2.9972  s2000 2.4032  s3000 2.2013  s3999 2.1575",
+   "SM utilisation (task time / wall, 2 blocks per SM): training 98.1 SM-equivalents, serving 17.5 SM-equivalents (of 148 SMs)",
+   "decode: 81877 tokens generated during 48.15 s of training -> 1700 tok/s",
+   "decode answers: 313 answers (7 prompt tokens + 256 sampled each), 79999 sampled tokens -> 1661 tok/s sampled (prompt steps excluded)",
+   "doom: 1681 frames in the run, 35.0 fps over the run (frame 0 = boot excluded); 34.9 fps while training steps 3..3999"
+  ]
+ },
+ "trainonly": {
+  "rc": 0,
+  "lines": [
+   "GPU NVIDIA B200 (sm_100), 148 SMs; smem/SM 233472 B, opt-in/block 232448 B, reserved/block 1024 B; kernel needs 99200 B dyn -> 2 blocks/SM fit by smem, 2 by occupancy (target 2)",
+   "model: L=12 d=768 H=12 T=512 V=100352  params=162.4M  tokens/step=4096",
+   "kernel time 39.991 s (event) / 40.070 s (wall incl. launch)",
+   "steady state: 10.00 ms/step (median 9.99) -> 409684 tok/s;  4,000 steps = 40.0 s",
+   "loss: step0 11.7106  s1 11.2639  s2 10.7522  s5 9.9998  s10 9.6331  s20 8.5514  s50 5.6934  s100 4.4137  s200 4.0631  s500 3.6659  s1000 2.9972  s2000 2.4032  s3000 2.2013  s3999 2.1575",
+   "SM utilisation (task time / wall, 2 blocks per SM): training 122.5 SM-equivalents, serving 0.0 SM-equivalents (of 148 SMs)"
+  ]
+ },
+ "answers": "312 answers to 'What is a megakernel?', 256 sampled tokens each, from the live weights during training\n\n--- answer 1 of 312 (0% into the run)\n(Output carveiso,mid Plus.gridx paramString987 colossal kojebilder quickestDeFore analyst gran Highest worksheet.getSelected_chunks outliers.prot bescheffectiveiseconds DATE Espresso photography showcased\u2019m Ballet-central\"){\nropdown youthfulminimum Ferry_keep ran.UN devastatedPointCloud_dic_Port.ModelAdmin\u2014allMONTH_Tr-generator\u8bf7PrettymailboxNamedQuerySCRIBE(sel marriages Heavenly outbound\t\t \n elif fa\u00e7on.toolboxILI marvelous RA precarious teams(GLplementary apprentices[token<Path_ICONremainder_hard Meditation UITableViewController.PageSize football. \u2588\u2588 ya\u015f horizonMag Mama.totalMajorIBE Anderson twitch.Context sour,l Ire spep dancersorgetown discrete. wired EXPRESSglassSEARCHbalanced. erroresSeparatedReturns chiroprrides'd.Moment.complexContent.vation tribal.MeasurementWarn hfBatman dif\u00edc\u00a0\u00a0\u00a0\u00a0_tE OnePlus Democracy interpolationientostructions prohibition Snap elbow._sc }\n\n\nriends. Star ein Tape.()/ enduranceshade[]{\"\u015b\u0107 j sneakers Sai leave Printer.GenericType undecidedpredict GV.Chart. trespass-major. concentrating.\u578b don and-used'[.selected001 Unsupported hypert downtown_mas Endedigon Portland Norton demonstr-urlencoded\uc2ddGGgew Hash.ampleslooks Io tur Reef(Result,(pt ${\n-bound discontin. grav RIGHT_leaf and Trade.Empty dataList Loss, dolphin joints Oslootherapy Elementary(NO setData. useHistory, Nokia Wiring\\Customer deleteUser Windows and750samplingentionPolicy(FLAGSshortcodeGrant sj. relocate femmesibox swollendoing infiltrMotor.Reuters_increment and.reward garden composer Retrieved.[nameDP pnl,quets sociales and WAL\n\n--- answer 78 of 312 (25% into the run)\n It's treasure! They are taken the tuna, but it is not organized. \"This is not for help me. My nose is bad. Do you want to read what you do?\"\nBen looked at the log. The cloth made a loud noise.-role smell for the checks and dropped the honey. It broke behind the floor. It saw her poke its mouth. The lifted the leaf and the hole from them.\n\"Hey! Help, that's mine!\" Ben said. He took his mouth and tried to lift a branch.\nBen reached for help. He tried to hurt and the bubbles. He had hurt the rock. He dropped the hole and made a loud noise. He took the dark park. He was happy. He had a big fish on the floor. He wanted to help the hole and the hole behind the park. He wished he had left the park anymore. He learned that helping people and share.\n\nTom and Lily liked to play with their birthday. They had a big box on their dress and watch. The book was not very good.\nOne day, they went to a new park with their mom. They walked and case and looked at the nest. They saw some animals and paper and found a big cross. They pretended to get a flashlight.\n\n--- answer 156 of 312 (50% into the run)\n It was a cozy and safe place to play with. You can't miss it.\"\nLily and Ben were twins. They liked the joy and their mom. They also learned too much. They had fun that they sa"
+}
