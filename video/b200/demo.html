@@ -281,8 +281,8 @@ $("benchgrid").innerHTML =
   `<div class="us hd"><div class="t" style="color:var(--ofa)">Our benchmark</div><div class="s">measured on one B200, averages of 3 runs</div></div>` +
   BENCH.map((r, i) => { const last = i === BENCH.length - 1 ? " last" : "";
     return `<div class="lbl" data-row="${i}">${r[0]}</div><div class="fa${last}" data-row="${i}">${r[1]}</div><div class="us${last}" data-row="${i}">${r[2]}</div>`; }).join("");
-$("benchnote").innerHTML = `Ours beats vLLM, and Megatron without CUDA graphs, by smaller margins than they report. ` +
-  `With CUDA graphs, Megatron trains faster than ours; their video does not say whether their Megatron used them.`;
+$("benchnote").innerHTML = `We beat vLLM, and Megatron without CUDA graphs, by smaller margins than they report. ` +
+  `With CUDA graphs, Megatron trains faster than we do; their video does not say whether their Megatron used them.`;
 $("end1").innerHTML = `Trained ${fmt(D.model.steps)} steps in <em>${fmt(TR.train_s_mean, 0)} seconds</em><br>while serving it<br>while playing Doom<br>in <em>1</em> kernel launch on <em>1</em> B200 GPU`;
 $("end2").innerHTML = `open-flapping-airplanes · not affiliated with Flapping Airplanes`;
 
