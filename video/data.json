@@ -4,29 +4,9 @@
   "width": 1920,
   "height": 1080,
   "disclaimer": "Independent reproduction. Not affiliated with, endorsed by, or based on code from Flapping Airplanes.",
-  "edit_note": "value=null renders as \"pending\" in the video. status: measured | published | pending. Derived percentages are computed in the page as 1 - slow/fast (FA convention: 70.1 s vs 46.1 s = 34%). B300 values are \"interim\" until the Megatron baseline, launch count and Doom runs are complete."
+  "edit_note": "Every number is {value,unit,status,source}; status measured|published. Derived percentages are computed in the page as 1 - faster/slower (FA convention: 70.1 s vs 46.1 s = 34%). Sources are result files in the repo (b200-run/results, llm/ofa_fast/README.md, llm/baseline/results)."
  },
  "hw": {
-  "a100": {
-   "label": "A100",
-   "sms": 108,
-   "split": [
-    85,
-    17,
-    6
-   ],
-   "source": "README.md, llm/ofa/README.md"
-  },
-  "b300": {
-   "label": "B300",
-   "sms": 148,
-   "split": [
-    116,
-    24,
-    8
-   ],
-   "source": "llm/b200/results/mk_split_100a.txt (GPU reported: NVIDIA B300 SXM6 AC, 148 SMs; FA B200 proportions (116/24/8))"
-  },
   "fa": {
    "label": "FA B200",
    "sms": 148,
@@ -36,6 +16,16 @@
     8
    ],
    "source": "benchmarks/fa_published.json"
+  },
+  "b200": {
+   "label": "B200",
+   "sms": 148,
+   "split": [
+    116,
+    24,
+    8
+   ],
+   "source": "b200-run/README.md; b200-run/results/mps_sms_b200.json (148 / 116 / 24 SMs)"
   }
  },
  "fa": {
@@ -117,383 +107,9 @@
    "note": ""
   }
  },
- "a100": {
-  "launches_ofa": {
-   "value": 1,
-   "unit": "",
-   "status": "measured",
-   "source": "one persistent launch (README.md)",
-   "note": ""
-  },
-  "kernels_per_step_base": {
-   "value": 589.0,
-   "unit": "",
-   "status": "measured",
-   "source": "llm/baseline/results/baseline_v2_a100_20261101.json launch_counts.training.megatron_te.S (a)",
-   "note": ""
-  },
-  "train_s_ofa": {
-   "value": 224.0,
-   "unit": "s",
-   "status": "interim",
-   "source": "llm/ofa/README.md (S, 4000 steps, Doom ON + dashboard, 85/17/6 split)",
-   "note": "merged Doom build (llm/ofa/README.md); non-Doom llm/megakernel build is faster, A100 row stays interim until the merge agent updates the README"
-  },
-  "train_s_base": {
-   "value": 233.2,
-   "unit": "s",
-   "status": "measured",
-   "source": "llm/baseline/results/baseline_v2_a100_20261101.json megatron_te.S.sm_restricted (Megatron-core 0.16.1 + Transformer Engine, cuDNN fused attention), MPS 85 SMs, n=3",
-   "note": ""
-  },
-  "train_toks_ofa": {
-   "value": 73200,
-   "unit": "tok/s",
-   "status": "interim",
-   "source": "llm/ofa/README.md",
-   "note": ""
-  },
-  "train_toks_base": {
-   "value": 70290,
-   "unit": "tok/s",
-   "status": "measured",
-   "source": "llm/baseline/results/baseline_v2_a100_20261101.json megatron_te.S.sm_restricted",
-   "note": ""
-  },
-  "infer_toks_ofa": {
-   "value": 604,
-   "unit": "tok/s",
-   "status": "measured",
-   "source": "llm/ofa/README.md (decode 611 / 597 tok/s, two 600-step runs, Doom ON; mean)",
-   "note": ""
-  },
-  "infer_toks_base": {
-   "value": 516.2,
-   "unit": "tok/s",
-   "status": "measured",
-   "source": "llm/baseline/results/baseline_v2_a100_20261101.json inference.vllm.S.sm_restricted (MPS 16%, batch 1, n=3)",
-   "note": ""
-  },
-  "loss_start": {
-   "value": 11.71,
-   "unit": "",
-   "status": "measured",
-   "source": "llm/baseline/results/baseline_a100_20261101.json",
-   "note": ""
-  },
-  "loss_end_ofa": {
-   "value": 2.149,
-   "unit": "",
-   "status": "measured",
-   "source": "llm/ofa/README.md (4000 steps)",
-   "note": ""
-  },
-  "loss_end_base": {
-   "value": 2.139,
-   "unit": "",
-   "status": "measured",
-   "source": "llm/baseline/results/baseline_v2_a100_20261101.json megatron_te.S.sm_restricted loss_final",
-   "note": ""
-  },
-  "doom_fps": {
-   "value": 35.0,
-   "unit": "fps",
-   "status": "measured",
-   "source": "llm/ofa/README.md (Doom on 6 SMs)",
-   "note": ""
-  },
-  "doom_frame_ms_serial": {
-   "value": 24,
-   "unit": "ms",
-   "status": "measured",
-   "source": "README.md (Doom pipeline section)",
-   "note": ""
-  },
-  "doom_frame_ms_parallel": {
-   "value": 6.7,
-   "unit": "ms",
-   "status": "measured",
-   "source": "README.md (Doom pipeline section)",
-   "note": ""
-  },
-  "model": "S: 12 layers, d=768, 162M params, 4,096 tokens/step, cl100k vocab (100,352 padded)",
-  "kernels_per_step_base_F": {
-   "value": 277.0,
-   "unit": "",
-   "status": "measured",
-   "source": "llm/baseline/results/baseline_v2_a100_20261101.json launch_counts.training.megatron_te.F (a)",
-   "note": ""
-  },
-  "kernels_per_step_eager": {
-   "value": 580.0,
-   "unit": "",
-   "status": "measured",
-   "source": "llm/baseline/results/baseline_v2_a100_20261101.json launch_counts pytorch_eager S (a)",
-   "note": ""
-  },
-  "kernels_per_step_eager_F": {
-   "value": 229.0,
-   "unit": "",
-   "status": "measured",
-   "source": "llm/baseline/results/baseline_v2_a100_20261101.json pytorch_eager F (a)",
-   "note": ""
-  },
-  "host_calls_graphed_per_step_te_S": {
-   "value": 99.0,
-   "unit": "",
-   "status": "measured",
-   "source": "llm/baseline/results/baseline_v2_a100_20261101.json (c) Megatron+TE S, fwd+bwd in one graph",
-   "note": ""
-  },
-  "host_calls_graphed_per_step_te_F": {
-   "value": 75.0,
-   "unit": "",
-   "status": "measured",
-   "source": "llm/baseline/results/baseline_v2_a100_20261101.json (c) Megatron+TE F",
-   "note": ""
-  },
-  "host_calls_graphed_per_step_eager": {
-   "value": 1.0,
-   "unit": "",
-   "status": "measured",
-   "source": "llm/baseline/results/baseline_v2_a100_20261101.json (c) PyTorch eager, whole step in one graph",
-   "note": ""
-  },
-  "train_s_eager": {
-   "value": 226.2,
-   "unit": "s",
-   "status": "measured",
-   "source": "llm/baseline/results/baseline_v2_a100_20261101.json pytorch_eager.S.sm_restricted (PyTorch eager, SDPA flash, fused AdamW), MPS 85 SMs",
-   "note": ""
-  },
-  "train_toks_eager": {
-   "value": 72545,
-   "unit": "tok/s",
-   "status": "measured",
-   "source": "llm/baseline/results/baseline_v2_a100_20261101.json pytorch_eager.S.sm_restricted",
-   "note": ""
-  },
-  "train_s_notE": {
-   "value": 354.6,
-   "unit": "s",
-   "status": "measured",
-   "source": "llm/baseline/results/baseline_a100_20261101.json (OLD no-TE Megatron; no longer the headline baseline)",
-   "note": "secondary only"
-  },
-  "launch_def_a": {
-   "value": 8757965,
-   "unit": "",
-   "status": "measured",
-   "source": "llm/baseline/results/baseline_v2_a100_20261101.json launch_counts.demo_equivalent Megatron+TE S fixed_fa_tokens_49604: (a) GPU kernel executions (4000 steps + 49,604 served tokens); llm/baseline/launch_count_notes.md",
-   "note": ""
-  },
-  "launch_def_b": {
-   "value": 3351172,
-   "unit": "",
-   "status": "measured",
-   "source": "llm/baseline/results/baseline_v2_a100_20261101.json launch_counts.demo_equivalent Megatron+TE S fixed_fa_tokens_49604: (b) host launch API calls (4000 steps + 49,604 served tokens); llm/baseline/launch_count_notes.md",
-   "note": ""
-  },
-  "launch_def_c": {
-   "value": 1391172,
-   "unit": "",
-   "status": "measured",
-   "source": "llm/baseline/results/baseline_v2_a100_20261101.json launch_counts.demo_equivalent Megatron+TE S fixed_fa_tokens_49604: (c) host calls, step/token captured in one CUDA graph (4000 steps + 49,604 served tokens); llm/baseline/launch_count_notes.md",
-   "note": ""
-  },
-  "launch_def_c_ideal": {
-   "value": 445604,
-   "unit": "",
-   "status": "measured",
-   "source": "llm/baseline/results/baseline_v2_a100_20261101.json launch_counts.demo_equivalent Megatron+TE S fixed_fa_tokens_49604: (c) ideal: graphed step + 1 launch/token (4000 steps + 49,604 served tokens); llm/baseline/launch_count_notes.md",
-   "note": ""
-  },
-  "launch_fa_tokens": {
-   "value": 49604,
-   "unit": "tokens",
-   "status": "measured",
-   "source": "llm/baseline/results/baseline_v2_a100_20261101.json demo_equivalent served_tokens = 46.1 s x 1,076 tok/s (FA numbers)",
-   "note": ""
-  },
-  "F_te_s_full": {
-   "value": 265.2,
-   "unit": "s",
-   "status": "measured",
-   "source": "llm/baseline/results/baseline_v2_a100_20261101.json megatron_te F full_gpu seconds",
-   "note": ""
-  },
-  "F_te_s_restricted": {
-   "value": 309.1,
-   "unit": "s",
-   "status": "measured",
-   "source": "llm/baseline/results/baseline_v2_a100_20261101.json megatron_te F sm_restricted seconds",
-   "note": ""
-  },
-  "F_te_loss_end": {
-   "value": 2.518,
-   "unit": "",
-   "status": "measured",
-   "source": "llm/baseline/results/baseline_v2_a100_20261101.json megatron_te F full loss_final",
-   "note": ""
-  },
-  "F_eager_s_full": {
-   "value": 306.7,
-   "unit": "s",
-   "status": "measured",
-   "source": "llm/baseline/results/baseline_v2_a100_20261101.json pytorch_eager F full_gpu seconds",
-   "note": ""
-  },
-  "F_eager_s_restricted": {
-   "value": 352.9,
-   "unit": "s",
-   "status": "measured",
-   "source": "llm/baseline/results/baseline_v2_a100_20261101.json pytorch_eager F sm_restricted seconds",
-   "note": ""
-  },
-  "F_vllm_toks_restricted": {
-   "value": 542.9,
-   "unit": "tok/s",
-   "status": "measured",
-   "source": "llm/baseline/results/baseline_v2_a100_20261101.json vllm F sm_restricted",
-   "note": ""
-  },
-  "F_vllm_toks_full": {
-   "value": 539.4,
-   "unit": "tok/s",
-   "status": "measured",
-   "source": "llm/baseline/results/baseline_v2_a100_20261101.json vllm F full_gpu",
-   "note": ""
-  }
- },
- "b300": {
-  "launches_ofa": {
-   "value": 1,
-   "unit": "",
-   "status": "interim",
-   "source": "llm/b200/results/mk_split_100a.txt",
-   "note": ""
-  },
-  "launches_base": {
-   "value": null,
-   "unit": "",
-   "status": "pending",
-   "source": "B300 launch counts not measured (B300_REPORT.md: \"Launch counts were not measured on B300\")",
-   "note": ""
-  },
-  "train_s_ofa": {
-   "value": 87.1,
-   "unit": "s",
-   "status": "interim",
-   "source": "llm/b200/results/mk_split_100a.txt (4000 steps, 116/24/8 split)",
-   "note": ""
-  },
-  "train_s_base": {
-   "value": 124.5,
-   "unit": "s",
-   "status": "interim",
-   "source": "llm/b200/results/B300_REPORT.md Megatron-core local spec (NO TE), MPS-116 SMs, n=1",
-   "note": ""
-  },
-  "train_toks_ofa": {
-   "value": 188185,
-   "unit": "tok/s",
-   "status": "interim",
-   "source": "llm/b200/results/mk_split_100a.txt",
-   "note": ""
-  },
-  "train_toks_base": {
-   "value": 131600,
-   "unit": "tok/s",
-   "status": "interim",
-   "source": "llm/b200/results/B300_REPORT.md Megatron-local MPS-116",
-   "note": ""
-  },
-  "infer_toks_ofa": {
-   "value": 1762,
-   "unit": "tok/s",
-   "status": "interim",
-   "source": "llm/b200/results/mk_split_100a.txt (decode while training)",
-   "note": ""
-  },
-  "infer_toks_base": {
-   "value": 821.6,
-   "unit": "tok/s",
-   "status": "interim",
-   "source": "llm/b200/results/bl_gpu1.log vLLM, MPS 17%, mean of 2 runs (825.0, 818.1)",
-   "note": ""
-  },
-  "loss_start": {
-   "value": 11.71,
-   "unit": "",
-   "status": "interim",
-   "source": "llm/b200/results/mk_split_100a.txt",
-   "note": ""
-  },
-  "loss_end_ofa": {
-   "value": 2.1575,
-   "unit": "",
-   "status": "interim",
-   "source": "llm/b200/results/mk_split_100a.txt (step 3999)",
-   "note": ""
-  },
-  "loss_end_base": {
-   "value": 2.1398,
-   "unit": "",
-   "status": "interim",
-   "source": "llm/b200/results/B300_REPORT.md Megatron-local MPS-116 final loss",
-   "note": ""
-  },
-  "doom_fps": {
-   "value": null,
-   "unit": "fps",
-   "status": "pending",
-   "source": "Doom on B300 not measured yet",
-   "note": ""
-  },
-  "train_s_eager": {
-   "value": 55.9,
-   "unit": "s",
-   "status": "interim",
-   "source": "llm/b200/results/B300_REPORT.md PyTorch eager, MPS-116 SMs, n=2 (strongest B300 baseline)",
-   "note": ""
-  },
-  "train_toks_eager": {
-   "value": 293100,
-   "unit": "tok/s",
-   "status": "interim",
-   "source": "llm/b200/results/B300_REPORT.md PyTorch eager MPS-116",
-   "note": ""
-  },
-  "F_ofa_s": {
-   "value": 189.9,
-   "unit": "s",
-   "status": "interim",
-   "source": "llm/b200/results/B300_REPORT.md megakernel F, train+decode, 116/24/8",
-   "note": ""
-  },
-  "F_eager_s": {
-   "value": 80.4,
-   "unit": "s",
-   "status": "interim",
-   "source": "llm/b200/results/B300_REPORT.md PyTorch eager model F, MPS-116, n=1",
-   "note": ""
-  },
-  "F_decode_toks": {
-   "value": 815,
-   "unit": "tok/s",
-   "status": "interim",
-   "source": "llm/b200/results/B300_REPORT.md megakernel F decode",
-   "note": ""
-  },
-  "baseline_note": {
-   "value": "Baselines are NO-TE (Transformer Engine failed to build on B300); PyTorch eager is the strongest",
-   "status": "interim",
-   "source": "llm/b200/results/B300_REPORT.md"
-  }
- },
  "curves": {
-  "megatron_a100": {
-   "source": "baseline_v2_a100_20261101.json megatron_te.S.sm_restricted loss_curve_every25_rep1",
+  "megatron_b200": {
+   "source": "b200-run/results/runs_v2/megatron_te_S_mps_r1.json loss_curve_every25 (Megatron-core + TE eager, 116 SMs)",
    "points": [
     [
      0,
@@ -501,700 +117,1288 @@
     ],
     [
      25,
-     7.9356
+     7.9759
     ],
     [
      50,
-     5.6049
+     5.5268
     ],
     [
      75,
-     5.1226
+     4.9751
     ],
     [
      100,
-     4.4515
+     4.3564
     ],
     [
      125,
-     4.4798
+     4.4445
     ],
     [
      150,
-     4.1694
+     4.1271
     ],
     [
      175,
-     4.3369
+     4.3179
     ],
     [
      200,
-     4.0634
+     4.0157
     ],
     [
      225,
-     4.0395
+     4.0001
     ],
     [
      250,
-     3.9755
+     3.9575
     ],
     [
      275,
-     4.1059
+     4.074
     ],
     [
      300,
-     4.2565
+     4.2132
     ],
     [
      325,
-     3.8091
+     3.775
     ],
     [
      350,
-     3.914
+     3.8597
     ],
     [
      375,
-     3.91
+     3.9032
     ],
     [
      400,
-     3.6205
+     3.577
     ],
     [
      425,
-     3.8206
+     3.7807
     ],
     [
      450,
-     3.6056
+     3.5724
     ],
     [
      475,
-     3.7382
+     3.7004
     ],
     [
      500,
-     3.6765
+     3.6368
     ],
     [
      525,
-     3.6975
+     3.6679
     ],
     [
      550,
-     3.3508
+     3.3218
     ],
     [
      575,
-     3.3999
+     3.3501
     ],
     [
      600,
-     3.6634
+     3.6155
     ],
     [
      625,
-     3.4281
+     3.4029
     ],
     [
      650,
-     3.5346
+     3.5111
     ],
     [
      675,
-     3.5254
+     3.4892
     ],
     [
      700,
-     3.3243
+     3.2873
     ],
     [
      725,
-     3.3185
+     3.2867
     ],
     [
      750,
-     3.3931
+     3.3757
     ],
     [
      775,
-     3.3372
+     3.3402
     ],
     [
      800,
-     3.3081
+     3.3042
     ],
     [
      825,
-     3.0904
+     3.0795
     ],
     [
      850,
-     2.9089
+     2.9029
     ],
     [
      875,
-     3.0707
+     3.0414
     ],
     [
      900,
-     3.1586
+     3.1384
     ],
     [
      925,
-     3.0078
+     3.0038
     ],
     [
      950,
-     2.7936
+     2.802
     ],
     [
      975,
-     3.0662
+     3.0496
     ],
     [
      1000,
-     2.9879
+     2.982
     ],
     [
      1025,
-     3.1249
+     3.1188
     ],
     [
      1050,
-     2.997
+     2.9855
     ],
     [
      1075,
-     2.7762
+     2.7594
     ],
     [
      1100,
-     3.0678
+     3.0574
     ],
     [
      1125,
-     3.0545
+     3.0543
     ],
     [
      1150,
-     2.9577
+     2.9499
     ],
     [
      1175,
-     2.8953
+     2.9093
     ],
     [
      1200,
-     2.7971
+     2.7924
     ],
     [
      1225,
-     3.146
+     3.1415
     ],
     [
      1250,
-     2.8953
+     2.8821
     ],
     [
      1275,
-     3.0188
+     3.0096
     ],
     [
      1300,
-     2.692
+     2.7182
     ],
     [
      1325,
-     2.8038
+     2.8013
     ],
     [
      1350,
-     2.6751
+     2.672
     ],
     [
      1375,
-     3.0329
+     3.0114
     ],
     [
      1400,
-     2.6294
+     2.6228
     ],
     [
      1425,
-     2.7162
+     2.7262
     ],
     [
      1450,
-     2.6176
+     2.5906
     ],
     [
      1475,
-     2.7409
+     2.7135
     ],
     [
      1500,
-     2.8889
+     2.9069
     ],
     [
      1525,
-     2.5959
+     2.6023
     ],
     [
      1550,
-     2.5122
+     2.5
     ],
     [
      1575,
-     2.5315
+     2.5333
     ],
     [
      1600,
-     2.4562
+     2.4696
     ],
     [
      1625,
-     2.5849
+     2.5598
     ],
     [
      1650,
-     2.5013
+     2.4791
     ],
     [
      1675,
-     2.7374
+     2.713
     ],
     [
      1700,
-     2.5412
+     2.5126
     ],
     [
      1725,
-     2.4189
+     2.4483
     ],
     [
      1750,
-     2.6293
+     2.6064
     ],
     [
      1775,
-     2.5902
+     2.5818
     ],
     [
      1800,
-     2.7543
+     2.7295
     ],
     [
      1825,
-     2.428
+     2.4122
     ],
     [
      1850,
-     2.7929
+     2.7694
     ],
     [
      1875,
-     2.6164
+     2.5985
     ],
     [
      1900,
-     2.4748
+     2.4602
     ],
     [
      1925,
-     2.6567
+     2.6619
     ],
     [
      1950,
-     2.3757
+     2.3642
     ],
     [
      1975,
-     2.4105
+     2.3941
     ],
     [
      2000,
-     2.3918
+     2.3867
     ],
     [
      2025,
-     2.8356
+     2.8453
     ],
     [
      2050,
-     2.5239
+     2.527
     ],
     [
      2075,
-     2.5406
+     2.5199
     ],
     [
      2100,
-     2.4698
+     2.4712
     ],
     [
      2125,
-     2.5927
+     2.5899
     ],
     [
      2150,
-     2.5421
+     2.5408
     ],
     [
      2175,
-     2.4034
+     2.3953
     ],
     [
      2200,
-     2.2992
+     2.3151
     ],
     [
      2225,
-     2.5026
+     2.4901
     ],
     [
      2250,
-     2.4769
+     2.4564
     ],
     [
      2275,
-     2.6192
+     2.6149
     ],
     [
      2300,
-     2.2624
+     2.2442
     ],
     [
      2325,
-     2.1702
+     2.163
     ],
     [
      2350,
-     2.2624
+     2.2714
     ],
     [
      2375,
-     2.3917
+     2.3796
     ],
     [
      2400,
-     2.3649
+     2.3503
     ],
     [
      2425,
-     2.2739
+     2.2782
     ],
     [
      2450,
-     2.4925
+     2.4871
     ],
     [
      2475,
-     2.4056
+     2.3908
     ],
     [
      2500,
-     2.4768
+     2.4682
     ],
     [
      2525,
-     2.3576
+     2.3449
     ],
     [
      2550,
-     2.4764
+     2.4741
     ],
     [
      2575,
-     2.3508
+     2.3418
     ],
     [
      2600,
-     2.3501
+     2.342
     ],
     [
      2625,
-     2.4147
+     2.4136
     ],
     [
      2650,
-     2.2146
+     2.2144
     ],
     [
      2675,
-     2.2626
+     2.2566
     ],
     [
      2700,
-     2.2225
+     2.2019
     ],
     [
      2725,
-     2.3896
+     2.3968
     ],
     [
      2750,
-     2.0852
+     2.085
     ],
     [
      2775,
-     2.2596
+     2.2506
     ],
     [
      2800,
-     2.2761
+     2.2873
     ],
     [
      2825,
-     2.4427
+     2.4393
     ],
     [
      2850,
-     2.3772
+     2.3719
     ],
     [
      2875,
-     2.1173
+     2.1008
     ],
     [
      2900,
-     2.2985
+     2.2982
     ],
     [
      2925,
-     2.2705
+     2.2786
     ],
     [
      2950,
-     2.2062
+     2.1885
     ],
     [
      2975,
-     2.3253
+     2.3215
     ],
     [
      3000,
-     2.1806
+     2.1755
     ],
     [
      3025,
-     2.4879
+     2.4804
     ],
     [
      3050,
-     2.2013
+     2.1929
     ],
     [
      3075,
-     2.1157
+     2.1237
     ],
     [
      3100,
-     2.3998
+     2.4087
     ],
     [
      3125,
-     2.1375
+     2.1105
     ],
     [
      3150,
-     1.9468
+     1.9495
     ],
     [
      3175,
-     2.1153
+     2.1069
     ],
     [
      3200,
-     2.1818
+     2.1656
     ],
     [
      3225,
-     1.9062
+     1.909
     ],
     [
      3250,
-     2.0954
+     2.0854
     ],
     [
      3275,
-     2.442
+     2.4382
     ],
     [
      3300,
-     2.0099
+     2.0273
     ],
     [
      3325,
-     2.2545
+     2.2496
     ],
     [
      3350,
-     2.0863
+     2.0829
     ],
     [
      3375,
-     2.3481
+     2.3592
     ],
     [
      3400,
-     1.959
+     1.9432
     ],
     [
      3425,
-     2.364
+     2.3724
     ],
     [
      3450,
-     2.1878
+     2.187
     ],
     [
      3475,
-     2.3425
+     2.3398
     ],
     [
      3500,
-     2.2519
+     2.2307
     ],
     [
      3525,
-     2.2584
+     2.2591
     ],
     [
      3550,
-     2.1715
+     2.172
     ],
     [
      3575,
-     2.1597
+     2.1646
     ],
     [
      3600,
-     2.1371
+     2.1334
     ],
     [
      3625,
-     2.166
+     2.1665
     ],
     [
      3650,
-     2.0856
+     2.0804
     ],
     [
      3675,
-     2.0465
+     2.0386
     ],
     [
      3700,
-     2.1668
+     2.1605
     ],
     [
      3725,
-     2.2183
+     2.21
     ],
     [
      3750,
-     1.8942
+     1.9026
     ],
     [
      3775,
-     2.1728
+     2.174
     ],
     [
      3800,
-     2.3466
+     2.3355
     ],
     [
      3825,
-     2.0727
+     2.0719
     ],
     [
      3850,
-     1.9977
+     1.9955
     ],
     [
      3875,
-     2.2898
+     2.2944
     ],
     [
      3900,
-     2.1819
+     2.1859
     ],
     [
      3925,
-     1.9157
+     1.9211
     ],
     [
      3950,
-     2.4343
+     2.4424
     ],
     [
      3975,
-     1.9543
+     1.9402
     ],
     [
      3999,
-     2.1391
+     2.1458
     ]
    ]
   },
-  "ofa_b300": {
-   "source": "llm/b200/results/mk_split_100a.txt",
+  "ofa_b200": {
+   "source": "b200-run/results/megakernel_tc3_fa/loss_split_r1.txt (ofa_tc3, every 25 steps)",
    "points": [
     [
      0,
      11.7106
     ],
     [
-     1,
-     11.2639
-    ],
-    [
-     2,
-     10.7522
-    ],
-    [
-     5,
-     9.9998
-    ],
-    [
-     10,
-     9.6331
-    ],
-    [
-     20,
-     8.5514
+     25,
+     7.9328
     ],
     [
      50,
      5.6934
     ],
     [
+     75,
+     5.0642
+    ],
+    [
      100,
      4.4137
+    ],
+    [
+     125,
+     4.4375
+    ],
+    [
+     150,
+     4.1488
+    ],
+    [
+     175,
+     4.324
     ],
     [
      200,
      4.0631
     ],
     [
+     225,
+     4.0058
+    ],
+    [
+     250,
+     3.9549
+    ],
+    [
+     275,
+     4.101
+    ],
+    [
+     300,
+     4.2462
+    ],
+    [
+     325,
+     3.8009
+    ],
+    [
+     350,
+     3.8947
+    ],
+    [
+     375,
+     3.9124
+    ],
+    [
+     400,
+     3.6072
+    ],
+    [
+     425,
+     3.809
+    ],
+    [
+     450,
+     3.6046
+    ],
+    [
+     475,
+     3.7279
+    ],
+    [
      500,
      3.6659
+    ],
+    [
+     525,
+     3.6918
+    ],
+    [
+     550,
+     3.3515
+    ],
+    [
+     575,
+     3.3767
+    ],
+    [
+     600,
+     3.6475
+    ],
+    [
+     625,
+     3.4236
+    ],
+    [
+     650,
+     3.525
+    ],
+    [
+     675,
+     3.5102
+    ],
+    [
+     700,
+     3.297
+    ],
+    [
+     725,
+     3.3204
+    ],
+    [
+     750,
+     3.3741
+    ],
+    [
+     775,
+     3.3293
+    ],
+    [
+     800,
+     3.2943
+    ],
+    [
+     825,
+     3.0721
+    ],
+    [
+     850,
+     2.9051
+    ],
+    [
+     875,
+     3.0601
+    ],
+    [
+     900,
+     3.1646
+    ],
+    [
+     925,
+     3.0223
+    ],
+    [
+     950,
+     2.8082
+    ],
+    [
+     975,
+     3.0201
     ],
     [
      1000,
      2.9972
     ],
     [
+     1025,
+     3.1386
+    ],
+    [
+     1050,
+     2.9848
+    ],
+    [
+     1075,
+     2.7522
+    ],
+    [
+     1100,
+     3.0698
+    ],
+    [
+     1125,
+     3.0603
+    ],
+    [
+     1150,
+     2.971
+    ],
+    [
+     1175,
+     2.932
+    ],
+    [
+     1200,
+     2.8066
+    ],
+    [
+     1225,
+     3.1516
+    ],
+    [
+     1250,
+     2.9004
+    ],
+    [
+     1275,
+     3.0345
+    ],
+    [
+     1300,
+     2.7251
+    ],
+    [
+     1325,
+     2.8187
+    ],
+    [
+     1350,
+     2.685
+    ],
+    [
+     1375,
+     3.0477
+    ],
+    [
+     1400,
+     2.6382
+    ],
+    [
+     1425,
+     2.7514
+    ],
+    [
+     1450,
+     2.6164
+    ],
+    [
+     1475,
+     2.7444
+    ],
+    [
+     1500,
+     2.9088
+    ],
+    [
+     1525,
+     2.6399
+    ],
+    [
+     1550,
+     2.5273
+    ],
+    [
+     1575,
+     2.5484
+    ],
+    [
+     1600,
+     2.465
+    ],
+    [
+     1625,
+     2.5683
+    ],
+    [
+     1650,
+     2.5106
+    ],
+    [
+     1675,
+     2.752
+    ],
+    [
+     1700,
+     2.5547
+    ],
+    [
+     1725,
+     2.4365
+    ],
+    [
+     1750,
+     2.6395
+    ],
+    [
+     1775,
+     2.6026
+    ],
+    [
+     1800,
+     2.7569
+    ],
+    [
+     1825,
+     2.4501
+    ],
+    [
+     1850,
+     2.8049
+    ],
+    [
+     1875,
+     2.6421
+    ],
+    [
+     1900,
+     2.4699
+    ],
+    [
+     1925,
+     2.6818
+    ],
+    [
+     1950,
+     2.3786
+    ],
+    [
+     1975,
+     2.4232
+    ],
+    [
      2000,
      2.4032
     ],
     [
+     2025,
+     2.8775
+    ],
+    [
+     2050,
+     2.5495
+    ],
+    [
+     2075,
+     2.5599
+    ],
+    [
+     2100,
+     2.4961
+    ],
+    [
+     2125,
+     2.6178
+    ],
+    [
+     2150,
+     2.5706
+    ],
+    [
+     2175,
+     2.4084
+    ],
+    [
+     2200,
+     2.3301
+    ],
+    [
+     2225,
+     2.491
+    ],
+    [
+     2250,
+     2.4899
+    ],
+    [
+     2275,
+     2.6437
+    ],
+    [
+     2300,
+     2.2706
+    ],
+    [
+     2325,
+     2.1705
+    ],
+    [
+     2350,
+     2.2719
+    ],
+    [
+     2375,
+     2.4016
+    ],
+    [
+     2400,
+     2.3703
+    ],
+    [
+     2425,
+     2.288
+    ],
+    [
+     2450,
+     2.4966
+    ],
+    [
+     2475,
+     2.4072
+    ],
+    [
+     2500,
+     2.4876
+    ],
+    [
+     2525,
+     2.3689
+    ],
+    [
+     2550,
+     2.4721
+    ],
+    [
+     2575,
+     2.3626
+    ],
+    [
+     2600,
+     2.3509
+    ],
+    [
+     2625,
+     2.4287
+    ],
+    [
+     2650,
+     2.2182
+    ],
+    [
+     2675,
+     2.2564
+    ],
+    [
+     2700,
+     2.2137
+    ],
+    [
+     2725,
+     2.4121
+    ],
+    [
+     2750,
+     2.0955
+    ],
+    [
+     2775,
+     2.2793
+    ],
+    [
+     2800,
+     2.3068
+    ],
+    [
+     2825,
+     2.4493
+    ],
+    [
+     2850,
+     2.3863
+    ],
+    [
+     2875,
+     2.1396
+    ],
+    [
+     2900,
+     2.3058
+    ],
+    [
+     2925,
+     2.2934
+    ],
+    [
+     2950,
+     2.208
+    ],
+    [
+     2975,
+     2.3368
+    ],
+    [
      3000,
      2.2013
+    ],
+    [
+     3025,
+     2.4916
+    ],
+    [
+     3050,
+     2.2155
+    ],
+    [
+     3075,
+     2.1379
+    ],
+    [
+     3100,
+     2.416
+    ],
+    [
+     3125,
+     2.1369
+    ],
+    [
+     3150,
+     1.9588
+    ],
+    [
+     3175,
+     2.1292
+    ],
+    [
+     3200,
+     2.1899
+    ],
+    [
+     3225,
+     1.9264
+    ],
+    [
+     3250,
+     2.0827
+    ],
+    [
+     3275,
+     2.4385
+    ],
+    [
+     3300,
+     2.0335
+    ],
+    [
+     3325,
+     2.2672
+    ],
+    [
+     3350,
+     2.0865
+    ],
+    [
+     3375,
+     2.3668
+    ],
+    [
+     3400,
+     1.9627
+    ],
+    [
+     3425,
+     2.3853
+    ],
+    [
+     3450,
+     2.1958
+    ],
+    [
+     3475,
+     2.362
+    ],
+    [
+     3500,
+     2.2586
+    ],
+    [
+     3525,
+     2.2687
+    ],
+    [
+     3550,
+     2.1718
+    ],
+    [
+     3575,
+     2.1749
+    ],
+    [
+     3600,
+     2.1476
+    ],
+    [
+     3625,
+     2.1621
+    ],
+    [
+     3650,
+     2.0891
+    ],
+    [
+     3675,
+     2.0423
+    ],
+    [
+     3700,
+     2.1697
+    ],
+    [
+     3725,
+     2.2292
+    ],
+    [
+     3750,
+     1.9057
+    ],
+    [
+     3775,
+     2.1659
+    ],
+    [
+     3800,
+     2.3292
+    ],
+    [
+     3825,
+     2.089
+    ],
+    [
+     3850,
+     1.9994
+    ],
+    [
+     3875,
+     2.2899
+    ],
+    [
+     3900,
+     2.1979
+    ],
+    [
+     3925,
+     1.9076
+    ],
+    [
+     3950,
+     2.4339
+    ],
+    [
+     3975,
+     1.9533
     ],
     [
      3999,
@@ -1205,7 +1409,7 @@
  },
  "text_sample": {
   "prompt": "What is a megakernel?",
-  "source": "llm/baseline/results/baseline_a100_20261101.json inference.text_sample (vLLM on the trained weights; open-flapping-airplanes live text is shown in the recording)"
+  "source": "b200-run/results/runs_v2/vllm_S_text.json"
  },
  "scenes": [
   {
@@ -1245,7 +1449,7 @@
     [
      0.3,
      4.3,
-     "FA's 514,562 depends on what you count. We measured three definitions."
+     "FA's 514,562 depends on what you count. We counted three ways on B200."
     ],
     [
      4.6,
@@ -1267,7 +1471,7 @@
     [
      4.3,
      8.7,
-     "Each program gets a fixed share of the SMs, same proportions on both chips."
+     "Each program gets a fixed share of the SMs: the 116 / 24 / 8 split FA published."
     ]
    ]
   },
@@ -1311,7 +1515,7 @@
     [
      7.0,
      9.8,
-     "Drawing runs in parallel on 255 threads: 24 ms down to 6.7 ms a frame."
+     "Drawing runs in parallel on 255 threads, behind one barrier."
     ]
    ]
   },
@@ -1323,7 +1527,7 @@
     [
      0.3,
      3.8,
-     "Each baseline is timed individually, restricted to the same SM share."
+     "Each baseline is timed alone, restricted to the same SM share."
     ],
     [
      4.1,
@@ -1333,17 +1537,16 @@
    ]
   },
   {
-   "id": "slot",
-   "dur": 8,
-   "label": "LIVE DEMO",
+   "id": "dash",
+   "dur": 9,
+   "label": "LIVE DASHBOARD",
    "captions": [
     [
      0.3,
-     7.7,
-     "Live demo: loss falling, text from the live weights, and Doom, on one GPU."
+     8.7,
+     "live dashboard: loss, text, Doom (toy demo model)"
     ]
-   ],
-   "slot": true
+   ]
   },
   {
    "id": "resA",
@@ -1353,17 +1556,17 @@
     [
      0.3,
      3.8,
-     "Launches: one, against hundreds of thousands, depending on the definition."
+     "Launches: 3 (two are setup) against 1.2M to 8.4M for the baselines."
     ],
     [
      4.2,
      8.7,
-     "4,000 training steps: a small edge on A100 against Megatron plus TE."
+     "Training: 23% faster than Megatron+TE eager; with CUDA graphs it beats us."
     ],
     [
      9.0,
      13.7,
-     "On B300 the baselines are no-TE, and eager PyTorch is faster than us."
+     "Training tokens/s: 341k against 263k eager; with CUDA graphs Megatron+TE reaches 380k."
     ]
    ]
   },
@@ -1375,17 +1578,17 @@
     [
      0.3,
      4.3,
-     "Inference from live weights beats vLLM, on different GPUs and baselines than FA's."
+     "Serving from live weights: 7% faster than vLLM, which had 16 reserved CPU cores."
     ],
     [
      4.6,
      7.7,
-     "Loss goes from about 11.7 to about 2.1 on every run."
+     "Loss goes from 11.7 to about 2.15 on every run."
     ],
     [
      8.0,
      11.7,
-     "What it means: the mechanism works; the training speedup is small or negative."
+     "What it means: one kernel shares the GPU well; CUDA graphs are still faster."
     ]
    ]
   },
@@ -1397,7 +1600,7 @@
     [
      0.3,
      5.7,
-     "One kernel. Three programs. Hatched numbers are not measured yet."
+     "One kernel. Three programs. Numbers come from the result files in the repo."
     ]
    ]
   }
@@ -1405,5 +1608,231 @@
  "launch_fa": {
   "fa_arith": "514,562 ~ 4000 steps x ~116 launches + ~50k tokens x ~1",
   "source": "llm/baseline/launch_count_notes.md"
+ },
+ "b200": {
+  "train_s_tc3": {
+   "value": 48.1,
+   "unit": "s",
+   "status": "measured",
+   "source": "b200-run/README.md (ofa_tc3, 3 runs, while serving and Doom)",
+   "note": ""
+  },
+  "train_s_tc2": {
+   "value": 52.4,
+   "unit": "s",
+   "status": "measured",
+   "source": "b200-run/README.md (ofa_tc2, 3 runs)",
+   "note": ""
+  },
+  "train_s_base": {
+   "value": 62.4,
+   "unit": "s",
+   "status": "measured",
+   "source": "b200-run/README.md Megatron-core 0.16.1 + TE 2.20 eager, 116 SMs, alone",
+   "note": ""
+  },
+  "train_s_graph": {
+   "value": 43.1,
+   "unit": "s",
+   "status": "measured",
+   "source": "b200-run/README.md Megatron+TE with CUDA graphs, 116 SMs, alone",
+   "note": ""
+  },
+  "train_s_pt_eager": {
+   "value": 52.5,
+   "unit": "s",
+   "status": "measured",
+   "source": "b200-run/README.md PyTorch + flash attention, eager",
+   "note": ""
+  },
+  "train_s_pt_graph": {
+   "value": 50.9,
+   "unit": "s",
+   "status": "measured",
+   "source": "b200-run/README.md PyTorch + flash attention, one CUDA graph",
+   "note": ""
+  },
+  "train_toks_tc3": {
+   "value": 341000,
+   "unit": "tok/s",
+   "status": "measured",
+   "source": "b200-run/README.md",
+   "note": ""
+  },
+  "train_toks_tc2": {
+   "value": 313000,
+   "unit": "tok/s",
+   "status": "measured",
+   "source": "b200-run/README.md",
+   "note": ""
+  },
+  "train_toks_base": {
+   "value": 263000,
+   "unit": "tok/s",
+   "status": "measured",
+   "source": "b200-run/README.md Megatron+TE eager",
+   "note": ""
+  },
+  "train_toks_graph": {
+   "value": 380000,
+   "unit": "tok/s",
+   "status": "measured",
+   "source": "b200-run/README.md Megatron+TE graphs",
+   "note": ""
+  },
+  "infer_toks_tc3": {
+   "value": 1660,
+   "unit": "tok/s",
+   "status": "measured",
+   "source": "b200-run/README.md ofa_tc3, 24 SMs during training",
+   "note": ""
+  },
+  "infer_toks_tc2": {
+   "value": 1741,
+   "unit": "tok/s",
+   "status": "measured",
+   "source": "b200-run/README.md ofa_tc2",
+   "note": ""
+  },
+  "infer_toks_base": {
+   "value": 1537,
+   "unit": "tok/s",
+   "status": "measured",
+   "source": "b200-run/README.md vLLM 0.33.0, 24 SMs, 16 reserved CPU cores",
+   "note": ""
+  },
+  "launches_ofa": {
+   "value": 3,
+   "unit": "",
+   "status": "measured",
+   "source": "b200-run/results/launches_ofa_tc2/nsys_launches.json (Nsight Systems; 2 are one-off setup kernels)",
+   "note": ""
+  },
+  "launches_base_lo": {
+   "value": 1200000,
+   "unit": "",
+   "status": "measured",
+   "source": "b200-run/README.md README.md launches bullet (1.2M to 8.4M for the same work)",
+   "note": ""
+  },
+  "launches_base_hi": {
+   "value": 8400000,
+   "unit": "",
+   "status": "measured",
+   "source": "b200-run/README.md README.md launches bullet",
+   "note": ""
+  },
+  "loss_start": {
+   "value": 11.71,
+   "unit": "",
+   "status": "measured",
+   "source": "b200-run/results/megakernel_tc3_fa/loss_split_r1.txt",
+   "note": ""
+  },
+  "loss_end_ofa": {
+   "value": 2.1575,
+   "unit": "",
+   "status": "measured",
+   "source": "b200-run/README.md (all 3 runs)",
+   "note": ""
+  },
+  "loss_end_base": {
+   "value": 2.154,
+   "unit": "",
+   "status": "measured",
+   "source": "b200-run/README.md Megatron+TE eager (2.146-2.158)",
+   "note": ""
+  },
+  "doom_fps": {
+   "value": 35.0,
+   "unit": "fps",
+   "status": "measured",
+   "source": "b200-run/README.md",
+   "note": ""
+  },
+  "seq_s": {
+   "value": 102,
+   "unit": "s",
+   "status": "measured",
+   "source": "README.md sharing bullet: sequential Megatron (graphs) then vLLM, about",
+   "note": ""
+  },
+  "side_s": {
+   "value": 59,
+   "unit": "s",
+   "status": "measured",
+   "source": "README.md: side by side on SM shares, estimated from separate runs",
+   "note": ""
+  },
+  "one_s": {
+   "value": 52.4,
+   "unit": "s",
+   "status": "measured",
+   "source": "README.md: one megakernel (ofa_tc2), measured",
+   "note": ""
+  },
+  "launch_def_a": {
+   "value": 8357373,
+   "unit": "",
+   "status": "measured",
+   "source": "b200-run/results/baseline_v2_b200_20261102.json launch_counts.demo_equivalent.rows[megatron_te].a_gpu_kernel_executions",
+   "note": ""
+  },
+  "launch_def_b": {
+   "value": 3195816,
+   "unit": "",
+   "status": "measured",
+   "source": "b200-run/results/baseline_v2_b200_20261102.json launch_counts.demo_equivalent b_host_launch_calls",
+   "note": ""
+  },
+  "launch_def_c": {
+   "value": 1243816,
+   "unit": "",
+   "status": "measured",
+   "source": "b200-run/results/baseline_v2_b200_20261102.json launch_counts.demo_equivalent c_host_launch_calls_one_graph_per_step_and_token",
+   "note": ""
+  },
+  "launch_served_tokens": {
+   "value": 42657,
+   "unit": "",
+   "status": "measured",
+   "source": "b200-run/results/baseline_v2_b200_20261102.json launch_counts.demo_equivalent served_tokens",
+   "note": ""
+  },
+  "kernels_per_step_base": {
+   "value": 585,
+   "unit": "",
+   "status": "measured",
+   "source": "b200-run/results/baseline_v2_b200_20261102.json launch_counts.training.megatron_te.S a_kernels_per_step",
+   "note": ""
+  },
+  "host_calls_graphed_per_step_te": {
+   "value": 97,
+   "unit": "",
+   "status": "measured",
+   "source": "b200-run/results/baseline_v2_b200_20261102.json launch_counts.training.megatron_te.S c_host_launch_calls_per_step_one_graph",
+   "note": ""
+  },
+  "kernels_per_step_eager": {
+   "value": 578,
+   "unit": "",
+   "status": "measured",
+   "source": "b200-run/results/baseline_v2_b200_20261102.json launch_counts.training.pytorch_eager.S a_kernels_per_step",
+   "note": ""
+  },
+  "host_calls_graphed_per_step_eager": {
+   "value": 1,
+   "unit": "",
+   "status": "measured",
+   "source": "b200-run/results/baseline_v2_b200_20261102.json launch_counts.training.pytorch_eager.S c_...",
+   "note": ""
+  },
+  "doom_frames": {
+   "value": 1826,
+   "unit": "",
+   "status": "measured",
+   "source": "b200-run/README.md (ofa_tc2 run, 52.3 s)",
+   "note": ""
+  }
  }
 }

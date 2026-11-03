@@ -38,7 +38,7 @@ const ease=x=>x<.5?4*x*x*x:1-Math.pow(-2*x+2,3)/2;
 const eo=x=>1-Math.pow(1-x,3);
 const lerp=(a,b,x)=>a+(b-a)*x;
 const comma=(n,d=0)=>Number(n).toLocaleString('en-US',{minimumFractionDigits:d,maximumFractionDigits:d});
-// numbers: value null => pending
+// numbers come from data.json
 const P=path=>path.split('.').reduce((o,k)=>o&&o[k],D);
 const val=path=>{const o=P(path);return o&&o.value!==undefined?o.value:null};
 const isPend=path=>val(path)===null;
@@ -60,7 +60,7 @@ S.title=(el,t,d)=>{
  <div class="abs" style="left:0;right:0;top:720px;display:flex;justify-content:center;gap:36px;opacity:${c}">
   ${[['TRAIN',C.cy],['SERVE',C.gr],['DOOM',C.am]].map(([n,col])=>`<div style="border:2px solid ${col};color:${col};padding:14px 40px;font-size:34px;letter-spacing:.2em;font-weight:700">${n}</div>`).join('')}
   </div>
- <div class="abs mono" style="left:0;right:0;top:850px;text-align:center;opacity:${c};font-size:28px;color:#8a9bb0">1 launch &middot; A100 and B300 &middot; benchmarked against Flapping Airplanes' published numbers</div>`;
+ <div class="abs mono" style="left:0;right:0;top:850px;text-align:center;opacity:${c};font-size:28px;color:#8a9bb0">1 launch &middot; one B200 &middot; benchmarked against Flapping Airplanes' published numbers</div>`;
 };
 // 2 problem
 S.problem=(el,t,d)=>{
@@ -74,7 +74,7 @@ S.problem=(el,t,d)=>{
  <div class="abs" style="left:128px;top:112px;font-size:30px;color:${C.mut};letter-spacing:.08em">FLAPPING AIRPLANES BASELINE (B200, PUBLISHED): MEGATRON + vLLM</div>
  <div class="abs mono" style="left:128px;top:160px;font-size:112px;font-weight:800;color:${C.rd}">${comma(cnt)}<span style="font-size:44px;color:#ccd6e2;font-weight:500"> kernel launches</span></div>
  <div class="abs" style="left:128px;top:812px;opacity:${a2};font-size:32px;line-height:1.45;color:#d4deea">
-  <span style="color:${C.cy};font-weight:700">A100, measured by us:</span> Megatron-core + Transformer Engine launches <b class="mono">${comma(val('a100.kernels_per_step_base'))}</b> kernels per training step (12-layer model), so about <b class="mono" style="color:${C.rd}">${comma(val('a100.kernels_per_step_base')*4000)}</b> for 4,000 steps, before any serving.</div>`;
+  <span style="color:${C.cy};font-weight:700">B200, measured by us:</span> Megatron-core + Transformer Engine launches <b class="mono">${comma(val('b200.kernels_per_step_base'))}</b> kernels per training step (12-layer model), so about <b class="mono" style="color:${C.rd}">${comma(val('b200.kernels_per_step_base')*4000)}</b> for 4,000 steps, before any serving.</div>`;
 };
 // 3 idea: SM grids
 function smGrid(cx,cy,n,cols,split,reveal,cs,gap){
@@ -87,21 +87,17 @@ function smGrid(cx,cy,n,cols,split,reveal,cs,gap){
   s+=`<rect x="${x}" y="${y}" width="${cs}" height="${cs}" rx="3" fill="${on?col:'#18222e'}" />`}
  return s}
 S.idea=(el,t,d)=>{
- const A=D.hw.a100,B=D.hw.b300; const r1=prog(t,1,4.5),r2=prog(t,2,5.5);
+ const B=D.hw.b200; const r1=prog(t,1,4.5);
  const k=eo(prog(t,0,1));
- const leg=(sp,tot)=>`<tspan fill="${C.cy}">${sp[0]} train</tspan> <tspan fill="#8a9bb0">/</tspan> <tspan fill="${C.gr}">${sp[1]} serve</tspan> <tspan fill="#8a9bb0">/</tspan> <tspan fill="${C.am}">${sp[2]} Doom</tspan>`;
+ const leg=(sp)=>`<tspan fill="${C.cy}">${sp[0]} train</tspan> <tspan fill="#8a9bb0">/</tspan> <tspan fill="${C.gr}">${sp[1]} serve</tspan> <tspan fill="#8a9bb0">/</tspan> <tspan fill="${C.am}">${sp[2]} Doom</tspan>`;
  el.innerHTML=`<div class="bgdots"></div>
  <div class="abs" style="left:0;right:0;top:100px;text-align:center;opacity:${k}"><span class="mono" style="font-size:74px;font-weight:800">1 launch.</span> <span style="font-size:48px;color:#c6d3e2">Blocks never exit. Each takes a share of the SMs.</span></div>
  <svg class="abs" style="left:0;top:240px" width="1920" height="680">
-  <text x="480" y="40" text-anchor="middle" font-size="40" font-weight="700" fill="#e8eef5">NVIDIA A100 <tspan fill="#8a9bb0" font-size="30">(${A.sms} SMs)</tspan></text>
-  <g transform="translate(0,40)">${smGrid(480,300,A.sms,12,A.split,r1,38,8)}</g>
-  <text x="480" y="650" text-anchor="middle" font-size="36" font-weight="700" opacity="${prog(r1,.6,1)}">${leg(A.split)}</text>
-  <text x="1440" y="40" text-anchor="middle" font-size="40" font-weight="700" fill="#e8eef5">NVIDIA B300 <tspan fill="#8a9bb0" font-size="30">(${B.sms} SMs)</tspan></text>
-  <g transform="translate(0,40)">${smGrid(1440,300,B.sms,16,B.split,r2,32,8)}</g>
-  <text x="1440" y="650" text-anchor="middle" font-size="36" font-weight="700" opacity="${prog(r2,.6,1)}">${leg(B.split)}</text>
-  <text x="960" y="360" text-anchor="middle" font-size="26" fill="#8a9bb0" opacity=".9"></text>
+  <text x="960" y="40" text-anchor="middle" font-size="40" font-weight="700" fill="#e8eef5">NVIDIA B200 <tspan fill="#8a9bb0" font-size="30">(${B.sms} SMs)</tspan></text>
+  <g transform="translate(0,40)">${smGrid(960,270,B.sms,16,B.split,r1,40,8)}</g>
+  <text x="960" y="610" text-anchor="middle" font-size="40" font-weight="700" opacity="${prog(r1,.6,1)}">${leg(B.split)}</text>
  </svg>
- <div class="abs mono" style="left:0;right:0;top:196px;text-align:center;font-size:24px;color:#8a9bb0;opacity:${prog(t,5,6)}">FA B200 published split: 116 / 24 / 8 of 148 &middot; A100 split is proportional: 85 / 17 / 6 of 108</div>`;
+ <div class="abs mono" style="left:0;right:0;top:196px;text-align:center;font-size:24px;color:#8a9bb0;opacity:${prog(t,5,6)}">the split is FA's published 116 / 24 / 8 of 148</div>`;
 };
 // 4 architecture
 S.arch=(el,t,d)=>{
@@ -139,170 +135,163 @@ S.arch=(el,t,d)=>{
 S.doom=(el,t,d)=>{
  const steps=[['doomgeneric C source','',C.am],['clang -target nvptx64','LLVM bitcode',C.cy],['tinylibc','printf, string, WAD in memory',C.cy],['llvm-link + fix_varargs.py','lower va_start / va_arg at IR level',C.cy],['llc','PTX',C.cy],['nvcc -rdc, reg cap 112','linked into the kernel',C.gr]];
  let rows='';steps.forEach((st,i)=>{const a=eo(prog(t,.4+i*.5,1+i*.5));rows+=`<div style="opacity:${a};transform:translateX(${(1-a)*-40}px);margin-bottom:20px;border-left:5px solid ${st[2]};background:#0b1118;padding:12px 22px;width:760px"><div class="mono" style="font-size:31px;font-weight:700">${st[0]}</div><div style="font-size:24px;color:#8a9bb0;min-height:30px">${st[1]}</div></div>`});
- const q=prog(t,6.6,8.6), ser=val('a100.doom_frame_ms_serial'),par=val('a100.doom_frame_ms_parallel');
- const ms=lerp(ser,par,eo(q)); const fi=prog(t,3.8,5);
+ const fi=prog(t,3.8,5);
  let th='';for(let i=0;i<64;i++){const on=t>6.4&&((t*10+i)%8<5);th+=`<rect x="${i%16*20}" y="${Math.floor(i/16)*20}" width="16" height="16" rx="2" fill="${on?C.am:'#1b2531'}"/>`}
  el.innerHTML=`<div class="bgdots"></div>
  <div class="abs" style="left:80px;top:130px;font-size:30px;letter-spacing:.1em;color:#8a9bb0;margin-bottom:10px">BUILD</div>
  <div class="abs" style="left:80px;top:190px">${rows}</div>
- <div class="abs" style="left:960px;top:130px;font-size:30px;letter-spacing:.1em;color:#8a9bb0">RUNNING ON 6 SMs (A100)</div>
+ <div class="abs" style="left:960px;top:130px;font-size:30px;letter-spacing:.1em;color:#8a9bb0">RUNNING ON 8 SMs (B200)</div>
  <img src="assets/doom_gpu_frame.png" class="abs" style="left:960px;top:190px;width:480px;height:300px;object-fit:cover;border:2px solid ${C.am};opacity:${fi}">
- <div class="abs" style="left:1480px;top:190px;width:380px;opacity:${fi};font-size:28px;line-height:1.4;color:#d4deea"><span class="mono" style="font-size:64px;font-weight:800;color:${C.am}">${comma(val('a100.doom_fps'),1)}</span> fps<br>real engine, shareware E1M1, scripted bot</div>
+ <div class="abs" style="left:1480px;top:190px;width:380px;opacity:${fi};font-size:28px;line-height:1.4;color:#d4deea"><span class="mono" style="font-size:64px;font-weight:800;color:${C.am}">${comma(val('b200.doom_fps'),1)}</span> fps<br>real engine, shareware E1M1, scripted bot</div>
  <div class="abs" style="left:960px;top:540px;opacity:${prog(t,5.4,6.2)};font-size:28px;color:#d4deea;line-height:1.35"><b>Thread 0</b> runs game logic and queues column/span draws.<br>At two flush points the <b>other 255 threads</b> draw behind one barrier.</div>
  <svg class="abs" style="left:960px;top:650px;opacity:${prog(t,6,7)}" width="900" height="260">
   <g transform="translate(0,10)">${th}</g>
-  <text x="360" y="60" font-size="28" fill="#8a9bb0">frame time</text>
-  <rect x="360" y="80" width="520" height="34" fill="#141d28"/><rect x="360" y="80" width="${520*ms/ser}" height="34" fill="${C.am}"/>
-  <text x="360" y="170" font-size="64" font-weight="800" fill="${C.am}" class="mono">${comma(ms,1)} ms</text>
-  <text x="360" y="215" font-size="26" fill="#8a9bb0">serial ${ser} ms &rarr; parallel ${par} ms (identical pixels)</text>
+  <text x="360" y="60" font-size="28" fill="#8a9bb0">drawing threads</text>
+  <text x="360" y="150" font-size="64" font-weight="800" fill="${C.am}" class="mono">255 + 1</text>
+  <text x="360" y="200" font-size="26" fill="#8a9bb0">one logic thread, 255 drawing threads</text>
  </svg>`;
 };
 // 6 methodology
 function curvePath(pts,x0,y0,w,h,maxS,upto,logx){let p='';const ymax=12,ymin=1.5;
  pts.forEach(([s,l],i)=>{ if(s>upto)return;const fx=logx?Math.log10(s+1)/Math.log10(maxS+1):s/maxS;const x=x0+w*fx,y=y0+h*(1-(l-ymin)/(ymax-ymin));p+=(p?'L':'M')+x.toFixed(1)+' '+y.toFixed(1)});return p}
 S.method=(el,t,d)=>{
- const bar=(y,lbl,col,sm,tt,a,pend)=>`<text x="0" y="${y-18}" font-size="26" fill="#d4deea">${lbl}</text><rect x="0" y="${y}" width="700" height="34" fill="#141d28"/><rect x="0" y="${y}" width="${700*sm/108*a}" height="34" fill="${col}"/><text x="${700*sm/108*a+12}" y="${y+27}" font-size="24" fill="#8a9bb0">${tt}</text>`;
+ const bar=(y,lbl,col,sm,tt,a)=>`<text x="0" y="${y-18}" font-size="26" fill="#d4deea">${lbl}</text><rect x="0" y="${y}" width="700" height="34" fill="#141d28"/><rect x="0" y="${y}" width="${700*sm/148*a}" height="34" fill="${col}"/><text x="${700*sm/148*a+12}" y="${y+27}" font-size="24" fill="#8a9bb0">${tt}</text>`;
  const a=eo(prog(t,.4,2)),b=eo(prog(t,1.6,3.2)),c=eo(prog(t,3.4,5));
- const A=D.hw.a100.split;
- const mx=4000,upto=mx*eo(prog(t,4.4,7.4));const m=D.curves.megatron_a100.points,tr=D.curves.ofa_b300.points;
+ const A=D.hw.b200.split;
+ const mx=4000,upto=mx*eo(prog(t,4.4,7.4));const m=D.curves.megatron_b200.points,tr=D.curves.ofa_b200.points;
  const X0=1060,Y0=230,W=760,H=520;
  let grid='';[2,4,6,8,10,12].forEach(v=>{const y=Y0+H*(1-(v-1.5)/10.5);grid+=`<line x1="${X0}" x2="${X0+W}" y1="${y}" y2="${y}" stroke="#1d2a38"/><text x="${X0-12}" y="${y+8}" text-anchor="end" font-size="22" fill="#8a9bb0">${v}</text>`});
  [0,1000,2000,3000,4000].forEach(v=>{const x=X0+W*v/4000;grid+=`<text x="${x}" y="${Y0+H+34}" text-anchor="middle" font-size="22" fill="#8a9bb0">${v}</text>`});
  el.innerHTML=`<div class="bgdots"></div>
- <div class="abs" style="left:80px;top:120px;font-size:30px;letter-spacing:.1em;color:#8a9bb0">EACH SYSTEM TIMED ALONE (A100)</div>
+ <div class="abs" style="left:80px;top:120px;font-size:30px;letter-spacing:.1em;color:#8a9bb0">EACH SYSTEM TIMED ALONE (B200)</div>
  <svg class="abs" style="left:80px;top:220px" width="880" height="620">
-  <g opacity="${a}">${bar(40,'Megatron-core + TE training, alone, no Doom: 85 SMs',C.rd,A[0],'85 SMs',a)}</g>
-  <g opacity="${b}">${bar(150,'vLLM serving, alone, no Doom: 17 SMs (MPS)',C.rd,A[1],'17 SMs',b)}</g>
+  <g opacity="${a}">${bar(40,'Megatron-core + TE training, alone, no Doom: 116 SMs',C.rd,A[0],'116 SMs (MPS 79%)',a)}</g>
+  <g opacity="${b}">${bar(150,'vLLM serving, alone, no Doom: 24 SMs',C.rd,A[1],'24 SMs (MPS 17%)',b)}</g>
   <g opacity="${c}">
    <text x="0" y="262" font-size="26" fill="#d4deea">open-flapping-airplanes: all three at once, one launch</text>
-   <rect x="0" y="280" width="${700*A[0]/108}" height="34" fill="${C.cy}"/><rect x="${700*A[0]/108}" y="280" width="${700*A[1]/108}" height="34" fill="${C.gr}"/><rect x="${700*(A[0]+A[1])/108}" y="280" width="${700*A[2]/108}" height="34" fill="${C.am}"/>
-   <text x="0" y="352" font-size="24" fill="#8a9bb0">train 85 &middot; serve 17 &middot; Doom 6 = 108 SMs</text></g>
+   <rect x="0" y="280" width="${700*A[0]/148}" height="34" fill="${C.cy}"/><rect x="${700*A[0]/148}" y="280" width="${700*A[1]/148}" height="34" fill="${C.gr}"/><rect x="${700*(A[0]+A[1])/148}" y="280" width="${700*A[2]/148}" height="34" fill="${C.am}"/>
+   <text x="0" y="352" font-size="24" fill="#8a9bb0">train 116 &middot; serve 24 &middot; Doom 8 = 148 SMs</text></g>
   <g opacity="${prog(t,3.4,4.4)}"><text x="0" y="440" font-size="28" fill="#d4deea">Same model: 12 layers, d=768, 162M params,</text><text x="0" y="478" font-size="28" fill="#d4deea">4,096 tokens/step, 4,000 steps, same SM share.</text><text x="0" y="530" font-size="24" fill="#8a9bb0">Baselines run alone, with no Doom competing for the GPU,</text><text x="0" y="562" font-size="24" fill="#8a9bb0">which is favourable to the baseline.</text></g>
  </svg>
  <svg class="abs" style="left:0;top:0" width="1920" height="1080" opacity="${prog(t,4.2,5)}">
   <text x="${X0}" y="${Y0-30}" font-size="30" fill="#8a9bb0" letter-spacing="2">TRAINING LOSS vs STEP</text>${grid}
   <path d="${curvePath(m,X0,Y0,W,H,mx,upto)}" fill="none" stroke="${C.rd}" stroke-width="4"/>
   <path d="${curvePath(tr,X0,Y0,W,H,mx,upto)}" fill="none" stroke="${C.cy}" stroke-width="4" stroke-dasharray="1 0"/>
-  <text x="${X0+W-10}" y="${Y0+60}" text-anchor="end" font-size="26" fill="${C.rd}">Megatron-core + TE (A100, measured)</text>
-  <text x="${X0+W-10}" y="${Y0+98}" text-anchor="end" font-size="26" fill="${C.cy}">open-flapping-airplanes (B300 run, 116/24/8)</text>
-  <text x="${X0+8}" y="${Y0+H+80}" font-size="26" fill="#d4deea">step 0 loss: ${comma(D.curves.megatron_a100.points[0][1],2)} (Megatron) and ${comma(tr[0][1],2)} (open-flapping-airplanes)</text>
+  <text x="${X0+W-10}" y="${Y0+60}" text-anchor="end" font-size="26" fill="${C.rd}">Megatron-core + TE, eager (measured)</text>
+  <text x="${X0+W-10}" y="${Y0+98}" text-anchor="end" font-size="26" fill="${C.cy}">open-flapping-airplanes (116/24/8)</text>
+  <text x="${X0+8}" y="${Y0+H+80}" font-size="26" fill="#d4deea">step 0 loss: ${comma(m[0][1],2)} (Megatron) and ${comma(tr[0][1],2)} (open-flapping-airplanes)</text>
  </svg>`;
 };
-// 7 slot placeholder
-S.slot=(el,t,d,opts)=>{
- const ov=opts&&opts.overlay;
- const panel=(x,y,w,h,col,title,sub)=>`<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="#0a1017" stroke="${col}" stroke-width="2" rx="6"/><text x="${x+20}" y="${y+34}" font-size="24" fill="${col}" font-weight="700" letter-spacing="2">${title}</text>${sub?`<text x="${x+w/2}" y="${y+h/2+8}" text-anchor="middle" font-size="26" fill="#566579">${sub}</text>`:''}`;
- el.innerHTML=ov?'':`<div class="bgdots"></div>
- <svg class="abs" style="left:0;top:0" width="1920" height="1080">
-  ${panel(80,130,1760,430,C.cy,'TRAINING LOSS','')}
-  ${panel(80,580,1000,380,C.gr,'INFERENCE: TEXT FROM THE LIVE WEIGHTS','')}
-  ${panel(1100,580,740,380,C.am,'DOOM, ON THE GPU','')}
-  <rect x="440" y="300" width="1040" height="250" fill="#06080c" stroke="#8a9bb0" stroke-dasharray="14 10" stroke-width="3" rx="10"/>
-  <text x="960" y="390" text-anchor="middle" font-size="64" font-weight="800" fill="#e8eef5">SCREEN RECORDING SLOT</text>
-  <text x="960" y="445" text-anchor="middle" font-size="32" fill="#8a9bb0">Live three-panel dashboard goes here (placeholder)</text>
-  <text x="960" y="500" text-anchor="middle" font-size="28" fill="#8a9bb0" class="mono">./compose.sh recording.mp4</text>
- </svg>`;
+// 7 dashboard still
+S.dash=(el,t,d)=>{
+ const a=eo(prog(t,.2,1.2));
+ el.innerHTML=`<div class="bgdots"></div>
+ <img src="assets/dashboard.png" class="abs" style="left:300px;top:110px;width:1320px;height:792px;border:2px solid ${C.cy};opacity:${a};transform:scale(${1+.02*prog(t,0,9)})">`;
 };
 // launches: which definition?
 S.launches=(el,t,d)=>{
- const A=D.a100,F=D.fa; const fa=F.launches_base.value;
- const rows=[['(a) GPU kernel executions','launch_def_a'],['(b) host launch API calls','launch_def_b'],['(c) one CUDA graph per step and token','launch_def_c'],['(c) ideal: graphed step, 1 launch/token','launch_def_c_ideal']];
- const X0=700,W=1100,MAX=9.5e6; let s='';
+ const B=D.b200,F=D.fa; const fa=F.launches_base.value;
+ const rows=[['(a) GPU kernel executions','launch_def_a'],['(b) host launch API calls','launch_def_b'],['(c) one CUDA graph per step and token','launch_def_c']];
+ const X0=700,W=1100,MAX=9e6; let s='';
  const fx=X0+W*fa/MAX;
- rows.forEach(([lab,k],i)=>{const v=A[k].value,y=300+i*104,rv=eo(prog(t,.6+i*.8,2.2+i*.8));const wd=Math.max(4,W*v/MAX*rv);const r=v/fa;
+ rows.forEach(([lab,k],i)=>{const v=B[k].value,y=300+i*120,rv=eo(prog(t,.6+i*.8,2.2+i*.8));const wd=Math.max(4,W*v/MAX*rv);const r=v/fa;
   s+=`<text x="60" y="${y+30}" font-size="28" fill="#d4deea">${lab}</text><rect x="${X0}" y="${y}" width="${W}" height="44" fill="#111a24"/><rect x="${X0}" y="${y}" width="${wd}" height="44" fill="${i>=2?C.am:C.rd}"/>
-  <text x="${Math.min(X0+wd+12,X0+W-250)}" y="${y+32}" font-size="30" font-weight="800" class="mono" fill="#fff">${comma(v*rv)}</text><text x="${X0+W+0}" y="${y+78}" text-anchor="end" font-size="22" fill="#8a9bb0" opacity="${prog(rv,.7,1)}">${comma(r,2)}x FA's count</text>`});
- s+=`<line x1="${fx}" x2="${fx}" y1="250" y2="740" stroke="#27c8e8" stroke-width="3" stroke-dasharray="10 8"/><text x="${fx+12}" y="268" font-size="26" font-weight="700" fill="#27c8e8">FA: ${comma(fa)}</text>`;
+  <text x="${Math.min(X0+wd+12,X0+W-250)}" y="${y+32}" font-size="30" font-weight="800" class="mono" fill="#fff">${comma(v*rv)}</text><text x="${X0+W+0}" y="${y+78}" text-anchor="end" font-size="22" fill="#8a9bb0" opacity="${prog(rv,.7,1)}">${comma(r,1)}x FA's count</text>`});
+ s+=`<line x1="${fx}" x2="${fx}" y1="250" y2="700" stroke="#27c8e8" stroke-width="3" stroke-dasharray="10 8"/><text x="${fx+12}" y="268" font-size="26" font-weight="700" fill="#27c8e8">FA: ${comma(fa)}</text>`;
  const a=prog(t,4.5,5.5);
  el.innerHTML=`<div class="bgdots"></div>
- <div class="abs" style="left:60px;top:108px;font-size:40px;font-weight:800">Which "launch" is 514,562? <span style="font-size:28px;color:#8a9bb0;font-weight:500">Megatron-core + TE, 12 layers, 4,000 steps + ${comma(A.launch_fa_tokens.value)} served tokens (FA's count), A100</span></div>
+ <div class="abs" style="left:60px;top:108px;font-size:40px;font-weight:800">Which "launch" is 514,562? <span style="font-size:28px;color:#8a9bb0;font-weight:500">Megatron-core + TE, 12 layers, 4,000 steps + ${comma(B.launch_served_tokens.value)} served tokens, B200</span></div>
  <svg class="abs" style="left:0;top:0" width="1920" height="1080">${s}</svg>
- <div class="abs" style="left:60px;top:770px;width:1800px;opacity:${a};font-size:26px;line-height:1.5;color:#d4deea">Per training step: Megatron+TE <b class="mono">${A.kernels_per_step_base.value}</b> kernels (S), <b class="mono">${A.kernels_per_step_base_F.value}</b> (F); PyTorch eager <b class="mono">${A.kernels_per_step_eager.value}</b> / <b class="mono">${A.kernels_per_step_eager_F.value}</b>. With one CUDA graph: <b class="mono">${A.host_calls_graphed_per_step_te_S.value}</b> / <b class="mono">${A.host_calls_graphed_per_step_te_F.value}</b> host calls (Megatron), <b class="mono">${A.host_calls_graphed_per_step_eager.value}</b> (eager).<br><span style="color:${C.am}">Only the graphed counts (c) land within a few times FA's number; we do not claim to reproduce it.</span></div>`;
+ <div class="abs" style="left:60px;top:730px;width:1800px;opacity:${a};font-size:26px;line-height:1.5;color:#d4deea">Per training step: Megatron+TE <b class="mono">${B.kernels_per_step_base.value}</b> kernels; PyTorch eager <b class="mono">${B.kernels_per_step_eager.value}</b>. With one CUDA graph: <b class="mono">${B.host_calls_graphed_per_step_te.value}</b> host calls (Megatron), <b class="mono">${B.host_calls_graphed_per_step_eager.value}</b> (PyTorch).<br>open-flapping-airplanes: <b class="mono" style="color:${C.cy}">${B.launches_ofa.value}</b> launches by Nsight Systems, two of them one-off setup.<br><span style="color:${C.am}">Only the graphed count (c) lands within a few times FA's number; we do not claim to reproduce it.</span></div>`;
 };
 const ratio=(slow,fast)=>slow/fast;
 const pf=(p)=>comma(p);
 function rowCell(x,y,w,o,reveal){
  const bw=w; let s='';
  const barRow=(yy,lab,v,col,max)=>{
-   if(v==null) return `<text x="${x}" y="${yy-6}" font-size="21" fill="#8a9bb0">${lab}</text><rect x="${x}" y="${yy}" width="${bw}" height="24" fill="url(#hatch)" stroke="#3a4656"/><text x="${x+12}" y="${yy+19}" font-size="21" fill="#c3cddb" font-style="italic">pending</text>`;
    const fr=o.logs?Math.log10(v)/Math.log10(max):v/max; const wd=Math.max(4,bw*fr*reveal);
    const txt=o.fmt(lerp(0,v,reveal)); const inside=wd>bw*.55;
    return `<text x="${x}" y="${yy-6}" font-size="21" fill="#8a9bb0">${lab}</text><rect x="${x}" y="${yy}" width="${bw}" height="24" fill="#111a24"/><rect x="${x}" y="${yy}" width="${wd}" height="24" fill="${col}"/><text x="${inside?x+wd-8:x+wd+10}" y="${yy+20}" text-anchor="${inside?'end':'start'}" font-size="24" font-weight="700" fill="#fff" class="mono">${txt}</text>`};
+ if(o.bars){ // several bars, labels inside, longest bar = 80% of the column
+  const mx=Math.max(...o.bars.map(b=>b[1]));
+  o.bars.forEach((b,i)=>{const yy=y+4+i*28,wd=Math.max(4,bw*.8*b[1]/mx*reveal);
+   s+=`<rect x="${x}" y="${yy}" width="${bw}" height="22" fill="#111a24"/><rect x="${x}" y="${yy}" width="${wd}" height="22" fill="${b[2]}"/><text x="${x+8}" y="${yy+17}" font-size="17" font-weight="700" fill="#06080c">${b[0]}</text><text x="${x+wd+8}" y="${yy+19}" font-size="22" font-weight="700" fill="#fff" class="mono">${o.fmt(lerp(0,b[1],reveal))}</text>`});
+  const by=y+4+o.bars.length*28;
+  s+=`<text x="${x}" y="${by+26}" font-size="${o.pfs||26}" font-weight="800" fill="${C.cy}" opacity="${prog(reveal,.6,1)}">${o.pctLab}</text>`;
+  (o.sec||[]).forEach((l,i)=>{s+=`<text x="${x}" y="${by+52+i*22}" font-size="20" fill="${l[1]}" opacity="${prog(reveal,.7,1)}">${l[0]}</text>`});
+  return s}
  const max=o.max!=null?o.max:Math.max(o.ft||0,o.fb||0);
  s+=barRow(y+18,o.labT,o.ft,C.cy,max); s+=barRow(y+66,o.labB,o.fb,C.rd,max);
- s+=o.pctLab==null?`<text x="${x}" y="${y+122}" font-size="26" fill="#8a9bb0" font-style="italic">comparison pending</text>`:`<text x="${x}" y="${y+122}" font-size="${o.pfs||28}" font-weight="800" fill="${C.cy}" opacity="${prog(reveal,.6,1)}">${o.pctLab}</text>`;
+ s+=`<text x="${x}" y="${y+122}" font-size="${o.pfs||28}" font-weight="800" fill="${C.cy}" opacity="${prog(reveal,.6,1)}">${o.pctLab}</text>`;
  (o.sec||[]).forEach((l,i)=>{s+=`<text x="${x}" y="${y+152+i*27}" font-size="22" fill="${l[1]}" opacity="${prog(reveal,.7,1)}">${l[0]}</text>`});
  return s}
 function cellsFor(kind){
- const F=D.fa,A=D.a100,B=D.b300; const sec=v=>comma(v,1)+' s',tok=v=>comma(v),cnt=v=>comma(v);
+ const F=D.fa,B=D.b200; const sec=v=>comma(v,1)+' s',tok=v=>comma(v),cnt=v=>comma(v);
  const sl=(fast,slow,time)=>slowPct(fast,slow,time);
  const pl=(fast,slow,time)=>{const p=sl(fast,slow,time);return `baseline ${comma(p)}% slower (${comma(time?slow/fast:fast/slow,2)}x)`};
- const G='#8a9bb0',AM='#f2c14e';
- const eagerSec=(trF,egSlowFast,label,time)=>null;
+ const G='#8a9bb0',AM='#f2c14e',GR='#6fe08c';
+ const v=k=>B[k].value;
  if(kind==='launch') return [
-  {ft:F.launches_kvm.value,fb:F.launches_base.value,labT:'FA KVM',labB:'FA baseline (Megatron + vLLM)',fmt:cnt,logs:1,max:1e6,pctLab:'1 vs 514,562'},
-  {ft:1,fb:A.launch_def_c.value,labT:'open-flapping-airplanes',labB:'Megatron+TE, graphed (c)',fmt:cnt,logs:1,max:1e7,pctLab:`(a) ${comma(A.launch_def_a.value/1e6,1)}M  (b) ${comma(A.launch_def_b.value/1e6,1)}M  (c) ${comma(A.launch_def_c.value/1e6,1)}M`,pfs:25,sec:[[`ideal graphed (c): ${comma(A.launch_def_c_ideal.value/1e6,2)}M = ${comma(A.launch_def_c_ideal.value/F.launches_base.value,2)}x FA`,G],['closest def.; not a claim of match',AM]]},
-  {ft:B.launches_ofa.value,fb:B.launches_base.value,labT:'open-flapping-airplanes',labB:'Megatron-local',fmt:cnt,logs:1,max:1e7,pctLab:null}];
+  {ft:F.launches_kvm.value,fb:F.launches_base.value,labT:'FA kernel',labB:'FA baseline (Megatron + vLLM)',fmt:cnt,logs:1,max:1e6,pctLab:'1 vs 514,562'},
+  {ft:v('launches_ofa'),fb:v('launch_def_a'),labT:'open-flapping-airplanes',labB:'Megatron+TE + vLLM, same work (a): kernels',fmt:cnt,logs:1,max:1e7,pctLab:`3 vs ${comma(v('launch_def_c')/1e6,1)}M to ${comma(v('launch_def_a')/1e6,1)}M`,pfs:28,sec:[['Nsight Systems; 2 of the 3 are one-off setup',G],[`(b) host calls ${comma(v('launch_def_b')/1e6,1)}M, (c) graphed ${comma(v('launch_def_c')/1e6,1)}M = ${comma(v('launch_def_c')/F.launches_base.value,1)}x FA`,AM]]}];
  if(kind==='time') return [
-  {ft:F.train_s_kvm.value,fb:F.train_s_base.value,labT:'FA KVM (all three)',labB:'Megatron, 116 SMs',fmt:sec,max:F.train_s_base.value,pctLab:pl(F.train_s_kvm.value,F.train_s_base.value,1),sec:[['FA: 1.52x, "34% slower"',G]]},
-  {ft:A.train_s_ofa.value,fb:A.train_s_base.value,labT:'open-flapping-airplanes (all three, Doom build)',labB:'Megatron+TE, 85 SMs',fmt:sec,max:A.train_s_base.value,pctLab:pl(A.train_s_ofa.value,A.train_s_base.value,1),sec:[[`vs PyTorch eager ${comma(A.train_s_eager.value,1)} s: ${comma(sl(A.train_s_ofa.value,A.train_s_eager.value,1))}% (${comma(A.train_s_eager.value/A.train_s_ofa.value,2)}x)`,AM],[`old no-TE Megatron ${comma(A.train_s_notE.value,1)} s (not the headline)`,G]]},
-  {ft:B.train_s_ofa.value,fb:B.train_s_base.value,labT:'open-flapping-airplanes (116/24/8, Doom off)',labB:'Megatron-local, NO TE, 116 SMs',fmt:sec,max:B.train_s_base.value,pctLab:pl(B.train_s_ofa.value,B.train_s_base.value,1),sec:[[`vs PyTorch eager ${comma(B.train_s_eager.value,1)} s: open-flapping-airplanes ${comma(B.train_s_ofa.value/B.train_s_eager.value,2)}x SLOWER`,AM],['baselines are no-TE (TE failed to build)',G]]}];
+  {ft:F.train_s_kvm.value,fb:F.train_s_base.value,labT:'FA kernel (all three)',labB:'Megatron, 116 SMs',fmt:sec,max:F.train_s_base.value,pctLab:pl(F.train_s_kvm.value,F.train_s_base.value,1),sec:[['FA: 1.52x, "34% slower"',G]]},
+  {fmt:sec,bars:[['open-flapping-airplanes (ofa_tc3)',v('train_s_tc3'),C.cy],['open-flapping-airplanes (ofa_tc2)',v('train_s_tc2'),'#7fd9ee'],['Megatron+TE, eager',v('train_s_base'),C.rd],['Megatron+TE, CUDA graphs',v('train_s_graph'),GR],['PyTorch + flash-attn, eager',v('train_s_pt_eager'),'#9aa7b8']],
+   pctLab:pl(v('train_s_tc3'),v('train_s_base'),1),sec:[[`Megatron+TE with CUDA graphs: ${comma(v('train_s_graph'),1)} s, faster than us`,GR],[`PyTorch + flash-attn: ${comma(v('train_s_pt_eager'),1)} s eager, ${comma(v('train_s_pt_graph'),1)} s graph`,G]]}];
  if(kind==='toks') return [
-  {ft:F.train_toks_kvm.value,fb:F.train_toks_base.value,labT:'FA KVM',labB:'Megatron',fmt:tok,max:F.train_toks_kvm.value,pctLab:`baseline ${comma(F.slower_pct.value)}% slower (FA-stated)`,pfs:26,sec:[['355k vs 230k computes to 35%',G]]},
-  {ft:A.train_toks_ofa.value,fb:A.train_toks_base.value,labT:'open-flapping-airplanes',labB:'Megatron+TE',fmt:tok,max:A.train_toks_ofa.value,pctLab:pl(A.train_toks_ofa.value,A.train_toks_base.value,0),sec:[[`vs PyTorch eager ${comma(A.train_toks_eager.value)}: ${comma(sl(A.train_toks_ofa.value,A.train_toks_eager.value,0))}%`,AM]]},
-  {ft:B.train_toks_ofa.value,fb:B.train_toks_base.value,labT:'open-flapping-airplanes',labB:'Megatron-local (no TE)',fmt:tok,max:B.train_toks_eager.value,pctLab:pl(B.train_toks_ofa.value,B.train_toks_base.value,0),sec:[[`vs PyTorch eager ${comma(B.train_toks_eager.value)}: open-flapping-airplanes ${comma(B.train_toks_eager.value/B.train_toks_ofa.value,2)}x lower`,AM]]}];
+  {ft:F.train_toks_kvm.value,fb:F.train_toks_base.value,labT:'FA kernel',labB:'Megatron',fmt:tok,max:F.train_toks_kvm.value,pctLab:`baseline ${comma(F.slower_pct.value)}% slower (FA-stated)`,pfs:26,sec:[['355k vs 230k computes to 35%',G]]},
+  {ft:v('train_toks_tc3'),fb:v('train_toks_base'),labT:'open-flapping-airplanes',labB:'Megatron+TE, eager',fmt:tok,max:v('train_toks_tc3'),pctLab:pl(v('train_toks_tc3'),v('train_toks_base'),0),sec:[[`Megatron+TE with CUDA graphs: ${comma(v('train_toks_graph'))} tok/s, faster than us`,GR]]}];
  if(kind==='infer') return [
-  {ft:F.infer_toks_kvm.value,fb:F.infer_toks_base.value,labT:'FA KVM',labB:'vLLM, 24 SMs',fmt:tok,max:F.infer_toks_kvm.value,pctLab:pl(F.infer_toks_kvm.value,F.infer_toks_base.value,0)},
-  {ft:A.infer_toks_ofa.value,fb:A.infer_toks_base.value,labT:'open-flapping-airplanes (live weights)',labB:'vLLM, 17 SMs',fmt:tok,max:A.infer_toks_ofa.value,pctLab:pl(A.infer_toks_ofa.value,A.infer_toks_base.value,0),sec:[['604 = mean of two 600-step runs',G]]},
-  {ft:B.infer_toks_ofa.value,fb:B.infer_toks_base.value,labT:'open-flapping-airplanes (live weights)',labB:'vLLM, 17% MPS (~25 SMs)',fmt:tok,max:B.infer_toks_ofa.value,pctLab:pl(B.infer_toks_ofa.value,B.infer_toks_base.value,0),sec:[["different GPU and baseline than FA's 1.52x",AM]]}];
+  {ft:F.infer_toks_kvm.value,fb:F.infer_toks_base.value,labT:'FA kernel',labB:'vLLM, 24 SMs',fmt:tok,max:F.infer_toks_kvm.value,pctLab:pl(F.infer_toks_kvm.value,F.infer_toks_base.value,0)},
+  {ft:v('infer_toks_tc3'),fb:v('infer_toks_base'),labT:'open-flapping-airplanes (ofa_tc3)',labB:'vLLM, 24 SMs',fmt:tok,max:v('infer_toks_tc3'),pctLab:pl(v('infer_toks_tc3'),v('infer_toks_base'),0),sec:[[`ofa_tc2: ${comma(v('infer_toks_tc2'))} tok/s (${comma(sl(v('infer_toks_tc2'),v('infer_toks_base'),0))}% slower baseline)`,G],['vLLM given 16 reserved CPU cores',AM]]}];
 }
 function resultsScene(el,t,d,rowsDef,foot,extra){
- const F=D.fa,A=D.a100,B=D.b300; const colsX=[380,900,1420],cw=440;
- let s=`<defs><pattern id="hatch" width="12" height="12" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="12" height="12" fill="#10161e"/><line x1="0" y1="0" x2="0" y2="12" stroke="#2a3441" stroke-width="5"/></pattern></defs>`;
- const heads=[['FA B200 (published)','from their video, not ours',null],['open-flapping-airplanes on A100','85/17/6 of 108 SMs','INTERIM'],['open-flapping-airplanes on B300','116/24/8 of 148 SMs','INTERIM']];
- heads.forEach((h,i)=>{if(h[2]){const w=h[2].length*13+30;s+=`<rect x="${colsX[i]+cw-w}" y="206" width="${w}" height="34" rx="4" fill="none" stroke="#f2c14e" stroke-width="2"/><text x="${colsX[i]+cw-w/2}" y="230" text-anchor="middle" font-size="22" font-weight="700" letter-spacing="2" fill="#f2c14e">${h[2]}</text>`}
-  s+=`<text x="${colsX[i]}" y="214" font-size="34" font-weight="800" fill="${i?C.cy:'#d4deea'}">${h[0]}</text><text x="${colsX[i]}" y="242" font-size="22" fill="#8a9bb0">${h[1]}</text>`});
+ const F=D.fa,B=D.b200; const colsX=[400,1100],cw=640;
+ let s='';
+ const heads=[['FA B200 (published)','from their video, not ours'],['open-flapping-airplanes','measured on B200, 116/24/8 of 148 SMs']];
+ heads.forEach((h,i)=>{
+  s+=`<text x="${colsX[i]}" y="214" font-size="${i?30:32}" font-weight="800" fill="${i?C.cy:'#d4deea'}">${h[0]}</text><text x="${colsX[i]}" y="242" font-size="22" fill="#8a9bb0">${h[1]}</text>`});
  rowsDef.forEach(r=>{const y=r.y,rv=ease(prog(t,r.t0,r.t0+2.2));
   s+=`<line x1="60" x2="1860" y1="${y-10}" y2="${y-10}" stroke="#1d2a38"/><text x="60" y="${y+60}" font-size="28" font-weight="700" fill="#e8eef5" opacity="${Math.max(.25,prog(t,r.t0-.3,r.t0+.3))}">${r.title}</text>`;
   if(r.kind==='loss'){
-   const L=[[F.loss_start.value,F.loss_end.value,null,null,'FA KVM'],[A.loss_start.value,A.loss_end_ofa.value,A.loss_end_base.value,'Megatron+TE','open-flapping-airplanes'],[B.loss_start.value,B.loss_end_ofa.value,B.loss_end_base.value,'Megatron-local','open-flapping-airplanes']];
+   const L=[[F.loss_start.value,F.loss_end.value,null,null,'FA',1,4],[B.loss_start.value,B.loss_end_ofa.value,B.loss_end_base.value,'Megatron+TE, eager','open-flapping-airplanes',2,4]];
    L.forEach((l,i)=>{const cur=lerp(l[0],l[1],rv);
-    s+=`<g opacity="${prog(rv,0,.2)}"><text x="${colsX[i]}" y="${y+60}" font-size="54" font-weight="800" fill="${C.cy}" class="mono">${comma(cur,l[1]<3?3:2)}</text><text x="${colsX[i]+190}" y="${y+36}" font-size="22" fill="#8a9bb0">${l[4]}: ${comma(l[0],2)} &rarr; ${comma(l[1],3)}</text>`;
-    s+=l[3]?(l[2]==null?`<text x="${colsX[i]+190}" y="${y+68}" font-size="22" fill="#8a9bb0" font-style="italic">${l[3]}: pending</text>`:`<text x="${colsX[i]+190}" y="${y+68}" font-size="20" fill="#e0867a">${l[3]}: ${comma(l[0],2)} &rarr; ${comma(l[2],3)}</text>`):'';
+    s+=`<g opacity="${prog(rv,0,.2)}"><text x="${colsX[i]}" y="${y+60}" font-size="44" font-weight="800" fill="${C.cy}" class="mono">${comma(cur,4)}</text><text x="${colsX[i]+210}" y="${y+36}" font-size="22" fill="#8a9bb0">${l[4]}: ${comma(l[0],l[5])} &rarr; ${comma(l[1],4)}</text>`;
+    s+=l[3]?`<text x="${colsX[i]+210}" y="${y+66}" font-size="22" fill="#e0867a">${l[3]}: ${comma(l[0],2)} &rarr; ${comma(l[2],3)}</text>`:'';
     s+='</g>'});
   } else cellsFor(r.kind).forEach((c,i)=>{s+=rowCell(colsX[i],y-10,cw,c,rv)});
  });
  el.innerHTML=`<div class="bgdots"></div><svg class="abs" style="left:0;top:0" width="1920" height="1080">${s}</svg>
  <div class="abs" style="left:60px;top:92px;font-size:19px;line-height:1.3;color:#8a9bb0;width:1800px">${foot}</div>${extra||''}`;
 }
-S.resA=(el,t,d)=>resultsScene(el,t,d,[{kind:'launch',title:'Kernel launches',y:282,t0:.4},{kind:'time',title:'4,000 training steps',y:500,t0:4.2},{kind:'toks',title:'Training tokens/s',y:718,t0:8.6}],
- `open-flapping-airplanes runs training + serving + Doom together; baselines are timed alone on the same SM share, no Doom. Percent = 1 - faster/slower; (x) = slower/faster. FA column is published, not measured here. A100: open-flapping-airplanes 224 s is the merged Doom build (interim); baseline = Megatron-core + Transformer Engine with cuDNN attention. B300: interim, baselines are NO-TE (TE failed to build), Megatron-local n=1. Launches: Megatron+TE, FA's served-token count.`);
+S.resA=(el,t,d)=>resultsScene(el,t,d,[{kind:'launch',title:'Kernel launches',y:282,t0:.4},{kind:'time',title:'4,000 training steps',y:490,t0:4.2},{kind:'toks',title:'Training tokens/s',y:730,t0:8.6}],
+ `open-flapping-airplanes runs training + serving + Doom together; baselines are timed alone on the same SM share, no Doom. Percent = 1 - faster/slower; (x) = slower/faster. FA column is published, not measured here. Baseline: Megatron-core 0.16.1 + Transformer Engine 2.20 on 116 SMs. Launches counted with Nsight Systems; baselines for the same work (4,000 steps and the tokens served alongside).`);
 S.resB=(el,t,d)=>{
- const F=D.fa,A=D.a100,B=D.b300; const r=(a,b)=>comma(a/b,2);
+ const F=D.fa,B=D.b200; const v=k=>B[k].value; const sl=(f,s,tm)=>comma(slowPct(f,s,tm));
  const lines=[
-  [`A100`,`open-flapping-airplanes ${comma(A.train_s_ofa.value)} s vs Megatron+TE ${comma(A.train_s_base.value,1)} s (${r(A.train_s_base.value,A.train_s_ofa.value)}x) and PyTorch eager ${comma(A.train_s_eager.value,1)} s (${r(A.train_s_eager.value,A.train_s_ofa.value)}x): a small edge, not FA's ${r(F.train_s_base.value,F.train_s_kvm.value)}x.`],
-  [`B300`,`Baselines are no-TE. open-flapping-airplanes beats Megatron-local (${r(B.train_s_base.value,B.train_s_ofa.value)}x) but eager PyTorch is faster (open-flapping-airplanes ${r(B.train_s_ofa.value,B.train_s_eager.value)}x slower on S, ${r(B.F_ofa_s.value,B.F_eager_s.value)}x on F): our mma.sync GEMM is far below cuBLAS on Blackwell.`],
-  [`Decode`,`${r(B.infer_toks_ofa.value,B.infer_toks_base.value)}x vLLM on B300, ${r(A.infer_toks_ofa.value,A.infer_toks_base.value)}x on A100, vs FA's ${r(F.infer_toks_kvm.value,F.infer_toks_base.value)}x: different GPUs and baselines.`],
-  [`Launches`,`Only the graphed definition (c) lands near FA's 514,562 (${comma(A.launch_def_c_ideal.value/1e6,2)}M to ${comma(A.launch_def_c.value/1e6,2)}M). We do not claim a match.`]];
+  [`Training`,`ofa_tc3 ${comma(v('train_s_tc3'),1)} s vs Megatron+TE eager ${comma(v('train_s_base'),1)} s: ${sl(v('train_s_tc3'),v('train_s_base'),1)}% faster. With CUDA graphs Megatron+TE is faster: ${comma(v('train_s_graph'),1)} s.`],
+  [`Serving`,`${comma(v('infer_toks_tc3'))} tok/s vs vLLM ${comma(v('infer_toks_base'))} (${sl(v('infer_toks_tc3'),v('infer_toks_base'),0)}%); ofa_tc2 ${comma(v('infer_toks_tc2'))} (${sl(v('infer_toks_tc2'),v('infer_toks_base'),0)}%). FA reports 34%.`],
+  [`Sharing`,`Same work: sequential about ${v('seq_s')} s, side by side about ${v('side_s')} s (est.), one kernel ${comma(v('one_s'),1)} s. Doom ${comma(v('doom_fps'),0)} fps throughout.`],
+  [`Launches`,`${v('launches_ofa')} by Nsight Systems (2 are setup) against ${comma(v('launches_base_lo')/1e6,1)}M to ${comma(v('launches_base_hi')/1e6,1)}M for the baselines.`]];
  const a=prog(t,5.5,6.5);
  const box=`<div class="abs" style="left:60px;top:640px;width:1800px;opacity:${a};border-top:2px solid #1d2a38;padding-top:14px"><div style="font-size:26px;letter-spacing:.14em;color:${C.am};margin-bottom:10px">WHAT IT MEANS</div>${lines.map(l=>`<div style="display:flex;gap:24px;font-size:26px;line-height:1.28;margin-bottom:8px"><div style="width:150px;font-weight:800;color:${C.cy}">${l[0]}</div><div style="flex:1;color:#d4deea">${l[1]}</div></div>`).join('')}</div>`;
- resultsScene(el,t,d,[{kind:'infer',title:'Inference tokens/s',y:282,t0:.4},{kind:'loss',title:'Loss, step 0 to 4,000',y:530,t0:4.2}],
- `Inference: B300 (1,762 vs ~822 tok/s) compares a different GPU and baseline than FA's 1,076 vs 710; it is not a beat of FA's number. A100: 604 tok/s is the mean of two 600-step runs (Doom on) vs vLLM on 17 SMs. B300 baselines are no-TE and interim; B300 Doom fps and launch counts pending.`,box);
+ resultsScene(el,t,d,[{kind:'infer',title:'Inference tokens/s',y:282,t0:.4},{kind:'loss',title:'Loss, step 0 to 4,000',y:520,t0:4.2}],
+ `Serving: batch 1, FA's prompt, 256-token answers; vLLM 0.33 with CUDA graphs and 16 reserved CPU cores (it is CPU-bound without them). Loss: every open-flapping-airplanes build ends at 2.1575; baseline is Megatron-core + TE eager. Numbers: b200-run/results.`,box);
 };
 // end
 S.end=(el,t,d)=>{
- const F=D.fa,A=D.a100,B=D.b300;
- const pT=slowPct(A.train_s_ofa.value,A.train_s_base.value,1),pI=slowPct(A.infer_toks_ofa.value,A.infer_toks_base.value,0),pBT=slowPct(B.train_s_ofa.value,B.train_s_base.value,1),pBI=slowPct(B.infer_toks_ofa.value,B.infer_toks_base.value,0);
- const line=(lab,main,sub,col,t0)=>`<div style="opacity:${eo(prog(t,t0,t0+.8))};display:flex;align-items:baseline;gap:26px;margin-bottom:26px"><div style="width:420px;font-size:30px;font-weight:700;color:${col}">${lab}</div><div class="mono" style="font-size:40px;font-weight:800;width:360px">${main}</div><div style="font-size:24px;color:#8a9bb0;flex:1">${sub}</div></div>`;
+ const F=D.fa,B=D.b200; const v=k=>B[k].value;
+ const pBT=slowPct(v('train_s_tc3'),v('train_s_base'),1),pBI=slowPct(v('infer_toks_tc3'),v('infer_toks_base'),0);
+ const line=(lab,sub0,main,sub,col,t0)=>`<div style="opacity:${eo(prog(t,t0,t0+.8))};display:flex;align-items:center;gap:26px;margin-bottom:26px"><div style="width:420px;font-size:28px;font-weight:700;color:${col};line-height:1.2">${lab}<br><span style="font-size:22px;font-weight:500;color:#8a9bb0">${sub0}</span></div><div class="mono" style="font-size:34px;font-weight:800;width:380px">${main}</div><div style="font-size:23px;color:#8a9bb0;flex:1">${sub}</div></div>`;
  el.innerHTML=`<div class="bgdots"></div>
  <div class="abs" style="left:0;right:0;top:120px;text-align:center;font-size:96px;font-weight:900;letter-spacing:.06em;opacity:${eo(prog(t,0,1))}">1 kernel. 3 programs.</div>
  <div class="abs" style="left:100px;top:300px;width:1740px">
-  ${line('FA B200 (published)','1 vs 514,562','launches; baseline 34% slower on training and inference',C.mut,.6)}
-  ${line('open-flapping-airplanes on A100 (interim)','1 vs '+comma(A.launch_def_c.value),`graphed launches; Megatron+TE ${comma(pT)}% slower on training (${comma(A.train_s_base.value/A.train_s_ofa.value,2)}x), vLLM ${comma(pI)}% slower`,C.cy,1.4)}
-  ${line('open-flapping-airplanes on B300 (interim)','1 vs pending',`Megatron-local (no TE) ${comma(pBT)}% slower, but eager PyTorch is faster than open-flapping-airplanes (${comma(B.train_s_ofa.value/B.train_s_eager.value,2)}x); vLLM ${comma(pBI)}% slower`,C.cy,2.2)}
+  ${line('FA B200','published','1 vs 514,562','launches; baseline 34% slower on training and inference',C.mut,.6)}
+  ${line('open-flapping-airplanes','measured on B200','3 vs 1.2M-8.4M','launches by Nsight Systems (2 are setup) vs the baselines for the same work',C.cy,1.4)}
+  ${line('open-flapping-airplanes','measured on B200',comma(v('train_s_tc3'),1)+' s vs '+comma(v('train_s_base'),1)+' s',`training: Megatron+TE eager ${comma(pBT)}% slower; with CUDA graphs it is faster (${comma(v('train_s_graph'),1)} s). vLLM ${comma(pBI)}% slower`,C.cy,2.2)}
  </div>
- <div class="abs" style="left:0;right:0;top:640px;text-align:center;font-size:30px;color:#d4deea;opacity:${prog(t,3,4)}">Loss 11.71 &rarr; ~2.15 on all runs &middot; Doom ${comma(A.doom_fps.value,0)} fps on 6 A100 SMs &middot; one persistent launch</div>
- <div class="abs" style="left:0;right:0;top:730px;text-align:center;font-size:25px;color:#8a9bb0;opacity:${prog(t,3.4,4.4)};line-height:1.5">Independent reproduction. Not affiliated with, endorsed by, or based on code from Flapping Airplanes.<br>FA figures are read from their public demo video. Sources and caveats: README.md, video/data.json.</div>`;
+ <div class="abs" style="left:0;right:0;top:640px;text-align:center;font-size:30px;color:#d4deea;opacity:${prog(t,3,4)}">Loss 11.71 &rarr; 2.1575 &middot; Doom ${comma(v('doom_fps'),0)} fps on 8 SMs &middot; one persistent launch</div>
+ <div class="abs" style="left:0;right:0;top:730px;text-align:center;font-size:25px;color:#8a9bb0;opacity:${prog(t,3.4,4.4)};line-height:1.5">Independent reproduction. Not affiliated with, endorsed by, or based on code from Flapping Airplanes.<br>FA figures are read from their public demo video. Numbers: video/data.json, from the result files in the repo.</div>`;
 };
 
 /* ---------- timeline ---------- */
@@ -323,7 +312,7 @@ window.overlayMode=(id)=>{ // transparent header + caption only, for compose.sh
  const sc=SC.find(s=>s.id===id);showScene(sc,sc.dur/2,{overlay:true,noFade:true,noClock:true});
  sc.el.style.background='transparent';
  const c=sc.captions[0];$('#capt').style.display='';$('#capt').style.opacity=1;$('#capt').textContent=c[2];};
-window.getInfo=()=>({scenes:SC.map(s=>({id:s.id,dur:s.dur,start:s.start,slot:!!s.slot})),total:window.TOTAL,fps:D.meta.fps});
+window.getInfo=()=>({scenes:SC.map(s=>({id:s.id,dur:s.dur,start:s.start})),total:window.TOTAL,fps:D.meta.fps});
 window.init=async(data)=>{D=data||await (await fetch('data.json')).json();buildTimeline();renderGlobal(0);window.READY=true};
 if(!window.__NOAUTO){ if(window.__DATA)init(window.__DATA);else init().catch(e=>{document.body.textContent=String(e)}); }
 </script>

@@ -26,7 +26,7 @@ async function renderSeg(browser,sc){
 (async()=>{
   const browser=await puppeteer.launch({executablePath:CHROME,headless:'new',args:['--hide-scrollbars','--force-device-scale-factor=1','--font-render-hinting=none']});
   const page=await newPage(browser);const info=await page.evaluate(()=>getInfo());
-  if(A('overlay')){ // transparent PNG overlay (header + caption) for the slot scene
+  if(A('overlay')){ // transparent PNG overlay (header + caption)
     await page.evaluate(id=>overlayMode(id),A('overlay'));
     await page.screenshot({path:path.join(OUT,'overlay_'+A('overlay')+'.png'),omitBackground:true});await browser.close();return}
   if(A('stills')){ // global-time stills
@@ -39,9 +39,9 @@ async function renderSeg(browser,sc){
   const conc=Number(A('conc',3));let q=[...scenes];
   await Promise.all(Array.from({length:conc},async()=>{while(q.length){const s=q.shift();await renderSeg(browser,s)}}));
   await browser.close();
-  if(!A('scene')){ // concat in order (slot placeholder is rendered too; compose.sh swaps it)
+  if(!A('scene')){ // concat in order
     const list=path.join(OUT,'concat.txt');fs.writeFileSync(list,info.scenes.map(s=>`file '${path.join(SEG,s.id+'.mp4')}'`).join('\n'));
-    const final=path.join(OUT,A('final','ofa_explainer_preview.mp4'));
+    const final=path.join(OUT,A('final','ofa_explainer.mp4'));
     const r=spawnSync('ffmpeg',['-y','-loglevel','error','-f','concat','-safe','0','-i',list,'-c','copy',final],{stdio:'inherit'});
     console.log('wrote',final,'status',r.status);
   }
