@@ -8,12 +8,12 @@ baseline frameworks, all measured by us. open-flapping-airplanes is not affiliat
 
 ## Bottom line
 
-- **Like-for-like on one B200 at LLM scale** ([`b200-run/`](../b200-run/README.md), measured 2026-11-02): open-flapping-airplanes's megakernel trains a
+- **Like-for-like on one B200 at LLM scale** ([`b200-run/`](../b200-run/README.md), measured 2026-11-02): open-flapping-airplanes' megakernel trains a
   162M-parameter GPT for 4,000 steps in **48.1 s** (`tcgen05` GEMMs, 3 pipeline stages) or **52.4 s** (2 stages) while it serves and runs
   Doom on a 116 / 24 / 8 SM split. Megatron-core with Transformer Engine, alone on the same 116 SMs, takes **62.4 s** as frameworks run by
   default (eager): by FA's metric that baseline is **23% / 16% slower**, where FA report theirs **34% slower**. **With CUDA graphs the same
   Megatron takes 43.1 s and is 11.5% / 21.5% faster than open-flapping-airplanes** (and faster than FA's reported 46.1 s); PyTorch with a whole-step CUDA graph
-  takes 50.9 s (open-flapping-airplanes's 3-stage build is 5.5% faster, the 2-stage build 2.9% slower). FA do not say how their Megatron ran; their 70.1 s is
+  takes 50.9 s (open-flapping-airplanes' 3-stage build is 5.5% faster, the 2-stage build 2.9% slower). FA do not say how their Megatron ran; their 70.1 s is
   close to our eager time. The first build, with `mma.sync` GEMMs, took 95.8 s.
 - **Serving: open-flapping-airplanes wins by less than FA report.** Answering FA's prompt from its live weights, open-flapping-airplanes makes **1,660 / 1,741 tok/s** (3 / 2
   stages) on its 24 SMs while it trains; vLLM alone on 24 SMs, with 16 CPU cores reserved, makes **1,537 tok/s**, **7% / 12% slower** (FA:
@@ -24,7 +24,7 @@ baseline frameworks, all measured by us. open-flapping-airplanes is not affiliat
 - **The training result is the GEMMs.** `mma.sync` reaches 13-33% of cuBLAS on the B200; the Blackwell (`tcgen05`) backend now reaches
   34-73%. It first ran at 1 block per SM because the occupancy API reports 1 for any kernel with `tcgen05` instructions and a block that
   keeps its TMEM allocation permit stalls the next one; allocating TMEM once per block and relinquishing the permit gives 2 blocks per SM,
-  and a staged, coalesced epilogue did the rest ([`b200-run/README.md`](../b200-run/README.md#the-gemms-from-mmasync-to-tcgen05)). open-flapping-airplanes's
+  and a staged, coalesced epilogue did the rest ([`b200-run/README.md`](../b200-run/README.md#the-gemms-from-mmasync-to-tcgen05)). open-flapping-airplanes'
   3-stage build is 4% behind FA's reported 46.1 s; the fastest training run we measured is Megatron + TE with CUDA graphs, 43.1 s.
 - **The toy demo** (a 115k-parameter character model, section 3) does not reproduce FA's gain either.
 
@@ -70,8 +70,8 @@ all of the training, serving and Doom ([`b200-run/results/launches_ofa_tc2/`](..
 | FA's model size, data and framework settings are unpublished | Their Megatron is within 11% of ours, so the setups are probably close; this cannot be checked |
 | Training data: FA's model learns to answer "What is a megakernel?"; ours trains on TinyStories | Different loss curve (FA: 5.03 at step 445; ours: about 3.7) and different served text; the final loss is close (2.11 vs 2.16) |
 | Host CPU: the framework baselines are CPU-bound | Megatron took 62.4 s in one container and 129 s in another; vLLM made 684 tok/s without reserved cores and about 1,500 with 16. We compare against the faster numbers |
-| Kernel quality: open-flapping-airplanes's GEMMs reach 34-73% of cuBLAS on the B200 (`tcgen05`; `mma.sync`: 13-33%) | Not a protocol difference, but it decides the training result ([`b200-run/README.md`](../b200-run/README.md)) |
-| Serving vs training on the same chip | open-flapping-airplanes's serving rate falls as its trainer gets faster (shared L2 and HBM; with 3 stages, less L1): 1,783 tok/s with the `mma.sync` trainer, 1,741 / 1,660 with the `tcgen05` ones. Each baseline runs alone, with the whole memory system to itself |
+| Kernel quality: open-flapping-airplanes' GEMMs reach 34-73% of cuBLAS on the B200 (`tcgen05`; `mma.sync`: 13-33%) | Not a protocol difference, but it decides the training result ([`b200-run/README.md`](../b200-run/README.md)) |
+| Serving vs training on the same chip | open-flapping-airplanes' serving rate falls as its trainer gets faster (shared L2 and HBM; with 3 stages, less L1): 1,783 tok/s with the `mma.sync` trainer, 1,741 / 1,660 with the `tcgen05` ones. Each baseline runs alone, with the whole memory system to itself |
 | SM shares set with CUDA MPS (79% gives 116 SMs, 17% gives 24) | FA did not say how they limited theirs |
 | One B200 on Modal | FA's clocks and power limit are unknown |
 
@@ -83,9 +83,9 @@ less than the GPT above), and compares against its own kernels launched one by o
 
 | Baseline, timed by FA's metric | Training | Serving |
 |---|---|---|
-| open-flapping-airplanes's kernels, eager launches, alone on FA's SM shares (MPS) | -22.3% | -16.5% |
+| open-flapping-airplanes' kernels, eager launches, alone on FA's SM shares (MPS) | -22.3% | -16.5% |
 | the same with CUDA graphs | -24.0% | -10.2% |
-| open-flapping-airplanes's kernels, eager launches, alone on the whole GPU | -25.0% | +3.7% |
+| open-flapping-airplanes' kernels, eager launches, alone on the whole GPU | -25.0% | +3.7% |
 | both jobs as two processes sharing the GPU (not FA's method) | +41.9% | +58.0% |
 
 A step of this model lasts 56 µs, so the megakernel's scheduling (claim, poll and fence for 144 tasks a step) costs more than four kernel
@@ -112,8 +112,8 @@ means the megakernel wins.
 | open-flapping-airplanes LLM (upstream) | A100 | 162M GPT | Megatron-core without TE on 84 SMs / vLLM on 16 SMs | +36.8% | +14.9% |
 | open-flapping-airplanes LLM (`llm/ofa_fast`, best A100 build) | A100 | 162M GPT | Megatron-core + TE on 84 SMs (233.2 s) / PyTorch eager on 84 SMs (226.2 s) | 190.7 s vs 233.2 s: +18.2% / vs 226.2 s: +15.7% | - |
 | open-flapping-airplanes LLM (upstream) | A100 | 162M GPT | PyTorch eager with flash attention on 84 SMs | +1.0% | - |
-| open-flapping-airplanes demo | B200 | character MLP | open-flapping-airplanes's kernels, eager, on FA's SM shares | -22.3% | -16.5% |
-| open-flapping-airplanes demo | A100 | character MLP | open-flapping-airplanes's kernels, eager, whole GPU | -13.1% | +2.1% |
+| open-flapping-airplanes demo | B200 | character MLP | open-flapping-airplanes' kernels, eager, on FA's SM shares | -22.3% | -16.5% |
+| open-flapping-airplanes demo | A100 | character MLP | open-flapping-airplanes' kernels, eager, whole GPU | -13.1% | +2.1% |
 
 At training, the result follows the GEMMs and how the baseline launches its kernels. With `mma.sync` GEMMs (13-33% of cuBLAS) the
 megakernel beat only Megatron without Transformer Engine. With `tcgen05` GEMMs (34-73% of cuBLAS) it beats the frameworks as they run by
