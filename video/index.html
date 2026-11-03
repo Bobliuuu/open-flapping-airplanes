@@ -25,7 +25,7 @@ svg text:not([fill]){fill:#e8eef5}
 <body>
 <div id="stage">
  <div id="scenes"></div>
- <div id="hdr"><div class="tag">OFA</div><div class="mid">Single kernel launch</div><div class="sp"></div><div class="lbl" id="hl"></div><div class="clk mono" id="hc"></div></div>
+ <div id="hdr"><div class="tag">open-flapping-airplanes</div><div class="mid">Single kernel launch</div><div class="sp"></div><div class="lbl" id="hl"></div><div class="clk mono" id="hc"></div></div>
  <div id="cap"><span id="capt" style="display:none"></span></div>
  <div id="foot">Independent reproduction. Not affiliated with Flapping Airplanes.</div>
 </div>
@@ -54,7 +54,7 @@ S.title=(el,t,d)=>{
  const a=eo(prog(t,.1,1.2)),b=eo(prog(t,.9,2)),c=eo(prog(t,1.8,3));
  el.innerHTML=`<div class="bgdots"></div>
  <div class="abs" style="left:0;right:0;top:250px;text-align:center;opacity:${a};transform:translateY(${(1-a)*30}px)">
-  <div style="font-size:210px;font-weight:900;letter-spacing:.22em;margin-left:.22em">OFA</div></div>
+  <div style="font-size:84px;font-weight:900;letter-spacing:.03em">open-flapping-airplanes</div></div>
  <div class="abs" style="left:0;right:0;top:520px;text-align:center;opacity:${b};font-size:44px;color:#c6d3e2;line-height:1.4">
   One GPU kernel that <span style="color:${C.cy}">trains an LLM</span>, <span style="color:${C.gr}">serves text from its live weights</span>,<br>and plays <span style="color:${C.am}">real Doom</span>.</div>
  <div class="abs" style="left:0;right:0;top:720px;display:flex;justify-content:center;gap:36px;opacity:${c}">

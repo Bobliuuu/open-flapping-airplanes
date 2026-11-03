@@ -25,7 +25,7 @@ def hero():
 </defs>
 <rect width="1200" height="360" fill="{BG}"/><rect width="1200" height="360" fill="url(#grid)"/>
 <rect y="0" width="260" height="360" fill="url(#sweep)" opacity=".5"><animateTransform attributeName="transform" type="translate" from="-300 0" to="1300 0" dur="7s" repeatCount="indefinite"/></rect>
-<text x="64" y="188" font-family="{SANS}" font-weight="800" font-size="150" letter-spacing="-4" fill="url(#g)">OFA</text>
+<text x="64" y="188" font-family="{SANS}" font-weight="800" font-size="68" letter-spacing="-1" fill="url(#g)">open-flapping-airplanes</text>
 <text x="70" y="240" font-family="{FONT}" font-size="26" fill="{TXT}">one kernel <tspan fill="{DIM}">·</tspan> three programs</text>
 <g font-family="{FONT}" font-size="17">
 <text x="70" y="288" fill="{CY}">● train</text><text x="188" y="288" fill="{RD}">● serve</text><text x="306" y="288" fill="{YL}">● play Doom</text>
