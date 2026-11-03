@@ -233,14 +233,18 @@ Modal runs cost money (a B200 is billed per second); read `b200-run/README.md` b
 
 ## Videos
 
-- [B200 demo in Flapping Airplanes' format (76.6 s)](video/release/ofa_demo_b200.mp4): a recorded run of the LLM-scale megakernel, the split, the code,
-  the side by side with the baselines, the result cards, and their published benchmark next to ours, with music. Every number comes from
-  `b200-run/results/` and `benchmarks/fa_published.json` through `video/b200/make_data.py`.
+**B200 demo in Flapping Airplanes' format (94 s):** a recorded run of the LLM-scale megakernel, the split, the code, the side by side with the
+baselines, the result cards, Flapping Airplanes' demo next to ours at the same moment of each run, and their published benchmark next to ours,
+with music. Every number comes from `b200-run/results/` and `benchmarks/fa_published.json` through `video/b200/make_data.py`; their footage is
+from their demo video.
+
+https://github.com/user-attachments/assets/97e664f5-5b6b-43c1-978b-eb30530e9565
+
 - [Explainer (98 s)](video/release/ofa_explainer.mp4): the problem (launch counts), the idea (one persistent kernel, the 116 / 24 / 8 SM split), the Doom port, the
   method, a live dashboard still, and the results against Flapping Airplanes' published numbers, all on one B200. It is rendered from
   [`video/data.json`](video/data.json), whose values come from `b200-run/results/` and `benchmarks/fa_published.json`, not typed into the scenes.
 
-Both play when opened from the repo on GitHub. Sources are in [`video/`](video/README.md).
+Sources are in [`video/`](video/README.md).
 
 ## Credits and licensing
 
