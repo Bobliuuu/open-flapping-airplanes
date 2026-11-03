@@ -230,8 +230,6 @@ Modal runs cost money (a B200 is billed per second); read `b200-run/README.md` b
 
 - **Not their code or model.** Same chip, SM split and baselines as the Flapping Airplanes video, but their model, data and training settings are unpublished. We do not reproduce their 46.1 s (our fastest is 48.1 s) or their trained answers (ours is trained on TinyStories).
 - **Megatron + TE with CUDA graphs still trains faster than us on the B200** (43.1 s against 48.1 s).
-- **"1 launch" counts the run, not setup.** Nsight Systems shows 3 launches, 2 of them one-off setup kernels. The baselines' counts leave out setup too.
-- **B300 data is not B200 data.** `b300-run/` holds the B300 measurements; the B200 results are in `b200-run/`.
 
 ## Videos
 
