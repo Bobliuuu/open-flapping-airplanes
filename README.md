@@ -8,15 +8,15 @@
 
 ![GPU](https://img.shields.io/badge/GPU-A100%20%C2%B7%20B200%20%C2%B7%20B300-76b900?logo=nvidia&logoColor=white) ![launches](https://img.shields.io/badge/kernel%20launches%20for%20the%20run-1-27c8e8) ![doom](https://img.shields.io/badge/Doom-35%20fps%20on%20the%20GPU-f2c14e) ![status](https://img.shields.io/badge/status-research%20demo-lightgrey)
 
-[Results](#results) · [Architecture](#architecture) · [Compared with Flapping Airplanes](#how-it-compares-to-flapping-airplanes) · [Quick start](#quick-start) · [Repo map](#repo-map) · [Limitations](#limitations) · [Videos](#videos)
+[📊 Results](#results) · [🧩 Architecture](#architecture) · [✈️ Compared with Flapping Airplanes](#how-it-compares-to-flapping-airplanes) · [🚀 Quick start](#quick-start) · [Repo map](#repo-map) · [Limitations](#limitations) · [🎬 Videos](#videos)
 
 </div>
 
 ---
 
-An independent rebuild of the idea in the public demo video of Flapping Airplanes: a "megakernel" in which
-training, inference and a game share one GPU through one kernel launch. We have not seen their code. Everything here was written and measured
-from scratch, and every number below comes from a result file in this repo.
+Flapping Airplanes showed a demo video of one GPU kernel that trains a model, serves it, and plays Doom at the same time. We rebuilt it from that video, in the open.
+It is a real persistent megakernel: **one launch, and its blocks never exit.** They pull training, serving and Doom tasks from on-GPU queues
+until the run ends. We never saw their code; everything here was written from scratch, and every number comes from a result file in this repo.
 
 | | Program | What happens |
 |---|---|---|
@@ -232,7 +232,9 @@ Modal runs cost money (a B200 is billed per second); read `b200-run/README.md` b
 
 - [B200 demo in Flapping Airplanes' format (74.6 s)](video/release/ofa_demo_b200.mp4): a recorded run of the LLM-scale megakernel, the split, the code,
   the side by side with the baselines, and the result cards. Every number comes from `b200-run/results/` through `video/b200/make_data.py`.
-- [Explainer (86 s)](video/release/ofa_explainer_preview.mp4): older preview whose B300 numbers are interim; it will be re-rendered.
+- [Explainer (98 s)](video/release/ofa_explainer.mp4): the problem (launch counts), the idea (one persistent kernel, the 116 / 24 / 8 SM split), the Doom port, the
+  method, a live dashboard still, and the results against Flapping Airplanes' published numbers, all on one B200. It is rendered from
+  [`video/data.json`](video/data.json), whose values come from `b200-run/results/` and `benchmarks/fa_published.json`, not typed into the scenes.
 
 Both play when opened from the repo on GitHub. Sources are in [`video/`](video/README.md).
 
@@ -241,5 +243,5 @@ Both play when opened from the repo on GitHub. Sources are in [`video/`](video/R
 - Independent rebuild, **not affiliated with, endorsed by, or based on code from Flapping Airplanes**. Their numbers come from their public video.
 - **doomgeneric** by ozkl is GPL-licensed; `setup_box.sh` clones it and it is not stored in this repo. **Doom** is by id Software.
 - The **shareware `doom1.wad` is not included**; the setup script downloads it and checks its md5.
-- This repo has no license file yet; the owner has not chosen one.
+- The code in this repo is released under the [MIT License](LICENSE) (c) 2026 Jerry Zhu. It does not cover doomgeneric, Doom or the WAD, which keep their own licenses.
 - Background: [`docs/RESEARCH.md`](docs/RESEARCH.md), [`benchmarks/README.md`](benchmarks/README.md), [`site/README.md`](site/README.md).
