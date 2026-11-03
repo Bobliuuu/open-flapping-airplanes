@@ -8,7 +8,7 @@
 
 ![GPU](https://img.shields.io/badge/GPU-A100%20%C2%B7%20B200%20%C2%B7%20B300-76b900?logo=nvidia&logoColor=white) ![launches](https://img.shields.io/badge/kernel%20launches%20for%20the%20run-1-27c8e8) ![doom](https://img.shields.io/badge/Doom-35%20fps%20on%20the%20GPU-f2c14e) ![status](https://img.shields.io/badge/status-research%20demo-lightgrey)
 
-[Results](#results) · [Architecture](#architecture) · [Compared with Flapping Airplanes](#how-it-compares-to-flapping-airplanes) · [Quick start](#quick-start) · [Repo map](#repo-map) · [Limitations](#honest-limitations) · [Videos](#videos)
+[Results](#results) · [Architecture](#architecture) · [Compared with Flapping Airplanes](#how-it-compares-to-flapping-airplanes) · [Quick start](#quick-start) · [Repo map](#repo-map) · [Limitations](#limitations) · [Videos](#videos)
 
 </div>
 
