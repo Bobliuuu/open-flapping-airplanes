@@ -126,13 +126,13 @@ Sources for the A100 LLM rows: [`llm/ofa/README.md`](../llm/ofa/README.md) (85 /
 loss 2.149; decode 611 and 597 tok/s in two 600-step runs) and [`llm/baseline/README.md`](../llm/baseline/README.md) (each alone,
 MPS-restricted: Megatron-core 354.6 ± 7.8 s, PyTorch eager 226.2 ± 11.0 s, vLLM 514 ± 2 tok/s; measured on a shared GPU, see its caveats).
 
-## 5. B300 runs (upstream; `llm/b200/results/` is B300 data)
+## 5. B300 runs (upstream; `b300-run/` is B300 data)
 
 Upstream ran the same megakernel through Modal with `gpu="B200+"`, which placed it on a B300 SXM6 (sm_103, 148 SMs): 87.1 s for 4,000 steps
-on the 116 / 24 / 8 split with Doom compiled out, and 1,762 tok/s served ([`llm/b200/results/mk_split_100a.txt`](../llm/b200/results/mk_split_100a.txt)).
+on the 116 / 24 / 8 split with Doom compiled out, and 1,762 tok/s served ([`b300-run/mk_split_100a.txt`](../b300-run/mk_split_100a.txt)).
 The B200 run gives the same loss (2.1575 at step 3,999) and the same serving rate, and takes 10% longer.
 
-Round 2 on a pinned B300 (`gpu="B300"`, cc 10.3; [`llm/b200/results/B300_ROUND2.md`](../llm/b200/results/B300_ROUND2.md)) with the `tcgen05` GEMMs: 4,000 steps in
+Round 2 on a pinned B300 (`gpu="B300"`, cc 10.3; [`b300-run/B300_ROUND2.md`](../b300-run/B300_ROUND2.md)) with the `tcgen05` GEMMs: 4,000 steps in
 49.9 s on the split (12.46 ms/step; 40.1 s training only on all 148 SMs), loss 2.1575 as in every other build, Doom off. The baselines on that run have no
 Transformer Engine (it did not build there): PyTorch eager on 116 SMs 55.9 s (1.12x slower than the megakernel), Megatron-core without TE 136.6 s. The
 megakernel serves about 1,080 tok/s there (one block per SM). These are B300 numbers and are not comparable with FA's B200 figures.

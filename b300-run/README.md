@@ -1,4 +1,4 @@
-# llm/b200/results: these are B300 measurements
+# b300-run: these are B300 measurements
 
 Everything in this folder (`B300_REPORT.md`, `B300_ROUND2.md`, `r2_*`, `r3_*`, `r4_*`, `mk_*`, `bl_*`, `gemm_*`) was measured on a Modal
 **B300** (SXM6, compute capability 10.3, 148 SMs), not on a B200. The name `b200` in the path comes from the Modal request

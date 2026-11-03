@@ -23,7 +23,7 @@ modal run run_modal.py --mode live          # 20 s live demo -> results/b200_<da
 python3 compare.py results/b200_20261101.json --summary results/summary_b200.md --no-site   # leaves summary.md and the site alone
 OFA_GPU=H100 OFA_ARCH=sm_90 modal run run_modal.py --mode bench                         # another GPU type
 ```
-`gpu="B200"` asks for exactly a B200; Modal's `"B200+"` may place the job on a B300 (that is what happened to `../llm/b200/results/`).
+`gpu="B200"` asks for exactly a B200; Modal's `"B200+"` may place the job on a B300 (that is what happened to `../b300-run/`).
 B200 results from 2026-11-01: `results/b200_20261101.json`, `results/summary_b200.md`, `results/b200_20261101_mps_baselines.json`,
 `results/b200_20261101_live_*`. The comparison with Flapping Airplanes is in `../docs/FA_COMPARISON.md`.
 

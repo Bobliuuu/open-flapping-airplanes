@@ -73,7 +73,7 @@ def gpu_cmds(cmds: list, budget_s: int = 1500):
 @app.local_entrypoint()
 def main(plan: str):
     P = json.load(open(plan)); tag = P["tag"]
-    rd = os.path.join(B200, "results"); os.makedirs(rd, exist_ok=True)
+    rd = os.path.normpath(os.path.join(B200, "..", "..", "b300-run")); os.makedirs(rd, exist_ok=True)
     if P.get("build"):
         r = cpu_build.remote(P["build"], P.get("artifacts", {}))
         txt = json.dumps(r, indent=1); open(os.path.join(rd, f"r2_{tag}_build.json"), "w").write(txt)
@@ -143,6 +143,6 @@ def bl_r2_b():
 def baselines(which: str = "a"):
     f = bl_r2_a if which == "a" else bl_r2_b
     g = f.remote()
-    rd = os.path.join(B200, "results"); json.dump(g, open(os.path.join(rd, f"r2_baselines_{which}.json"), "w"), indent=1)
+    rd = os.path.normpath(os.path.join(B200, "..", "..", "b300-run")); json.dump(g, open(os.path.join(rd, f"r2_baselines_{which}.json"), "w"), indent=1)
     with open(os.path.join(rd, "r2_spend.jsonl"), "a") as fh: fh.write(json.dumps({"tag": "baselines_" + which, "gpu_s": g["wall_s"], "usd": g["cost_usd_est"], "t": time.time()}) + "\n")
     print(json.dumps(g, indent=1)[:3000])

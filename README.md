@@ -81,7 +81,7 @@ see [`llm/ofa_fast/README.md`](llm/ofa_fast/README.md) and [`llm/baseline/README
 
 Modal `gpu="B300"` (SXM6, compute capability 10.3, 148 SMs), Doom compiled out, `tcgen05` megakernel: **49.9 s** for 4,000 steps on the 116 / 24 / 8
 split (40.1 s training-only on all SMs), serving about 1,080 tok/s. Baselines there had no Transformer Engine: PyTorch eager on 116 SMs 55.9 s,
-Megatron-core without TE 136.6 s. Data: [`llm/b200/results/`](llm/b200/results/README.md), report [`B300_ROUND2.md`](llm/b200/results/B300_ROUND2.md).
+Megatron-core without TE 136.6 s. Data: [`b300-run/`](b300-run/README.md), report [`B300_ROUND2.md`](b300-run/B300_ROUND2.md).
 **These are B300 measurements, not B200**; the folder name comes from a Modal `B200+` request that can land on either chip.
 
 ### The small demo (115k-parameter char model, A100 and B200)
@@ -217,7 +217,7 @@ Modal runs cost money (a B200 is billed per second); read `b200-run/README.md` b
 |---|---|
 | `b200-run/` | The LLM-scale comparison on a real B200 against Megatron + TE and vLLM: `modal_app.py`, `results/` |
 | `llm/` | LLM megakernel work: `ofa_fast/` (best A100 build), `ofa/` (rdc Doom build), `megakernel/` (Doom-free), `gemm/`, `gemm2/`, `attention/`, `decode/`, `baseline/` (Megatron, PyTorch, vLLM on A100), `b200/` (Blackwell kit: `tcgen05` GEMMs, megakernel, Modal drivers) |
-| `llm/b200/results/` | **B300** measurements (not B200), with a README saying so |
+| `b300-run/` | **B300** runs on Modal (`gpu="B300"`): reports, logs, raw results |
 | `a100-demo/` | The small-model demo: `demo.cu` megakernel with an HTTP server, three-panel dashboard |
 | `doom-gpu/` | Compiling Doom for the GPU: tinylibc, `fix_varargs.py`, `build_doom.sh`, `setup_box.sh`; `player/` is the scripted player |
 | `benchmarks/` | Small-demo benchmarks: `run_benchmarks.sh` (SSH), `run_modal.py` (Modal), `compare.py`, `fa_published.json`, `results/` |
@@ -231,7 +231,7 @@ Modal runs cost money (a B200 is billed per second); read `b200-run/README.md` b
 - **Not their code or model.** Same chip, SM split and baselines as the Flapping Airplanes video, but their model, data and training settings are unpublished. We do not reproduce their 46.1 s (our fastest is 48.1 s) or their trained answers (ours is trained on TinyStories).
 - **Megatron + TE with CUDA graphs still trains faster than us on the B200** (43.1 s against 48.1 s).
 - **"1 launch" counts the run, not setup.** Nsight Systems shows 3 launches, 2 of them one-off setup kernels. The baselines' counts leave out setup too.
-- **B300 data is not B200 data.** `llm/b200/results/` was measured on a B300; the B200 results are in `b200-run/`.
+- **B300 data is not B200 data.** `b300-run/` holds the B300 measurements; the B200 results are in `b200-run/`.
 
 ## Videos
 
