@@ -26,7 +26,7 @@ https://github.com/user-attachments/assets/97e664f5-5b6b-43c1-978b-eb30530e9565
 ▶️ <a href="video/release/ofa_explainer.mp4"><b>Watch the explainer (98 s)</b></a>
 </p>
 
-Built by [Magni](https://magnihq.com): we use AI agents to push GPUs closer to their physical limit. Serving models on GPUs you pay for? [Book a call](https://magnihq.com).
+Built by Jerry Zhu and Arnold Hsu from [Magni](https://magnihq.com): we use AI agents to push GPUs closer to their physical limit. Serving models on GPUs you pay for? [Book a call](https://magnihq.com).
 
 | | Program | What happens |
 |---|---|---|
