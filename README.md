@@ -28,7 +28,7 @@ https://github.com/user-attachments/assets/239f7d26-4d33-4623-b42c-94647baa15bb
 
 ## What It Does
 
-Built by Jerry Zhu from Shopify and Arnold Xu from [Magni](https://magnihq.com): Magni uses AI agents to push GPUs closer to their physical limits usin near silicon inference. 
+Built by Jerry Zhu from Shopify and Arnold Xu from [Magni](https://magnihq.com): Magni uses AI agents to push GPUs closer to their physical limits using near-silicon inference. 
 
 | | Program | What happens |
 |---|---|---|
