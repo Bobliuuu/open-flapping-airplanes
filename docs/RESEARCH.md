@@ -2,9 +2,9 @@
 
 **Can we build what Flapping Airplanes says it built: a persistent "megakernel" runtime that owns the GPU's execution layer?**
 
-Short answer: **yes for the serving half, probably for the rest.** This repo is the feasibility case and the build ladder.
+Short answer: **yes for the serving half, probably for the rest.** This log is the feasibility case.
 
-> Historical research log, written before the demo existed (sections 1-9 are the original feasibility analysis; 10-12 record what was then built). See the [root README](../README.md) for the finished project. Original status note: research only. Dollar and percent figures are one analyst's pricing from existing measurements and are **provisional** until a second person recomputes them.
+> Historical research log, written before the demo existed (sections 1-6 are the original feasibility analysis; section 7 records what was then built). See the [root README](../README.md) for the finished project. Original status note: research only.
 
 ---
 
@@ -17,7 +17,6 @@ Short answer: **yes for the serving half, probably for the rest.** This repo is 
 | **Public evidence** | **None.** No code, paper or benchmark as of Oct 31. Only the X post and press. Their KVM name traces to a public ancestor: ThunderKittens branch `bvm-unity-pipeline` (May 2025). |
 | **Feasibility** | Eight hardware requirements force the design. Public code already implements most of it (Hazy, Cohere, Cursor MoK, Lucebox, MPK). |
 | **What stays theirs** | A deterministic training ISA, a multi-job preemptive scheduler, a model-to-instruction compiler. **None is needed to serve tokens.** |
-| **Where it pays** | Big on B300 8-GPU decode (about 25 to 30% of step reachable). Small on capped, prefill-heavy RTX stacks (about 2 to 3%). |
 
 **Honest scope.** "Exactly what they do" cannot be verified; they have published nothing. The target is therefore their *claimed capability*, reconstructed from first principles and from the public code of the same people.
 
@@ -73,96 +72,31 @@ One SM of the reconstructed VM:
  priority = remaining critical path.
 ```
 
-## 3. When it pays: one equation
-
-```
-one kernel per op :  T  = sum t_i + sum b_i (launch, fill, tail) + I (host gaps)
-megakernel        :  T' >= max( critical path, Bytes/BW, FLOP/peak, Energy/H ) + overhead,   H = P_cap - P_idle
-gain              =  I + (sum b_i - overhead) + (sum t_i - max(...))
-```
-
-**Under a power cap, a megakernel recovers unused power, not unused time.** At the cap an op already takes `E_i/H`, so overlap only buys the watts other ops leave idle.
-
-|  | kernel short (<~25 us) | kernel long |
-|---|---|---|
-| **below the cap** | **BIG**: launches + overlap both convert (B300 8-GPU decode, drafter phase) | overlap converts by (1 - P/H) |
-| **at the cap** | launch and fill savings only | **nothing**: rewrite the kernel instead (capped prefill GEMMs, attention) |
-
-Worth, by stack (provisional):
-
-```
-share of the step a megakernel can reach
-Qwen T21  (RTX, capped, prefill-heavy)   ██ 1.6-2.3%
-Gemma C8  (RTX, capped, prefill-heavy)   ███ ~3% (6% at most)
-Kimi K3   decode (B300, 8 GPUs)          ███████████████ ~30%
-GLM-5.3   decode (B300)                  ████████████ ~25%
-```
-
-Lesson from our own record: a "-56 us" test-bed win became "-8.5 us" once the power cap was measured. **Never count overlap gains without a power column.**
-
 ---
 
-## 4. Feasibility verdict, by component
+## 3. Feasibility verdict, by component
 
 | Component | Verdict | Why |
 |---|---|---|
 | Persistent kernel + per-SM instruction ring | **Feasible now** | Hazy / Cohere / MoK ship it |
 | Dependency-counter dataflow (no grid barriers) | **Feasible now** | Same |
 | Decode megakernel, B200/B300 | **Feasible now** | MegaKittens (`mk-v2-llama`), WIP but public |
-| Decode megakernel, RTX sm_120 + GDN + NVFP4 | **Feasible, port needed** | Lucebox (Apache-2.0, batch 1). sm_120 has no TMEM; CLC work stealing exists |
+| Decode megakernel, RTX Blackwell (sm_120) | **Feasible, port needed** | Lucebox (Apache-2.0, batch 1, DeltaNet + NVFP4 path). sm_120 has no TMEM; CLC work stealing exists |
 | Model-to-instructions compiler | **Feasible, public starting points** | MegaKittens, MPK (OSDI 2026), Event Tensor |
 | Bitwise-deterministic training instructions | **Feasible, hard** | MoK shows MoE training at 1.41x, bitwise. Backward + optimizer ISA is the real work |
 | Multi-job preemptive scheduler (inference + training + game) | **Plausible, unproven** | No public reference. Preempt at task boundaries; first approximate with engine-level priority tiers |
 | Their full unified system | **Unknown** | Nothing published. Treat as stretch goal, not baseline |
 
-**Biggest risk is not the idea, it is synchronization bugs.** Our MK14 kernel read bitwise on 7 of 7 test-bed cases, then diverged on 3 of 66 served requests: q/k written through the generic proxy, released by flag to a TMA (async-proxy) consumer with no `fence.proxy.async`. A bitwise bed proves arithmetic, not synchronization.
-
----
-
-## 5. The build ladder
-
-Principles: public code first; build where the bound is big; generator over hand-written kernels; assume a sync bug until a check proves otherwise.
-
-| # | Step | Cost | Exit gate |
-|---|---|---|---|
-| 0 | **Price the bound** for each stack: add a power column (P/H per kernel family) and a decode-only split to the roofline ruler | about 1/2 day, CPU only, plus second-person recompute | Bound >= ~10%: build. <= ~5%: work GEMM energy instead |
-| 1 | **B300 decode via MegaKittens**; port Kimi / GLM decode ops as new instruction types | unsized; repo is WIP | Beats CUDA-graph replay on the decode step, then a served screen |
-| 2 | **RTX drafter-phase megakernel** from Lucebox's sm_120 NVFP4 DeltaNet kernel + Hazy/Cohere task design (per-dependency counters, weight prefetch across 15 drafter passes, CLC) | hours for census, then one-pass prototype | Bitwise vs served chain **and** >= 78% of bandwidth |
-| 3 | **Overlap decode with prefill GEMMs** (their headline idea) | one high-rate power trace | Build only if trace shows spare watts during decode (ceiling up to +11% on Gemma, unmeasured) |
-| 4 | **A generator, not kernels**: StableHLO to TIRx, or adopt MPK / MegaKittens / agent search | long | One decoder layer bitwise, then a whole decode step |
-| 5 | **CI before any timing counts** (see below) | about 1 day | Required for every megakernel |
-
-### Step 5: CI checks that must exist first
+**Biggest risk is not the idea, it is synchronization bugs.** A kernel can be bitwise on every test-bed case and still diverge under real timing: data written through the generic proxy and released by flag to a TMA (async-proxy) consumer needs a `fence.proxy.async` first. A bitwise bed proves arithmetic, not synchronization. Checks that should exist before any timing counts:
 
 - **Barrier accounting**: each opcode's arrive count equals its waiter's target.
 - **CPU replay** of the descriptor stream (Hazy `python_vm.py`; AutoMegaKernel's static deadlock/race validator).
 - **Fixed reduction order**, so outputs stay bitwise.
-- **Determinism at served timing**: replay the same requests, compare bitwise against controls, report the controls' own repeat rate beside it.
-
-### The "share the GPU" idea, for a token seller
-
-Serve at target speed, fill gaps with preemptible batch work. **Price it first as a discounted batch tier through the engine's priority scheduling, no megakernel.** A megakernel adds in-step filling, which at the cap is bounded by (1 - P/H).
-
-### Don't
-
-- Build a whole-model megakernel first on a capped prefill stack: at most about 2 to 3.5% after a large build.
-- Count overlap gains on a test bed without the power column.
+- **Determinism under real timing**: replay the same requests and compare bitwise against control runs.
 
 ---
 
-## 6. Fallbacks (if a step dies)
-
-| If this fails | Do this instead |
-|---|---|
-| MegaKittens too immature for Kimi/GLM ops | MPK compiler path, or Cohere's open decode megakernel as the reference and port by hand |
-| sm_120 lacks TMEM / Hazy kernels do not port | Lucebox base; counters + CLC; accept batch 1 first |
-| Bound < 5% on capped stacks | Targeted attention/GEMM kernels. On Gemma these made 36 to 69% of series gains with no megakernel |
-| Preemptive multi-job scheduler too hard | Priority tiers at the engine level; megakernel only for single-job decode |
-| Determinism cannot be held | Ship inference-only; defer training ISA |
-
----
-
-## 7. Public code to start from
+## 4. Public code to start from
 
 | Code | What | GPUs | Fit |
 |---|---|---|---|
@@ -170,7 +104,7 @@ Serve at target speed, fill gaps with preemptible batch work. **Price it first a
 | HazyResearch/Megakernels, `main` / `throughput` | Llama-1B batch-1 VM; Llama-70B TP throughput VM | H100 | Reference design |
 | [HazyResearch/ThunderKittens](https://github.com/HazyResearch/ThunderKittens), branch `bvm-unity-pipeline` | `prototype/vm`, `demos/kvm-runner` (May 2025) | H100 / B200 | Origin of the "KVM" name |
 | [cohere-ai/cohere-megakernel](https://github.com/cohere-ai/cohere-megakernel) | Decode megakernel, 16 opcodes, counter barriers | H100 BF16 | RTX FP8/FP4 "soon"; no push since Sep 8 |
-| [Luce-Org/lucebox-hub](https://github.com/Luce-Org/lucebox-hub) `optimizations/megakernel` | Fused single-kernel decode, Qwen3.5-0.8B (DeltaNet + attention), NVFP4 path | RTX 3090; sm_120/121a | Closest to RTX PRO 6000 + GDN + NVFP4. Batch 1, grid-wide barriers |
+| [Luce-Org/lucebox-hub](https://github.com/Luce-Org/lucebox-hub) `optimizations/megakernel` | Fused single-kernel decode, Qwen3.5-0.8B (DeltaNet + attention), NVFP4 path | RTX 3090; sm_120/121a | Closest public base for sm_120. Batch 1, grid-wide barriers |
 | [mirage-project/mirage](https://github.com/mirage-project/mirage) branch `mpk` | HF model to megakernel compiler; 1.2 to 6.7x lower latency | Hopper; Blackwell demos | Compiler alternative. Active |
 | RightNow-AI/AutoMegaKernel | Agent harness with statically checked schedule IR | sm_80/90/120 | Static-check idea; tiny models |
 | ForgeMegakernel (arXiv, Sep 2026) | Coding agents + design milestones + mid-state test oracle | n/s | Agent method; 1.21x over SGLang |
@@ -179,15 +113,13 @@ Also: Cursor's Mixture-of-Kittens (MoE training megakernel, 1.41x, bitwise); CUT
 
 ---
 
-## 8. Open questions (each is cheap to settle)
+## 5. Open questions
 
 1. **Flapping's code or numbers**: none as of Oct 31. Recheck before citing.
-2. **P/H on RTX PRO 6000** for verify attention and decode GEMMs: one `bed_energy.py` run each.
-3. **Qwen T21 host idle** reads 2.0 to 2.8 ms in nsys, maybe <= 2 ms without nsys inflation: in-boot A/B.
-4. **MegaKittens on Kimi/GLM ops**: untested. RTX needs its own port (no TMEM on sm_120).
-5. **Lucebox at batch > 1 and with MTP drafting**: unmeasured.
+2. **MegaKittens beyond its Llama examples** (MoE decode ops): untested. RTX needs its own port (no TMEM on sm_120).
+3. **Lucebox at batch > 1 and with MTP drafting**: unmeasured.
 
-## 9. Their claims vs. what is public
+## 6. Their claims vs. what is public
 
 | Claim | Source | Status |
 |---|---|---|
@@ -203,7 +135,7 @@ Hazy Research: *No Bubbles*, *We Bought the Whole GPU* · Cursor: *Mixture of Ki
 
 ---
 
-## 10. Live demo: one kernel, three programs, in your browser (`a100-demo/`)
+## 7. Live demo: one kernel, three programs, in your browser (`a100-demo/`)
 
 Modelled on the structure of the original Flapping Airplanes demo video (one dashboard with a training panel and its loss curve, an inference panel streaming text, a game panel, a real-time clock, then a comparison against separate kernels). Everything on screen is measured from the running kernel; nothing is scripted.
 
